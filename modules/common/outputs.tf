@@ -12,7 +12,7 @@ output "ecs_task_role_arn" {
 
 ####################### KMS ########################
 output "kms_key_arn" {
-  value = aws_kms_key.this.arn
+  value = var.kms_key_arn 
 }
 
 ################### Cloud Map ######################
@@ -20,3 +20,8 @@ output "kms_key_arn" {
 output "cloud_map_namespace_id" {
   value = aws_service_discovery_private_dns_namespace.this.id
 }
+
+output "cloud_map_namespace_arn"{
+  value = aws_service_discovery_private_dns_namespace.this.arn
+}
+

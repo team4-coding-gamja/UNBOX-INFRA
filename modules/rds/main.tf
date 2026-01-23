@@ -24,9 +24,7 @@ resource "aws_db_instance" "postgresql" {
 
   # Prod: 각 서비스(user, product 등)에 맞는 SG ID 연결
   # Dev: service_rds["user"] SG를 공용으로 사용 (또는 요구사항에 맞는 SG 연결)
-  vpc_security_group_ids = [
-    var.env == "prod" ? var.rds_sg_ids[each.key] : var.rds_sg_ids["user"]
-  ]
+  vpc_security_group_ids = var.env == "prod" ? [var.rds_sg_ids[each.key]] : values(var.rds_sg_ids)
 
   multi_az                = var.env == "prod" ? true : false
   backup_retention_period = var.env == "prod" ? 7 : 0
@@ -34,6 +32,8 @@ resource "aws_db_instance" "postgresql" {
   
   storage_encrypted = true
   kms_key_id        = var.kms_key_arn
-
+  lifecycle { 
+    ignore_changes = [password]
+  }
   tags = { Name = "${var.project_name}-${var.env}-${each.key}-db" }
 }

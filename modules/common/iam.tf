@@ -35,7 +35,7 @@ resource "aws_iam_role_policy" "ecs_execution_prod_secrets" {
           "secretsmanager:GetSecretValue" # 시크릿 매니저 값을 읽기 위한 한 줄 추가
         ]
         Resource = [
-          aws_kms_key.this.arn,
+          var.kms_key_arn,
           "arn:aws:ssm:ap-northeast-2:*:parameter/unbox/*",
           "arn:aws:secretsmanager:ap-northeast-2:*:secret:unbox/prod/*" # prod 시크릿 경로 제한
         ]
@@ -132,38 +132,7 @@ locals {
   account_id   = data.aws_caller_identity.current.account_id
 
   # 실무 패턴: 관리할 사용자 명단 (리스트 형식)
-  users = {
-    "nacgyun" = {
-      user_name   = "nacgyun001@gmail.com"
-      display     = "nacgyun"
-      given_name  = "nacgyun"
-      family_name = "kim"
-    },
-    "gahyun" = {
-      user_name = "gahyun8876@gmail.com"
-      display = "gahyun"
-      given_name = "gahyun"
-      family_name = "song"
-    },
-    "junseok" = {
-      user_name = "joshua052698@gmail.com"
-      display = "junseok"
-      given_name = "junseok"
-      family_name = "roh"
-    },
-    "gyeongjun" = {
-      user_name = "jjangjoon76@gmail.com"
-      display = "gyeongjun"
-      given_name = "gyeongjun"
-      family_name = "jang"
-    },
-    "hyeonjun" = {
-      user_name = "hyeonjun0899@gmail.com"
-      display = "hyeonjun"
-      given_name = "hyeonjun"
-      family_name = ""
-    }
-  }
+  users = var.users
 }
 
 ###########################################################

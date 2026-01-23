@@ -13,6 +13,7 @@ resource "aws_cloudwatch_log_group" "services" {
   for_each = toset(var.service_names)
   name     = "/ecs/${var.project_name}-${var.env}/${each.key}"
   retention_in_days = 7
+  kms_key_id        = var.kms_key_arn
 }
 
 # 4. ECS Task Definition (설계도)
@@ -30,18 +31,14 @@ resource "aws_ecs_task_definition" "services" {
   container_definitions = jsonencode([
     {
       name      = each.key
-      image     = "public.ecr.aws/nginx/nginx:latest" #
+      image     = "public.ecr.aws/nginx/nginx:latest"
       #image     = "${aws_ecr_repository.services[each.key].repository_url}:latest"
       essential = true
       portMappings = [
         {
-          # containerPort = var.service_config[each.key]
-          # hostPort      = var.service_config[each.key]
-          containerPort = 80
-        
-        # 2. 외부(ALB)에서 찔러주는 포트 (Fargate 호스트 레벨 매핑)
-          hostPort      = 80
-          
+          containerPort = var.service_config[each.key]
+          hostPort      = var.service_config[each.key]
+          name          = "http"
           protocol      = "tcp"
         }
       ]
@@ -85,10 +82,24 @@ resource "aws_ecs_service" "services" {
   task_definition = aws_ecs_task_definition.services[each.key].arn
   desired_count   = 1
   launch_type     = "FARGATE"
+  enable_execute_command = true
 
   # [중요] 타겟 그룹 변경 시 서비스 재생성이 필요할 수 있으므로 강제 교체 설정 추가 (선택)
   force_new_deployment = true
 
+  service_connect_configuration {
+    enabled   = true
+    namespace = var.cloud_map_namespace_arn # 미리 생성된 Cloud Map Namespace ARN
+
+    service {
+      port_name      = "http" # Task Definition의 portMappings name과 일치해야 함
+      discovery_name = each.key
+      client_alias {
+        port     = 80
+        dns_name = "${each.key}.${var.project_name}.local"
+      }
+    }
+  }
   network_configuration {
     subnets          = var.env == "dev" ? [var.app_subnet_ids[0]] : var.app_subnet_ids
     security_groups  = [var.ecs_sg_id]
@@ -102,4 +113,5 @@ resource "aws_ecs_service" "services" {
     # ★ 수정 후: 80 (Task Definition의 containerPort와 반드시 일치해야 함)
     container_port   = 80 
   }
+  
 }

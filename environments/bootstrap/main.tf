@@ -75,3 +75,105 @@ resource "aws_dynamodb_table" "terraform_locks" {
     Project     = "unbox"
   }
 }
+
+
+# 1. 환경별 KMS 마스터 키 생성
+resource "aws_kms_key" "this" {
+  # 리스트를 set으로 변환하여 순회
+  for_each = toset(var.env)
+
+  description             = "${var.project_name}-${each.key}-main-kms"
+  deletion_window_in_days = 7
+  enable_key_rotation     = true
+
+  # [보안] 키 정책: CloudWatch Logs 등이 이 키를 쓸 수 있게 허용
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "Enable IAM User Permissions"
+        Effect = "Allow"
+        Principal = { AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root" }
+        Action   = "kms:*"
+        Resource = "*"
+      },
+      {
+        Sid    = "Allow CloudWatch Logs to use the key"
+        Effect = "Allow"
+        Principal = { Service = "logs.ap-northeast-2.amazonaws.com" }
+        Action = ["kms:Encrypt*", "kms:Decrypt*", "kms:ReEncrypt*", "kms:GenerateDataKey*", "kms:Describe*"]
+        Resource = "*"
+      }
+    ]
+  })
+
+  tags = {
+    Name        = "${var.project_name}-${each.key}-kms"
+    Environment = each.key
+  }
+}
+
+# 2. 환경별 별칭(Alias) 생성
+resource "aws_kms_alias" "this" {
+  for_each = toset(var.env)
+
+  # alias/unbox/dev/main-key 형식
+  name          = "alias/${var.project_name}/${each.key}/main-key"
+  target_key_id = aws_kms_key.this[each.key].key_id
+}
+
+# 3. 결과 출력 (Map 형태)
+output "kms_key_arns" {
+  description = "환경별 KMS ARN 맵"
+  value       = { for k, v in aws_kms_key.this : k => v.arn }
+}
+
+# --- 데이터 및 변수 ---
+data "aws_caller_identity" "current" {}
+
+variable "project_name" {
+  default = "unbox"
+}
+
+variable "env" {
+  type    = list(string)
+  default = ["dev", "prod"]
+}
+
+locals {
+  service_config = {
+    "user"    = 80
+    "product" = 80
+    "trade"   = 80
+    "order"   = 80
+    "payment" = 80
+  }
+
+  # [핵심] 환경(dev, prod)과 서비스(user, product 등)를 조합한 리스트 생성
+  ecr_map = {
+    for pair in setproduct(var.env, keys(local.service_config)) :
+    "${pair[0]}-${pair[1]}" => {
+      env     = pair[0]
+      service = pair[1]
+    }
+  }
+}
+
+resource "aws_ecr_repository" "services" {
+  for_each = local.ecr_map
+
+  # 결과: unbox-dev-user-repo, unbox-prod-user-repo 등이 생성됨
+  name                 = "${var.project_name}-${each.value.env}-${each.value.service}-repo"
+  image_tag_mutability = each.value.env == "prod" ? "IMMUTABLE" : "MUTABLE"
+  force_delete         = true
+
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+
+  tags = {
+    Name        = "${var.project_name}-${each.value.env}-${each.value.service}-repo"
+    Environment = each.value.env
+  }
+}
+

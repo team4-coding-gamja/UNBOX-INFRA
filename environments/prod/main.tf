@@ -26,6 +26,21 @@ module "security_group" {
   vpc_id       = module.vpc.vpc_id
 }
 
+data "aws_secretsmanager_secret" "db_password" {
+  name = "${var.project_name}/${var.env}/db-password"
+}
+
+data "aws_secretsmanager_secret_version" "db_password_val" {
+  secret_id = data.aws_secretsmanager_secret.db_password.id
+}
+
+module "waf" {
+  source       = "../../modules/waf" # waf 모듈 새로 생성 필요
+  env          = var.env
+  project_name = var.project_name
+  alb_arn      = module.alb.alb_arn # ALB와 연결
+}
+
 module "common" {
   source               = "../../modules/common"
   env                  = var.env
@@ -40,6 +55,7 @@ module "s3" {
   source       = "../../modules/s3"
   env          = var.env
   project_name = var.project_name
+  kms_key_arn  = module.common.kms_key_arn
 }
 
 module "alb" {
