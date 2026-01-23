@@ -1,10 +1,10 @@
 locals {
   service_config = {
-    "user"    = 80
-    "product" = 80
-    "trade"   = 80
-    "order"   = 80
-    "payment" = 80
+    "user"    = 8081
+    "product" = 8082
+    "trade"   = 8083
+    "order"   = 8084
+    "payment" = 8085
   }
 }
 data "aws_caller_identity" "current" {}
@@ -49,6 +49,7 @@ module "common" {
   vpc_id               = module.vpc.vpc_id
   cloudtrail_bucket_id = module.s3.cloudtrail_bucket_id
   users = var.users
+  kms_key_arn  = data.aws_kms_alias.infra_key.target_key_arn
 }
 
 module "s3" {
@@ -117,20 +118,20 @@ module "ecs" {
   project_name   = var.project_name
   env            = var.env
   app_subnet_ids = module.vpc.private_app_subnet_ids
-  aws_region = data.aws_region.current.name
-  account_id = data.aws_caller_identity.current.account_id
-  # 1. MSK 주소 전달 (이게 빠져서 에러가 난 겁니다!)
+  aws_region     = data.aws_region.current.name
+  account_id     = data.aws_caller_identity.current.account_id
+
   msk_bootstrap_brokers = module.msk.bootstrap_brokers
   service_config        = local.service_config
-  # 2. ALB 타겟 그룹 전달
+  # ALB 타겟 그룹 전달
   target_group_arns = module.alb.target_group_arns
 
-  # 3. 보안 그룹 전달 (중복 제거 및 이름 확인)
-  # 아까 SG 아웃풋에 ecs_sg_id가 없었으니, 공통으로 쓸 app_sg_ids["user"] 등을 넣거나
-  # SG 모듈의 아웃풋 이름을 ecs_sg_id로 수정해야 합니다.
+  # 보안 그룹 전달 (중복 제거 및 이름 확인)
   ecs_sg_id = module.security_group.app_sg_ids["user"]
 
-  # 4. IAM 역할 전달
+  # IAM 역할 전달
   ecs_task_execution_role_arn = module.common.ecs_task_execution_role_arn
   ecs_task_role_arn           = module.common.ecs_task_role_arn
+  cloud_map_namespace_arn     = module.common.cloud_map_namespace_arn
+  kms_key_arn                 = module.common.kms_key_arn
 }

@@ -16,6 +16,7 @@ variable "availability_zones" {
   default = ["ap-northeast-2a", "ap-northeast-2c"] # 서울 리전 기준
 }
 
+
 variable "users" {
   type = map(object({
     user_name   = string
@@ -23,4 +24,9 @@ variable "users" {
     given_name  = string
     family_name = string
   }))
+}
+
+variable "kms_key_arn" {
+  description = "KMS ARN from bootstrap"
+  type        = string
 }

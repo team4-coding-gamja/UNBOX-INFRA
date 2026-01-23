@@ -16,6 +16,12 @@ resource "aws_cloudwatch_log_group" "services" {
   kms_key_id        = var.kms_key_arn
 }
 
+#ECR경로 가져오기
+data "aws_ecr_repository" "service_ecr" {
+  for_each = var.service_config
+  name = "${var.project_name}-${var.env}-${each.key}-repo"
+}
+
 # 4. ECS Task Definition (설계도)
 resource "aws_ecs_task_definition" "services" {
   for_each = toset(var.service_names)
@@ -31,8 +37,7 @@ resource "aws_ecs_task_definition" "services" {
   container_definitions = jsonencode([
     {
       name      = each.key
-      image     = "public.ecr.aws/nginx/nginx:latest"
-      #image     = "${aws_ecr_repository.services[each.key].repository_url}:latest"
+      image     = "${data.aws_ecr_repository.service_ecr[each.key].repository_url}:latest"
       essential = true
       portMappings = [
         {
@@ -111,7 +116,7 @@ resource "aws_ecs_service" "services" {
     container_name   = each.key
     # ★ 수정 전: container_port = var.service_config[each.key]
     # ★ 수정 후: 80 (Task Definition의 containerPort와 반드시 일치해야 함)
-    container_port   = 80 
+    container_port   = var.service_config[each.key]
   }
   
 }
