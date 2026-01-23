@@ -9,6 +9,9 @@ locals {
 }
 data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
+data "aws_kms_alias" "infra_key" {
+  name = "alias/${var.project_name}/${var.env}/main-key"
+}
 
 module "vpc" {
   source             = "../../modules/vpc"
@@ -33,13 +36,15 @@ module "common" {
   service_config       = local.service_config
   vpc_id               = module.vpc.vpc_id
   cloudtrail_bucket_id = module.s3.cloudtrail_bucket_id
-  users = var.users
+  users                = var.users
+  kms_key_arn  = data.aws_kms_alias.infra_key.target_key_arn
 }
 
 module "s3" {
   source       = "../../modules/s3"
   env          = var.env
   project_name = var.project_name
+  kms_key_arn  = module.common.kms_key_arn
 }
 
 module "alb" {
@@ -101,8 +106,8 @@ module "ecs" {
   project_name   = var.project_name
   env            = var.env
   app_subnet_ids = module.vpc.private_app_subnet_ids
-  aws_region = data.aws_region.current.name
-  account_id = data.aws_caller_identity.current.account_id
+  aws_region     = data.aws_region.current.name
+  account_id     = data.aws_caller_identity.current.account_id
   # 1. MSK 주소 전달 (이게 빠져서 에러가 난 겁니다!)
   msk_bootstrap_brokers = module.msk.bootstrap_brokers
   service_config        = local.service_config
@@ -117,4 +122,6 @@ module "ecs" {
   # 4. IAM 역할 전달
   ecs_task_execution_role_arn = module.common.ecs_task_execution_role_arn
   ecs_task_role_arn           = module.common.ecs_task_role_arn
+  cloud_map_namespace_arn     = module.common.cloud_map_namespace_arn
+  kms_key_arn                 = module.common.kms_key_arn
 }

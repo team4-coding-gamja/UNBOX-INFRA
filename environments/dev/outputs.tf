@@ -19,14 +19,14 @@ output "redis_primary_endpoint" {
 output "msk_bootstrap_brokers" {
   value = module.msk.bootstrap_brokers
 }
-output "kms_key_arn" { 
-  value = module.common.kms_key_arn 
+output "kms_key_arn" {
+  value = module.common.kms_key_arn
 }
 
-output "ecs_task_execution_role_arn" { 
-  value = module.common.ecs_task_execution_role_arn 
+output "ecs_task_execution_role_arn" {
+  value = module.common.ecs_task_execution_role_arn
 }
 
-output "ecs_task_role_arn" { 
-  value = module.common.ecs_task_role_arn 
+output "ecs_task_role_arn" {
+  value = module.common.ecs_task_role_arn
 }
