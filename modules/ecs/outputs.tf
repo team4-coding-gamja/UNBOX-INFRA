@@ -14,7 +14,7 @@ output "cluster_arn" {
 output "ecr_repository_urls" {
   description = "각 서비스별 ECR 저장소 URL 주소"
   value = {
-    for k, v in aws_ecr_repository.services : k => v.repository_url
+    for k, v in data.aws_ecr_repository.service_ecr : k => v.repository_url
   }
 }
 

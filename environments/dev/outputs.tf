@@ -33,3 +33,8 @@ output "ecs_task_execution_role_arn" {
 output "ecs_task_role_arn" {
   value = module.common.ecs_task_role_arn
 }
+
+output "ecr_repository_urls" {
+  description = "전체 서비스별 ECR 저장소 URL 주소"
+  value       = module.ecs.ecr_repository_urls
+}

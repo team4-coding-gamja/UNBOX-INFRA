@@ -1,10 +1,10 @@
 locals {
   service_config = {
-    "user"    = 80
-    "product" = 80
-    "trade"   = 80
-    "order"   = 80
-    "payment" = 80
+    "user"    = 8081
+    "product" = 8081
+    "trade"   = 8083
+    "order"   = 8084
+    "payment" = 8085
   }
 }
 data "aws_caller_identity" "current" {}
