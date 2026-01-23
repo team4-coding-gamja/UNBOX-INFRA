@@ -46,4 +46,6 @@ variable "domain_name" {
   default="domain_name_default"
 }
 
-####################### Secret Manager #######################
+####################### WAF #######################
+variable "alb_arn" {
+}
