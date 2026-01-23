@@ -63,3 +63,9 @@ variable "account_id" {
   description = "AWS 계정 번호"
   type = string
 }
+
+variable "cloud_map_namespace_arn" {
+}
+
+variable "kms_key_arn" {
+}

@@ -1,10 +1,10 @@
 locals {
   service_config = {
-    "user" = 80
-    "product"    = 80
-    "trade"   = 80
-    "order"   = 80
-    "payment" = 80
+    "user" = 8081
+    "product"    = 8082
+    "trade"   = 8083
+    "order"   = 8084
+    "payment" = 8085
   }
 }
 
@@ -39,7 +39,6 @@ resource "aws_security_group" "msk" {
   vpc_id = var.vpc_id
 }
 
-# 누락되었던 NAT SG 추가
 resource "aws_security_group" "nat" {
   count  = var.env != "prod" ? 1 : 0
   name   = "${var.project_name}-${var.env}-nat-sg"
@@ -116,8 +115,8 @@ resource "aws_security_group_rule" "redis_ingress_from_app" {
 resource "aws_security_group_rule" "msk_ingress_from_app" {
   for_each                 = local.service_config
   type                     = "ingress"
-  from_port                = 9094
-  to_port                  = 9094
+  from_port                = var.env == "prod" ? 9094 : 9098
+  to_port                  = var.env == "prod" ? 9094 : 9098
   protocol                 = "tcp"
   security_group_id        = aws_security_group.msk.id
   source_security_group_id = aws_security_group.service_app[each.key].id
@@ -162,8 +161,8 @@ resource "aws_security_group_rule" "app_egress_to_redis" {
 resource "aws_security_group_rule" "app_egress_to_msk" {
   for_each                 = local.service_config
   type                     = "egress"
-  from_port                = 9094
-  to_port                  = 9094
+  from_port                = var.env == "prod" ? 9094 : 9098
+  to_port                  = var.env == "prod" ? 9094 : 9098
   protocol                 = "tcp"
   security_group_id        = aws_security_group.service_app[each.key].id
   source_security_group_id = aws_security_group.msk.id

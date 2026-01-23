@@ -14,6 +14,7 @@ resource "aws_lb_target_group" "services" {
   for_each = var.service_config
   
   name        = "${var.project_name}-${var.env}-${each.key}-tg"
+  #이 부분 실제 서비스 포트로 바꾸기 each.value -> 자동으로 health check도 해당 경로로 보냄
   port        = 80
   protocol    = "HTTP"
   vpc_id      = var.vpc_id
@@ -21,7 +22,7 @@ resource "aws_lb_target_group" "services" {
 
   health_check {
     enabled             = true
-    path                = "/health"
+    path                = "/actuator/health"
     port                = "traffic-port"
     healthy_threshold   = 3
     unhealthy_threshold = 2
@@ -59,7 +60,7 @@ resource "aws_lb_listener_rule" "services" {
 
   condition {
     path_pattern {
-      values = ["/api/${each.key}/*"]
+      values = ["/${each.key}/*"]
     }
   }
 }

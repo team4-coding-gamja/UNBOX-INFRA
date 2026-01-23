@@ -27,6 +27,10 @@ variable "users" {
   }))
 }
 
+variable "kms_key_arn" {
+  
+}
+
 ####################### Cloud Trail ########################
 variable "cloudtrail_bucket_id" {
   type = string
