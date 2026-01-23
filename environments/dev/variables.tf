@@ -24,3 +24,8 @@ variable "users" {
     family_name = string
   }))
 }
+
+variable "kms_key_arn" {
+  description = "KMS ARN from bootstrap"
+  type        = string
+}
