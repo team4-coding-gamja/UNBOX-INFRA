@@ -241,7 +241,43 @@ resource "aws_iam_role" "github_actions_ecr" {
   })
 }
 
+# 1. GitHub Actions ECR 권한 (CI용 - 이미지 빌드 및 푸시)
 resource "aws_iam_role_policy_attachment" "ecr_power_user" {
   role       = aws_iam_role.github_actions_ecr.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"
+}
+
+# 2. GitHub Actions ECS 배포 권한 (CD용 - Task Definition 조회 및 서비스 업데이트)
+resource "aws_iam_role_policy" "github_actions_ecs" {
+  name = "github-actions-ecs-policy"
+  role = aws_iam_role.github_actions_ecr.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        # ECS 서비스 및 Task Definition 관리 권한
+        Effect = "Allow"
+        Action = [
+          "ecs:DescribeServices",        # 현재 서비스 상태 조회
+          "ecs:DescribeTaskDefinition",  # 현재 Task Definition 조회
+          "ecs:RegisterTaskDefinition",  # 새 Task Definition 등록
+          "ecs:UpdateService"            # 서비스 업데이트 (새 이미지 배포)
+        ]
+        Resource = "*"
+      },
+      {
+        # ECS Task가 사용하는 IAM Role을 전달할 수 있는 권한
+        # (Task Definition 등록 시 필요)
+        Effect = "Allow"
+        Action = [
+          "iam:PassRole"
+        ]
+        Resource = [
+          aws_iam_role.ecs_task_execution_role.arn,  # Task 실행 Role
+          aws_iam_role.ecs_task_role.arn             # Task Role
+        ]
+      }
+    ]
+  })
 }
