@@ -60,6 +60,7 @@ resource "aws_ecs_task_definition" "services" {
           value = "jdbc:postgresql://${var.env == "dev" ? var.rds_endpoints["common"] : var.rds_endpoints[each.key]}/unbox_${each.key}"
         },
         { name = "SPRING_DATASOURCE_USERNAME", value = "unbox_${each.key}" },
+        { name = "DB_DRIVER_CLASS_NAME", value = "org.postgresql.Driver" },
         
         # Redis 연결 정보 (dev/prod 모두 공유 Redis 1개 사용)
         { name = "SPRING_REDIS_HOST", value = split(":", var.redis_endpoint)[0] },
