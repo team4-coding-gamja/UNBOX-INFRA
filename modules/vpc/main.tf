@@ -77,10 +77,6 @@ resource "aws_route_table_association" "public" {
   route_table_id = aws_route_table.public.id
 }
 
-# ----------------------------------------------------------------------------------------------
-# NAT 설정 영역 (PROD: Gateway / DEV: Instance)
-# ----------------------------------------------------------------------------------------------
-
 # 1. EIP 생성 (PROD와 DEV 모두 생성되도록 count 수정)
 resource "aws_eip" "nat" {
   # env에 상관없이 무조건 1개 생성 (PROD면 NAT GW용, DEV면 NAT Instance용)

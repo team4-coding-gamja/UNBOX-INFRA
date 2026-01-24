@@ -61,11 +61,50 @@ variable "aws_region" {
 
 variable "account_id" {
   description = "AWS 계정 번호"
-  type = string
+  type        = string
 }
 
 variable "cloud_map_namespace_arn" {
+  description = "Cloud Map Namespace ARN"
+  type        = string
 }
 
 variable "kms_key_arn" {
+  description = "KMS 키 ARN"
+  type        = string
+}
+
+# 1. RDS 및 Redis 연결 정보
+variable "rds_endpoints" {
+  description = "각 서비스별 RDS 엔드포인트 맵 (예: {user = 'user-db.xxx.rds.amazonaws.com:5432'})"
+  type        = map(string)
+}
+
+variable "redis_endpoint" {
+  description = "Redis 클러스터 primary 엔드포인트 (예: 'redis.xxx.cache.amazonaws.com:6379')"
+  type        = string
+}
+
+# 2. Secrets Manager ARN
+variable "jwt_secret_arn" {
+  description = "JWT Secret의 Secrets Manager ARN"
+  type        = string
+}
+
+variable "db_password_secret_arns" {
+  description = "각 서비스별 DB 비밀번호 Secret ARN 맵"
+  type        = map(string)
+}
+
+# 3. 컨테이너 설정 옵션
+variable "container_name_suffix" {
+  description = "컨테이너 이름에 -service suffix 추가 여부 (예: user → user-service)"
+  type        = bool
+  default     = true
+}
+
+variable "health_check_path" {
+  description = "컨테이너 health check 경로"
+  type        = string
+  default     = "/actuator/health"
 }
