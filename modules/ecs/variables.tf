@@ -85,15 +85,11 @@ variable "redis_endpoint" {
   type        = string
 }
 
-# 2. Secrets Manager ARN
+# 2. Secrets Manager ARN (Prod 환경에서만 사용)
 variable "jwt_secret_arn" {
-  description = "JWT Secret의 Secrets Manager ARN"
+  description = "JWT Secret의 Secrets Manager ARN (Prod 환경)"
   type        = string
-}
-
-variable "db_password_secret_arns" {
-  description = "각 서비스별 DB 비밀번호 Secret ARN 맵"
-  type        = map(string)
+  default     = ""
 }
 
 # 3. 컨테이너 설정 옵션

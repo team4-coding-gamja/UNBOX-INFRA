@@ -16,3 +16,10 @@ variable "service_config" {
 variable "rds_sg_ids" {
   type = map(string)
 }
+
+# 서비스별 DB 비밀번호 (Dev 환경용)
+variable "service_db_passwords" {
+  type      = map(string)
+  sensitive = true
+  default   = {}
+}

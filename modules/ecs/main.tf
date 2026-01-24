@@ -68,7 +68,7 @@ resource "aws_ecs_task_definition" "services" {
       ]
       
       # [환경별 로직] Secrets 설정
-      # dev: Secrets Manager만 사용
+      # dev: SSM만 사용
       # prod: DB Password는 SSM, JWT는 Secrets Manager
       secrets = var.env == "prod" ? [
         {
@@ -82,11 +82,11 @@ resource "aws_ecs_task_definition" "services" {
       ] : [
         {
           name      = "SPRING_DATASOURCE_PASSWORD"
-          valueFrom = var.db_password_secret_arns[each.key]
+          valueFrom = "arn:aws:ssm:${var.aws_region}:${var.account_id}:parameter/${var.project_name}/${var.env}/${each.key}/DB_PASSWORD"
         },
         {
           name      = "SPRING_JWT_SECRET"
-          valueFrom = var.jwt_secret_arn
+          valueFrom = "arn:aws:ssm:${var.aws_region}:${var.account_id}:parameter/${var.project_name}/${var.env}/common/JWT_SECRET"
         }
       ]
       
