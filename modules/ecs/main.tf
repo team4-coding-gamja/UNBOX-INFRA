@@ -37,7 +37,7 @@ resource "aws_ecs_task_definition" "services" {
   container_definitions = jsonencode([
     {
       name      = var.container_name_suffix ? "${each.key}-service" : each.key
-      image     = "${data.aws_ecr_repository.service_ecr[each.key].repository_url}:latest"
+      image     = "${data.aws_ecr_repository.service_ecr[each.key].repository_url}:${lookup(var.image_tags, each.key, "latest")}"
       essential = true
       portMappings = [
         {

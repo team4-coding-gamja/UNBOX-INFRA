@@ -108,3 +108,9 @@ variable "health_check_path" {
   type        = string
   default     = "/actuator/health"
 }
+
+variable "image_tags" {
+  description = "각 서비스별 Docker 이미지 태그 맵 (예: {user = 'sha-abc123'})"
+  type        = map(string)
+  default     = {}
+}
