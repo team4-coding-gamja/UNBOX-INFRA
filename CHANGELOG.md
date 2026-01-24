@@ -1,57 +1,120 @@
 # ECS 모듈 업데이트 내역
 
-## 2026-01-24: PostgreSQL Provider 추가 - RDS 데이터베이스 및 사용자 자동 생성
+## 2026-01-24: RDS 데이터베이스 수동 생성 방식으로 변경
 
 ### 📋 변경 부분
 
-RDS 모듈에 PostgreSQL Provider를 추가하여 Dev 환경에서 서비스별 데이터베이스와 사용자를 자동으로 생성하도록 개선했습니다.
+PostgreSQL Provider를 제거하고, 수동으로 데이터베이스를 생성하는 방식으로 변경했습니다.
+
+**이유:**
+- Terraform 실행 환경에서 Private Subnet의 RDS에 접속할 수 없음
+- Bastion Host 없이는 PostgreSQL Provider 사용 불가
+- 간단한 수동 생성으로 대체 (나중에 Bastion Host 추가 시 자동화 가능)
 
 **비밀번호 저장 정책:**
 - **Dev:** SSM Parameter Store만 사용 (무료)
 - **Prod:** SSM (DB 비밀번호) + Secrets Manager (JWT Secret, 자동 로테이션용)
 
-**임시 Public 접근:**
-- Dev 환경 RDS를 임시로 Public으로 설정 (Terraform PostgreSQL Provider 접속용)
-- Security Group에 Terraform 실행 환경 IP 허용
-- 데이터베이스 생성 후 다시 Private으로 변경 예정
-
 ---
 
 ## 🔧 수정된 파일
 
-### 1. `modules/rds/main.tf` (수정)
+### 1. `modules/rds/databases.tf` (삭제)
 
-Dev 환경 RDS를 임시로 Public으로 설정:
+PostgreSQL Provider를 사용한 자동 데이터베이스 생성 제거
 
-```hcl
-resource "aws_db_instance" "postgresql" {
-  # ...
-  
-  publicly_accessible     = var.env == "dev" ? true : false  # Dev: 임시로 Public 접근 허용
-  
-  # ...
-}
-```
+### 2. `modules/rds/provider.tf` (삭제)
 
-### 2. `modules/security_group/main.tf` (수정)
+PostgreSQL Provider 설정 제거
 
-Terraform 실행 환경에서 RDS 접속 허용:
+### 3. `modules/rds/versions.tf` (삭제)
 
-```hcl
-# RDS Inbound (From My IP - Dev only, for Terraform PostgreSQL Provider)
-resource "aws_security_group_rule" "rds_ingress_from_my_ip" {
-  for_each          = var.env == "dev" ? local.service_config : {}
-  type              = "ingress"
-  from_port         = 5432
-  to_port           = 5432
-  protocol          = "tcp"
-  cidr_blocks       = ["175.212.108.95/32"]  # 임시: Terraform 실행 환경 IP
-  security_group_id = aws_security_group.service_rds[each.key].id
-  description       = "Temporary access for Terraform PostgreSQL Provider"
-}
-```
+PostgreSQL Provider 버전 설정 제거
 
-### 3. `modules/common/ssm.tf` (수정)
+### 4. `modules/rds/variables.tf` (수정)
+
+`service_db_passwords` 변수 제거
+
+### 5. `modules/rds/main.tf` (수정)
+
+`publicly_accessible` 설정 제거 (다시 Private으로)
+
+### 6. `modules/security_group/main.tf` (수정)
+
+임시 IP 허용 규칙 제거
+
+### 7. `terraform/environments/dev/main.tf` (수정)
+
+RDS 모듈 호출 시 `service_db_passwords` 전달 제거
+
+### 8. `DB_SETUP_GUIDE.md` (신규 생성)
+
+수동으로 데이터베이스를 생성하는 가이드 문서
+
+---
+
+## 📝 수동 생성 방법
+
+자세한 내용은 `DB_SETUP_GUIDE.md` 참고
+
+### 간단 요약:
+
+1. **ECS Exec로 컨테이너 접속**
+2. **psql로 RDS 접속**
+3. **5개 데이터베이스 생성** (`unbox_user`, `unbox_product`, `unbox_trade`, `unbox_order`, `unbox_payment`)
+4. **5명 사용자 생성** (각 데이터베이스용)
+5. **권한 부여**
+
+---
+
+## 🎯 생성되는 리소스
+
+### Dev 환경
+
+**데이터베이스 (5개) - 수동 생성:**
+- `unbox_order`
+- `unbox_payment`
+- `unbox_user`
+- `unbox_product`
+- `unbox_trade`
+
+**사용자 (5명) - 수동 생성:**
+- `unbox_order` (비밀번호: SSM `/unbox/dev/order/DB_PASSWORD`)
+- `unbox_payment` (비밀번호: SSM `/unbox/dev/payment/DB_PASSWORD`)
+- `unbox_user` (비밀번호: SSM `/unbox/dev/user/DB_PASSWORD`)
+- `unbox_product` (비밀번호: SSM `/unbox/dev/product/DB_PASSWORD`)
+- `unbox_trade` (비밀번호: SSM `/unbox/dev/trade/DB_PASSWORD`)
+
+**관리자:**
+- `unbox_admin` (RDS 마스터 사용자, 모든 데이터베이스 소유)
+
+---
+
+## ⚠️ 주의사항
+
+### 1. 수동 생성 필요
+
+Terraform destroy → apply 시 데이터베이스를 다시 수동으로 생성해야 합니다.
+
+### 2. 비밀번호 관리
+
+- 비밀번호는 Terraform이 자동 생성 (`random_password`)
+- SSM Parameter Store에 안전하게 저장
+- `lifecycle { ignore_changes = [value] }` 설정으로 변경 방지
+
+### 3. 나중에 자동화
+
+Bastion Host를 추가하면 PostgreSQL Provider를 다시 사용하여 자동화할 수 있습니다.
+
+---
+
+## 👥 기여자
+
+- @gahyun - PostgreSQL Provider 제거 및 수동 생성 가이드 작성
+
+---
+
+## 가현: RDS/Redis 연결 정보 및 Health Check 추가
 
 **변경 사항:**
 - Dev/Prod 모두 SSM Parameter Store에 비밀번호 저장

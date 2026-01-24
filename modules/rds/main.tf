@@ -29,7 +29,6 @@ resource "aws_db_instance" "postgresql" {
   multi_az                = var.env == "prod" ? true : false
   backup_retention_period = var.env == "prod" ? 7 : 0
   skip_final_snapshot     = var.env == "prod" ? false : true
-  publicly_accessible     = var.env == "dev" ? true : false  # Dev: 임시로 Public 접근 허용
   
   storage_encrypted = true
   kms_key_id        = var.kms_key_arn
