@@ -34,11 +34,18 @@ resource "aws_iam_role_policy" "ecs_execution_prod_secrets" {
           "ssm:GetParameters",
           "secretsmanager:GetSecretValue" # 시크릿 매니저 값을 읽기 위한 한 줄 추가
         ]
-        Resource = [
-          var.kms_key_arn,
-          "arn:aws:ssm:ap-northeast-2:*:parameter/unbox/*",
-          "arn:aws:secretsmanager:ap-northeast-2:*:secret:unbox/prod/*" # prod 시크릿 경로 제한
-        ]
+        Resource = concat(
+          [
+            var.kms_key_arn,
+            "arn:aws:ssm:ap-northeast-2:*:parameter/unbox/*"
+          ],
+          # 환경별 Secrets Manager 경로 분기
+          var.env == "prod" ? [
+            "arn:aws:secretsmanager:ap-northeast-2:*:secret:unbox-prod-*"
+          ] : [
+            "arn:aws:secretsmanager:ap-northeast-2:*:secret:unbox-dev-*"
+          ]
+        )
       }
     ]
   })
