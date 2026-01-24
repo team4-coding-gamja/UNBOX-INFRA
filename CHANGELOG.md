@@ -10,11 +10,48 @@ RDS 모듈에 PostgreSQL Provider를 추가하여 Dev 환경에서 서비스별 
 - **Dev:** SSM Parameter Store만 사용 (무료)
 - **Prod:** SSM (DB 비밀번호) + Secrets Manager (JWT Secret, 자동 로테이션용)
 
+**임시 Public 접근:**
+- Dev 환경 RDS를 임시로 Public으로 설정 (Terraform PostgreSQL Provider 접속용)
+- Security Group에 Terraform 실행 환경 IP 허용
+- 데이터베이스 생성 후 다시 Private으로 변경 예정
+
 ---
 
 ## 🔧 수정된 파일
 
-### 1. `modules/common/ssm.tf` (수정)
+### 1. `modules/rds/main.tf` (수정)
+
+Dev 환경 RDS를 임시로 Public으로 설정:
+
+```hcl
+resource "aws_db_instance" "postgresql" {
+  # ...
+  
+  publicly_accessible     = var.env == "dev" ? true : false  # Dev: 임시로 Public 접근 허용
+  
+  # ...
+}
+```
+
+### 2. `modules/security_group/main.tf` (수정)
+
+Terraform 실행 환경에서 RDS 접속 허용:
+
+```hcl
+# RDS Inbound (From My IP - Dev only, for Terraform PostgreSQL Provider)
+resource "aws_security_group_rule" "rds_ingress_from_my_ip" {
+  for_each          = var.env == "dev" ? local.service_config : {}
+  type              = "ingress"
+  from_port         = 5432
+  to_port           = 5432
+  protocol          = "tcp"
+  cidr_blocks       = ["175.212.108.95/32"]  # 임시: Terraform 실행 환경 IP
+  security_group_id = aws_security_group.service_rds[each.key].id
+  description       = "Temporary access for Terraform PostgreSQL Provider"
+}
+```
+
+### 3. `modules/common/ssm.tf` (수정)
 
 **변경 사항:**
 - Dev/Prod 모두 SSM Parameter Store에 비밀번호 저장

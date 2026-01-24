@@ -100,6 +100,19 @@ resource "aws_security_group_rule" "rds_ingress_from_app" {
   source_security_group_id = aws_security_group.service_app[each.key].id
 }
 
+# RDS Inbound (From My IP - Dev only, for Terraform PostgreSQL Provider)
+resource "aws_security_group_rule" "rds_ingress_from_my_ip" {
+  for_each          = var.env == "dev" ? local.service_config : {}
+  type              = "ingress"
+  from_port         = 5432
+  to_port           = 5432
+  protocol          = "tcp"
+  cidr_blocks       = ["175.212.108.95/32"]  # 임시: Terraform 실행 환경 IP
+  security_group_id = aws_security_group.service_rds[each.key].id
+  description       = "Temporary access for Terraform PostgreSQL Provider"
+}
+
+
 # Redis Inbound (From App)
 resource "aws_security_group_rule" "redis_ingress_from_app" {
   for_each                 = local.service_config
