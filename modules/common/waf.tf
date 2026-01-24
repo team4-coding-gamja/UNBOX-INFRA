@@ -46,11 +46,12 @@ resource "aws_wafv2_web_acl_association" "main" {
   web_acl_arn  = aws_wafv2_web_acl.main[0].arn
 }
 
-resource "aws_wafv2_web_acl_logging_configuration" "main" {
-  count        = var.env == "prod" ? 1 : 0
-  resource_arn = aws_wafv2_web_acl.main[0].arn
-
-  log_destination_configs = [
-    aws_kinesis_firehose_delivery_stream.waf_logs.arn
-  ]
-}
+# WAF 로깅은 추후 Kinesis Firehose 설정 후 활성화
+# resource "aws_wafv2_web_acl_logging_configuration" "main" {
+#   count        = var.env == "prod" ? 1 : 0
+#   resource_arn = aws_wafv2_web_acl.main[0].arn
+#
+#   log_destination_configs = [
+#     aws_kinesis_firehose_delivery_stream.waf_logs.arn
+#   ]
+# }
