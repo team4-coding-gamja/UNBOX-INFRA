@@ -22,7 +22,7 @@ resource "aws_lb_target_group" "services" {
 
   health_check {
     enabled             = true
-    path                = "/${each.key}/actuator/health"
+    path                = "/actuator/health"
     port                = "traffic-port"
     healthy_threshold   = 3
     unhealthy_threshold = 5
