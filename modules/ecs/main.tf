@@ -71,7 +71,7 @@ resource "aws_ecs_task_definition" "services" {
       # [환경별 로직] Secrets 설정
       # dev: SSM만 사용
       # prod: DB Password는 SSM, JWT는 Secrets Manager
-      secrets = var.env == "prod" ? [
+      secrets = var.env == "prod" ? concat([
         {
           name      = "DB_PASSWORD"
           valueFrom = "arn:aws:ssm:${var.aws_region}:${var.account_id}:parameter/${var.project_name}/${var.env}/${each.key}/DB_PASSWORD"
@@ -80,7 +80,19 @@ resource "aws_ecs_task_definition" "services" {
           name      = "SPRING_JWT_SECRET"
           valueFrom = var.jwt_secret_arn
         }
-        ] : [
+        ],
+        # Payment 서비스에만 Toss API 키 추가
+        each.key == "payment" ? [
+          {
+            name      = "TOSS_SECRET_KEY"
+            valueFrom = "arn:aws:ssm:${var.aws_region}:${var.account_id}:parameter/${var.project_name}/${var.env}/payment/TOSS_SECRET_KEY"
+          },
+          {
+            name      = "TOSS_SECURITY_KEY"
+            valueFrom = "arn:aws:ssm:${var.aws_region}:${var.account_id}:parameter/${var.project_name}/${var.env}/payment/TOSS_SECURITY_KEY"
+          }
+        ] : []
+        ) : concat([
         {
           name      = "DB_PASSWORD"
           valueFrom = "arn:aws:ssm:${var.aws_region}:${var.account_id}:parameter/${var.project_name}/${var.env}/${each.key}/DB_PASSWORD"
@@ -89,7 +101,19 @@ resource "aws_ecs_task_definition" "services" {
           name      = "SPRING_JWT_SECRET"
           valueFrom = "arn:aws:ssm:${var.aws_region}:${var.account_id}:parameter/${var.project_name}/${var.env}/common/JWT_SECRET"
         }
-      ]
+        ],
+        # Payment 서비스에만 Toss API 키 추가
+        each.key == "payment" ? [
+          {
+            name      = "TOSS_SECRET_KEY"
+            valueFrom = "arn:aws:ssm:${var.aws_region}:${var.account_id}:parameter/${var.project_name}/${var.env}/payment/TOSS_SECRET_KEY"
+          },
+          {
+            name      = "TOSS_SECURITY_KEY"
+            valueFrom = "arn:aws:ssm:${var.aws_region}:${var.account_id}:parameter/${var.project_name}/${var.env}/payment/TOSS_SECURITY_KEY"
+          }
+        ] : []
+      )
 
       healthCheck = {
         command     = ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:${var.service_config[each.key]}/actuator/health || exit 1"]
