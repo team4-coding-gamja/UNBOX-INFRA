@@ -150,4 +150,18 @@ resource "aws_ecs_service" "services" {
     container_port   = var.service_config[each.key]
   }
   
+  # 배포 설정 최적화
+  deployment_configuration {
+    minimum_healthy_percent = var.env == "dev" ? 0 : 100
+    maximum_percent         = 200
+    
+    deployment_circuit_breaker {
+      enable   = true
+      rollback = true
+    }
+  }
+  
+  # Health check grace period
+  health_check_grace_period_seconds = 120
+  
 }
