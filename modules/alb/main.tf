@@ -13,7 +13,7 @@ resource "aws_lb" "this" {
 resource "aws_lb_target_group" "services" {
   for_each = var.service_config
   
-  name_prefix = "${substr("${var.project_name}-${var.env}-${each.key}", 0, 6)}-"
+  name_prefix = "${substr(each.key, 0, 5)}-"
   port        = each.value
   protocol    = "HTTP"
   vpc_id      = var.vpc_id
