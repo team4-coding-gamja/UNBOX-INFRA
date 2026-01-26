@@ -14,8 +14,7 @@ resource "aws_lb_target_group" "services" {
   for_each = var.service_config
   
   name        = "${var.project_name}-${var.env}-${each.key}-tg"
-  #이 부분 실제 서비스 포트로 바꾸기 each.value -> 자동으로 health check도 해당 경로로 보냄
-  port        = 80
+  port        = each.value
   protocol    = "HTTP"
   vpc_id      = var.vpc_id
   target_type = "ip"
