@@ -1,7 +1,7 @@
 locals {
   service_config = {
     "user"    = 8081
-    "product" = 8081
+    "product" = 8082
     "trade"   = 8083
     "order"   = 8084
     "payment" = 8085
@@ -11,6 +11,11 @@ data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 data "aws_kms_alias" "infra_key" {
   name = "alias/${var.project_name}/${var.env}/main-key"
+}
+#ECR경로 가져오기
+data "aws_ecr_repository" "service_ecr" {
+  for_each = local.service_config
+  name = "${var.project_name}-${var.env}-${each.key}-repo"
 }
 
 module "vpc" {
@@ -38,6 +43,7 @@ module "common" {
   cloudtrail_bucket_id = module.s3.cloudtrail_bucket_id
   users                = var.users
   kms_key_arn  = data.aws_kms_alias.infra_key.target_key_arn
+  alb_arn      = module.alb.alb_arn
 }
 
 module "s3" {

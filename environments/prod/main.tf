@@ -9,6 +9,9 @@ locals {
 }
 data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
+data "aws_kms_alias" "infra_key" {
+  name = "alias/${var.project_name}/dev/main-key"
+}
 
 module "vpc" {
   source             = "../../modules/vpc"
@@ -26,21 +29,6 @@ module "security_group" {
   vpc_id       = module.vpc.vpc_id
 }
 
-data "aws_secretsmanager_secret" "db_password" {
-  name = "${var.project_name}/${var.env}/db-password"
-}
-
-data "aws_secretsmanager_secret_version" "db_password_val" {
-  secret_id = data.aws_secretsmanager_secret.db_password.id
-}
-
-module "waf" {
-  source       = "../../modules/waf" # waf 모듈 새로 생성 필요
-  env          = var.env
-  project_name = var.project_name
-  alb_arn      = module.alb.alb_arn # ALB와 연결
-}
-
 module "common" {
   source               = "../../modules/common"
   env                  = var.env
@@ -50,6 +38,7 @@ module "common" {
   cloudtrail_bucket_id = module.s3.cloudtrail_bucket_id
   users = var.users
   kms_key_arn  = data.aws_kms_alias.infra_key.target_key_arn
+  alb_arn      = module.alb.alb_arn
 }
 
 module "s3" {
@@ -71,9 +60,11 @@ module "alb" {
 
 data "aws_ssm_parameter" "db_password" {
   # common 모듈 배포 후에 값이 수동으로 채워져 있어야 합니다.
-  name = "/${var.project_name}/${var.env}/user/DB_PASSWORD"
+  for_each = var.env == "dev" ? toset(keys(local.service_config)) : toset([])
 
-  # common 모듈이 먼저 생성되어야 하므로 명시적 의존성 추가
+  # [수정 3] 특정 서비스(user)가 아닌 각 서비스별 경로를 동적으로 가져옵니다.
+  name = "/${var.project_name}/${var.env}/${each.key}/DB_PASSWORD"
+
   depends_on = [module.common]
 }
 
@@ -91,7 +82,7 @@ module "rds" {
   rds_sg_ids     = module.security_group.rds_sg_ids
 
   # [핵심] SSM에서 읽어온 실제 비밀번호 값을 전달
-  db_password = data.aws_ssm_parameter.db_password.value
+  db_password = var.env == "prod" ? var.rds_admin_password : data.aws_ssm_parameter.db_password["user"].value
 }
 
 module "redis" {
@@ -103,14 +94,14 @@ module "redis" {
   kms_key_arn        = module.common.kms_key_arn
 }
 
-module "msk" {
-  source                = "../../modules/msk"
-  project_name          = var.project_name
-  env                   = var.env
-  private_db_subnet_ids = module.vpc.private_db_subnet_ids
-  msk_sg_id             = module.security_group.msk_sg_id # SG 모듈에 msk_sg_id가 있어야 함
-  kms_key_arn           = module.common.kms_key_arn       # 혹은 따로 만든 kms arn
-}
+# module "msk" {
+#   source                = "../../modules/msk"
+#   project_name          = var.project_name
+#   env                   = var.env
+#   private_db_subnet_ids = module.vpc.private_db_subnet_ids
+#   msk_sg_id             = module.security_group.msk_sg_id # SG 모듈에 msk_sg_id가 있어야 함
+#   kms_key_arn           = module.common.kms_key_arn       # 혹은 따로 만든 kms arn
+# }
 
 module "ecs" {
   source = "../../modules/ecs"
@@ -121,7 +112,7 @@ module "ecs" {
   aws_region     = data.aws_region.current.name
   account_id     = data.aws_caller_identity.current.account_id
 
-  msk_bootstrap_brokers = module.msk.bootstrap_brokers
+  # msk_bootstrap_brokers = module.msk.bootstrap_brokers
   service_config        = local.service_config
   # ALB 타겟 그룹 전달
   target_group_arns = module.alb.target_group_arns

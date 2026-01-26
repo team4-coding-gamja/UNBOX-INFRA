@@ -15,10 +15,12 @@ output "rds_endpoints" {
 output "redis_primary_endpoint" {
   value = module.redis.redis_primary_endpoint
 }
-# MSK 정보 (중요!)
-output "msk_bootstrap_brokers" {
-  value = module.msk.bootstrap_brokers
-}
+
+# # MSK 정보 (중요!)
+# output "msk_bootstrap_brokers" {
+#   value = module.msk.bootstrap_brokers
+# }
+
 output "kms_key_arn" { 
   value = module.common.kms_key_arn 
 }

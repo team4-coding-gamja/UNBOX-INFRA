@@ -49,7 +49,7 @@ resource "aws_ecs_task_definition" "services" {
       ]
       environment = [
         { name = "SPRING_PROFILES_ACTIVE", value = var.env },
-        { name = "KAFKA_BOOTSTRAP_SERVERS", value = var.msk_bootstrap_brokers }
+        # { name = "KAFKA_BOOTSTRAP_SERVERS", value = var.msk_bootstrap_brokers }
       ]
       
       # [수정] ARN을 변수 처리하여 유연하게 변경
@@ -57,7 +57,7 @@ resource "aws_ecs_task_definition" "services" {
         {
           name      = "DB_PASSWORD"
           # data.aws_caller_identity.current.account_id를 쓰면 계정번호 자동 매칭 가능
-          valueFrom = "arn:aws:secretsmanager:${var.aws_region}:${var.account_id}:secret:unbox/prod/${each.key}-secrets:password::"
+          valueFrom = "arn:aws:secretsmanager:${var.aws_region}:${var.account_id}:secret:unbox/prod/${each.key}/db-password::"
         }
       ] : [
         {

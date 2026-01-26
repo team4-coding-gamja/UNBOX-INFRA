@@ -25,3 +25,7 @@ output "cloud_map_namespace_arn"{
   value = aws_service_discovery_private_dns_namespace.this.arn
 }
 
+#################### secret manager #######################
+output "db_password_secret_arns" {
+  value = { for k, v in aws_secretsmanager_secret.db_password : k => v.arn }
+}

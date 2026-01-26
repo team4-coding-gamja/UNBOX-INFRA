@@ -42,6 +42,7 @@ variable "target_group_arns" {
 variable "msk_bootstrap_brokers" {
   description = "MSK 클러스터 접속 주소 (IAM 인증용)"
   type        = string
+  default   = ""
 }
 
 variable "ecs_task_execution_role_arn" {

@@ -16,7 +16,7 @@ resource "aws_db_instance" "postgresql" {
   instance_class = "db.t4g.micro"
   allocated_storage = 20
 
-  db_name  = var.env == "prod" ? each.key+"_db" : "dev_db"
+  db_name  = var.env == "prod" ? "${each.key}_db" : "dev_db"
   username = "unbox_admin"
   password = var.db_password
 

@@ -7,7 +7,6 @@ resource "aws_wafv2_web_acl" "main" {
     allow {}
   }
 
-  # 딱 이거 하나! Core Rule Set (CRS)
   rule {
     name     = "AWS-AWSManagedRulesCommonRuleSet"
     priority = 1
@@ -47,6 +46,11 @@ resource "aws_wafv2_web_acl_logging_configuration" "main" {
   resource_arn = aws_wafv2_web_acl.main.arn
 
   log_destination_configs = [
-    aws_kinesis_firehose_delivery_stream.waf_logs.arn
+    aws_cloudwatch_log_group.waf_log_group.arn
   ]
+}
+
+resource "aws_cloudwatch_log_group" "waf_log_group" {
+  name              = "aws-waf-logs-unbox-dev"
+  retention_in_days = 7
 }
