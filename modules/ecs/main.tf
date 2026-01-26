@@ -96,7 +96,7 @@ resource "aws_ecs_task_definition" "services" {
         interval    = 30
         timeout     = 5
         retries     = 3
-        startPeriod = 60
+        startPeriod = 120
       }
 
       logConfiguration = {
