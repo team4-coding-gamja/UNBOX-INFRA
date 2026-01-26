@@ -19,6 +19,9 @@ resource "aws_lb_target_group" "services" {
   vpc_id      = var.vpc_id
   target_type = "ip"
 
+  # Dev 환경에서는 빠른 배포를 위해 30초, Prod는 300초 (기본값)
+  deregistration_delay = var.env == "prod" ? 300 : 30
+
   health_check {
     enabled             = true
     path                = "/actuator/health"
