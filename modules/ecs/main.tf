@@ -56,10 +56,10 @@ resource "aws_ecs_task_definition" "services" {
         # dev: 공유 RDS 1개 사용 (모든 서비스가 같은 RDS, 다른 DB)
         # prod: 서비스별 RDS 사용
         { 
-          name  = "SPRING_DATASOURCE_URL"
-          value = "jdbc:postgresql://${var.env == "dev" ? var.rds_endpoints["common"] : var.rds_endpoints[each.key]}/unbox_${each.key}"
+          name  = "DB_URL"
+          value = "${var.env == "dev" ? var.rds_endpoints["common"] : var.rds_endpoints[each.key]}/unbox_${each.key}"
         },
-        { name = "SPRING_DATASOURCE_USERNAME", value = "unbox_${each.key}" },
+        { name = "DB_USERNAME", value = "unbox_${each.key}" },
         { name = "DB_DRIVER_CLASS_NAME", value = "org.postgresql.Driver" },
         
         # Redis 연결 정보 (dev/prod 모두 공유 Redis 1개 사용)
@@ -72,7 +72,7 @@ resource "aws_ecs_task_definition" "services" {
       # prod: DB Password는 SSM, JWT는 Secrets Manager
       secrets = var.env == "prod" ? [
         {
-          name      = "SPRING_DATASOURCE_PASSWORD"
+          name      = "DB_PASSWORD"
           valueFrom = "arn:aws:ssm:${var.aws_region}:${var.account_id}:parameter/${var.project_name}/${var.env}/${each.key}/DB_PASSWORD"
         },
         {
@@ -81,7 +81,7 @@ resource "aws_ecs_task_definition" "services" {
         }
       ] : [
         {
-          name      = "SPRING_DATASOURCE_PASSWORD"
+          name      = "DB_PASSWORD"
           valueFrom = "arn:aws:ssm:${var.aws_region}:${var.account_id}:parameter/${var.project_name}/${var.env}/${each.key}/DB_PASSWORD"
         },
         {
