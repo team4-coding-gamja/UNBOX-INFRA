@@ -125,31 +125,6 @@ resource "aws_ecs_service" "services" {
   # 타겟 그룹 변경 시 서비스 재생성을 위한 설정
   force_new_deployment = true
 
-  service_connect_configuration {
-    enabled   = true
-    namespace = var.cloud_map_namespace_arn
-
-    service {
-      port_name      = "http"
-      discovery_name = each.key
-      client_alias {
-        port     = 80
-        dns_name = "${each.key}.${var.project_name}.local"
-      }
-    }
-  }
-  network_configuration {
-    subnets          = var.env == "dev" ? [var.app_subnet_ids[0]] : var.app_subnet_ids
-    security_groups  = [var.ecs_sg_ids[each.key]]
-    assign_public_ip = false
-  }
-
-  load_balancer {
-    target_group_arn = var.target_group_arns[each.key]
-    container_name   = var.container_name_suffix ? "${each.key}-service" : each.key
-    container_port   = var.service_config[each.key]
-  }
-  
   # 배포 설정 최적화
   deployment_configuration {
     minimum_healthy_percent = var.env == "dev" ? 0 : 100
@@ -163,5 +138,31 @@ resource "aws_ecs_service" "services" {
   
   # Health check grace period
   health_check_grace_period_seconds = 120
+
+  service_connect_configuration {
+    enabled   = true
+    namespace = var.cloud_map_namespace_arn
+
+    service {
+      port_name      = "http"
+      discovery_name = each.key
+      client_alias {
+        port     = 80
+        dns_name = "${each.key}.${var.project_name}.local"
+      }
+    }
+  }
+  
+  network_configuration {
+    subnets          = var.env == "dev" ? [var.app_subnet_ids[0]] : var.app_subnet_ids
+    security_groups  = [var.ecs_sg_ids[each.key]]
+    assign_public_ip = false
+  }
+
+  load_balancer {
+    target_group_arn = var.target_group_arns[each.key]
+    container_name   = var.container_name_suffix ? "${each.key}-service" : each.key
+    container_port   = var.service_config[each.key]
+  }
   
 }
