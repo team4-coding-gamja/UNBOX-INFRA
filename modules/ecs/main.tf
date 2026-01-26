@@ -57,7 +57,7 @@ resource "aws_ecs_task_definition" "services" {
         # prod: 서비스별 RDS 사용
         { 
           name  = "DB_URL"
-          value = "${var.env == "dev" ? var.rds_endpoints["common"] : var.rds_endpoints[each.key]}/unbox_${each.key}"
+          value = "jdbc:postgresql://${var.env == "dev" ? var.rds_endpoints["common"] : var.rds_endpoints[each.key]}/unbox_${each.key}"
         },
         { name = "DB_USERNAME", value = "unbox_${each.key}" },
         { name = "DB_DRIVER_CLASS_NAME", value = "org.postgresql.Driver" },

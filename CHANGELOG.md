@@ -1,5 +1,115 @@
 # ECS 모듈 업데이트 내역
 
+## 2026-01-26: DB 환경 변수 이름 통일 및 JDBC URL 수정
+
+### 📋 변경 부분
+
+백엔드 application.yml과 인프라 코드 간 환경 변수 이름을 통일하고, JDBC URL 형식을 수정했습니다.
+
+**변경 사항:**
+1. 환경 변수 이름 통일: `SPRING_DATASOURCE_*` → `DB_*`
+2. JDBC URL 프리픽스 추가: `jdbc:postgresql://` 포함
+
+---
+
+## 🔧 수정된 파일
+
+### 1. `modules/ecs/main.tf` (수정)
+
+#### 환경 변수 이름 변경
+
+**변경 전:**
+```hcl
+{ 
+  name  = "SPRING_DATASOURCE_URL"
+  value = "jdbc:postgresql://${var.env == "dev" ? var.rds_endpoints["common"] : var.rds_endpoints[each.key]}/unbox_${each.key}"
+},
+{ name = "SPRING_DATASOURCE_USERNAME", value = "unbox_${each.key}" },
+```
+
+**변경 후:**
+```hcl
+{ 
+  name  = "DB_URL"
+  value = "jdbc:postgresql://${var.env == "dev" ? var.rds_endpoints["common"] : var.rds_endpoints[each.key]}/unbox_${each.key}"
+},
+{ name = "DB_USERNAME", value = "unbox_${each.key}" },
+```
+
+#### Secrets 이름 변경
+
+**변경 전:**
+```hcl
+{
+  name      = "SPRING_DATASOURCE_PASSWORD"
+  valueFrom = "arn:aws:ssm:${var.aws_region}:${var.account_id}:parameter/${var.project_name}/${var.env}/${each.key}/DB_PASSWORD"
+}
+```
+
+**변경 후:**
+```hcl
+{
+  name      = "DB_PASSWORD"
+  valueFrom = "arn:aws:ssm:${var.aws_region}:${var.account_id}:parameter/${var.project_name}/${var.env}/${each.key}/DB_PASSWORD"
+}
+```
+
+---
+
+## 📝 백엔드 application.yml 형식
+
+모든 서비스가 동일한 환경 변수 이름을 사용합니다:
+
+```yaml
+spring:
+  datasource:
+    driver-class-name: ${DB_DRIVER_CLASS_NAME}
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+```
+
+---
+
+## 🎯 제공되는 환경 변수
+
+### 데이터베이스 관련
+- `DB_URL`: JDBC URL (예: `jdbc:postgresql://unbox-dev-common-db.xxx.rds.amazonaws.com:5432/unbox_user`)
+- `DB_USERNAME`: 데이터베이스 사용자 (예: `unbox_user`)
+- `DB_PASSWORD`: 데이터베이스 비밀번호 (SSM에서 로드)
+- `DB_DRIVER_CLASS_NAME`: JDBC 드라이버 클래스 (`org.postgresql.Driver`)
+
+### Redis 관련
+- `SPRING_DATA_REDIS_HOST`: Redis 호스트
+- `SPRING_DATA_REDIS_PORT`: Redis 포트 (6379)
+
+### 기타
+- `SPRING_PROFILES_ACTIVE`: 환경 (dev/prod)
+- `SERVER_PORT`: 서비스 포트
+- `KAFKA_BOOTSTRAP_SERVERS`: Kafka 브로커 주소
+- `SPRING_JWT_SECRET`: JWT 시크릿 (SSM에서 로드)
+
+---
+
+## ⚠️ Breaking Changes
+
+### 환경 변수 이름 변경
+
+기존에 `SPRING_DATASOURCE_*` 형식을 사용하던 백엔드 코드는 `DB_*` 형식으로 변경해야 합니다.
+
+**마이그레이션:**
+- `SPRING_DATASOURCE_URL` → `DB_URL`
+- `SPRING_DATASOURCE_USERNAME` → `DB_USERNAME`
+- `SPRING_DATASOURCE_PASSWORD` → `DB_PASSWORD`
+
+---
+
+## 👥 기여자
+
+- @gahyun - 환경 변수 통일 및 JDBC URL 수정
+
+---
+
 ## 2026-01-24: RDS 데이터베이스 수동 생성 방식으로 변경
 
 ### 📋 변경 부분
@@ -107,8 +217,6 @@ Terraform destroy → apply 시 데이터베이스를 다시 수동으로 생성
 Bastion Host를 추가하면 PostgreSQL Provider를 다시 사용하여 자동화할 수 있습니다.
 
 ---
-
-## 👥 기여자
 
 - @gahyun - PostgreSQL Provider 제거 및 수동 생성 가이드 작성
 
