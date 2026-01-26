@@ -1,5 +1,79 @@
 # ECS 모듈 업데이트 내역
 
+## 2026-01-26: Redis TLS/SSL 연결 설정 추가
+
+### 📋 변경 부분
+
+ElastiCache Redis가 TLS 암호화를 사용하도록 설정되어 있어서, Spring Boot 애플리케이션도 SSL 연결을 활성화해야 합니다.
+
+**문제:**
+- Redis TransitEncryption 활성화 (TLS 1.2 사용)
+- 애플리케이션이 일반 연결 시도
+- 연결 타임아웃 발생: `RedisTimeoutException: Command execution timeout for command: (PING)`
+
+**해결:**
+- ECS Task Definition에 `SPRING_DATA_REDIS_SSL_ENABLED=true` 환경 변수 추가
+
+---
+
+## 🔧 수정된 파일
+
+### 1. `modules/ecs/main.tf` (수정)
+
+**추가된 환경 변수:**
+```hcl
+environment = [
+  # ... 기존 환경 변수들 ...
+  
+  # Redis 연결 정보 (dev/prod 모두 공유 Redis 1개 사용)
+  { name = "SPRING_DATA_REDIS_HOST", value = split(":", var.redis_endpoint)[0] },
+  { name = "SPRING_DATA_REDIS_PORT", value = "6379" },
+  { name = "SPRING_DATA_REDIS_SSL_ENABLED", value = "true" }  # 추가
+]
+```
+
+---
+
+## 📝 백엔드 application.yml 설정
+
+백엔드 엔지니어가 다음과 같이 수정해야 합니다:
+
+```yaml
+spring:
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      ssl:
+        enabled: ${SPRING_DATA_REDIS_SSL_ENABLED:false}  # 추가
+```
+
+**적용 대상 서비스:**
+- user
+- product
+- trade
+- order
+- payment
+
+(모든 서비스가 Redis 사용)
+
+---
+
+## 💡 기술 노트
+
+### SSL vs TLS
+- AWS ElastiCache: `TransitEncryptionEnabled: true` = TLS 1.2 사용
+- Spring Boot: `spring.data.redis.ssl.enabled` = TLS 연결 활성화
+- 설정 이름은 "SSL"이지만 실제로는 TLS 프로토콜 사용 (역사적 이유)
+
+---
+
+## 👥 기여자
+
+- @gahyun - Redis TLS 연결 설정 추가
+
+---
+
 ## 2026-01-26: 서비스별 보안 그룹 적용
 
 ### 📋 변경 부분

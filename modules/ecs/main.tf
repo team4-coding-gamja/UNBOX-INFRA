@@ -64,7 +64,8 @@ resource "aws_ecs_task_definition" "services" {
         
         # Redis 연결 정보 (dev/prod 모두 공유 Redis 1개 사용)
         { name = "SPRING_DATA_REDIS_HOST", value = split(":", var.redis_endpoint)[0] },
-        { name = "SPRING_DATA_REDIS_PORT", value = "6379" }
+        { name = "SPRING_DATA_REDIS_PORT", value = "6379" },
+        { name = "SPRING_DATA_REDIS_SSL_ENABLED", value = "true" }
       ]
       
       # [환경별 로직] Secrets 설정
