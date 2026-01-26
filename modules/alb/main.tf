@@ -13,7 +13,7 @@ resource "aws_lb" "this" {
 resource "aws_lb_target_group" "services" {
   for_each = var.service_config
   
-  name        = "${var.project_name}-${var.env}-${each.key}-tg"
+  name_prefix = "${substr("${var.project_name}-${var.env}-${each.key}", 0, 6)}-"
   port        = each.value
   protocol    = "HTTP"
   vpc_id      = var.vpc_id
@@ -28,6 +28,10 @@ resource "aws_lb_target_group" "services" {
     timeout             = 5
     interval            = 30
     matcher             = "200"
+  }
+
+  lifecycle {
+    create_before_destroy = true
   }
 }
 
