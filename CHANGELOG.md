@@ -1,5 +1,104 @@
 # ECS 모듈 업데이트 내역
 
+## 2026-01-26: 서비스별 보안 그룹 적용
+
+### 📋 변경 부분
+
+ECS 서비스가 각자의 보안 그룹을 사용하도록 수정하여 Redis/RDS 접근 권한 문제를 해결했습니다.
+
+**문제:**
+- 모든 서비스가 user 서비스의 보안 그룹만 사용
+- Redis 연결 실패: `Unable to connect to Redis server`
+
+**해결:**
+- 각 서비스가 자신의 보안 그룹 사용
+- 보안 그룹별로 Redis/RDS 인바운드/아웃바운드 규칙 적용
+
+---
+
+## 🔧 수정된 파일
+
+### 1. `modules/ecs/variables.tf` (수정)
+
+**변경 전:**
+```hcl
+variable "ecs_sg_id" {
+  description = "ECS Task에 적용할 보안 그룹 ID"
+  type        = string
+}
+```
+
+**변경 후:**
+```hcl
+variable "ecs_sg_ids" {
+  description = "각 서비스별 ECS Task에 적용할 보안 그룹 ID 맵"
+  type        = map(string)
+}
+```
+
+### 2. `modules/ecs/main.tf` (수정)
+
+**변경 전:**
+```hcl
+network_configuration {
+  subnets          = var.env == "dev" ? [var.app_subnet_ids[0]] : var.app_subnet_ids
+  security_groups  = [var.ecs_sg_id]
+  assign_public_ip = false
+}
+```
+
+**변경 후:**
+```hcl
+network_configuration {
+  subnets          = var.env == "dev" ? [var.app_subnet_ids[0]] : var.app_subnet_ids
+  security_groups  = [var.ecs_sg_ids[each.key]]
+  assign_public_ip = false
+}
+```
+
+---
+
+## 📝 사용 예시
+
+### terraform/environments/dev/main.tf
+
+```hcl
+module "ecs" {
+  source = "git::https://github.com/team4-coding-gamja/UNBOX-INFRA.git//modules/ecs?ref=main"
+  
+  # 변경 전
+  ecs_sg_id = module.security_group.app_sg_ids["user"]
+  
+  # 변경 후
+  ecs_sg_ids = module.security_group.app_sg_ids
+  # {
+  #   user    = "sg-xxx1"
+  #   product = "sg-xxx2"
+  #   trade   = "sg-xxx3"
+  #   order   = "sg-xxx4"
+  #   payment = "sg-xxx5"
+  # }
+}
+```
+
+---
+
+## ⚠️ Breaking Changes
+
+### 변수 타입 변경
+
+`ecs_sg_id` (string) → `ecs_sg_ids` (map)
+
+기존 코드를 사용 중이라면 반드시 수정해야 합니다.
+
+---
+
+## 👥 기여자
+
+- @gahyun - 서비스별 보안 그룹 적용
+
+---
+
 ## 2026-01-26: DB 환경 변수 이름 통일 및 JDBC URL 수정
 
 ### 📋 변경 부분

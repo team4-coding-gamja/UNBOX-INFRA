@@ -27,9 +27,9 @@ variable "app_subnet_ids" {
   type        = list(string)
 }
 
-variable "ecs_sg_id" {
-  description = "ECS Task에 적용할 보안 그룹 ID"
-  type        = string
+variable "ecs_sg_ids" {
+  description = "각 서비스별 ECS Task에 적용할 보안 그룹 ID 맵"
+  type        = map(string)
 }
 
 # --- 로드 밸런서 연결 ---

@@ -139,7 +139,7 @@ resource "aws_ecs_service" "services" {
   }
   network_configuration {
     subnets          = var.env == "dev" ? [var.app_subnet_ids[0]] : var.app_subnet_ids
-    security_groups  = [var.ecs_sg_id]
+    security_groups  = [var.ecs_sg_ids[each.key]]
     assign_public_ip = false
   }
 
