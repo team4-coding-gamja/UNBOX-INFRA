@@ -1,4 +1,6 @@
+# WAF는 prod 환경에서만 생성
 resource "aws_wafv2_web_acl" "main" {
+  count       = var.env == "prod" ? 1 : 0
   name        = "${var.project_name}-${var.env}-waf"
   description = "OWASP Top 10 Managed Rule Set"
   scope       = "REGIONAL" # ALB 연결용
@@ -38,19 +40,17 @@ resource "aws_wafv2_web_acl" "main" {
 
 # [필수] ALB와 WAF를 연결해주는 코드
 resource "aws_wafv2_web_acl_association" "main" {
+  count        = var.env == "prod" ? 1 : 0
   resource_arn = var.alb_arn # ALB의 ARN을 넣어줘야 합니다.
-  web_acl_arn  = aws_wafv2_web_acl.main.arn
+  web_acl_arn  = aws_wafv2_web_acl.main[0].arn
 }
 
-resource "aws_wafv2_web_acl_logging_configuration" "main" {
-  resource_arn = aws_wafv2_web_acl.main.arn
-
-  log_destination_configs = [
-    aws_cloudwatch_log_group.waf_log_group.arn
-  ]
-}
-
-resource "aws_cloudwatch_log_group" "waf_log_group" {
-  name              = "aws-waf-logs-unbox-dev"
-  retention_in_days = 7
-}
+# WAF 로깅은 추후 Kinesis Firehose 설정 후 활성화
+# resource "aws_wafv2_web_acl_logging_configuration" "main" {
+#   count        = var.env == "prod" ? 1 : 0
+#   resource_arn = aws_wafv2_web_acl.main[0].arn
+#
+#   log_destination_configs = [
+#     aws_kinesis_firehose_delivery_stream.waf_logs.arn
+#   ]
+# }
