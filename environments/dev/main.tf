@@ -15,7 +15,7 @@ data "aws_kms_alias" "infra_key" {
 #ECR경로 가져오기
 data "aws_ecr_repository" "service_ecr" {
   for_each = local.service_config
-  name = "${var.project_name}-${var.env}-${each.key}-repo"
+  name     = "${var.project_name}-${var.env}-${each.key}-repo"
 }
 
 module "vpc" {
@@ -42,8 +42,8 @@ module "common" {
   vpc_id               = module.vpc.vpc_id
   cloudtrail_bucket_id = module.s3.cloudtrail_bucket_id
   users                = var.users
-  kms_key_arn  = data.aws_kms_alias.infra_key.target_key_arn
-  alb_arn      = module.alb.alb_arn
+  kms_key_arn          = data.aws_kms_alias.infra_key.target_key_arn
+  alb_arn              = module.alb.alb_arn
 }
 
 module "s3" {
@@ -61,6 +61,7 @@ module "alb" {
   public_subnet_ids = module.vpc.public_subnet_ids
   alb_sg_id         = module.security_group.alb_sg_id # 아까 만든 보안 그룹 ID
   service_config    = local.service_config
+  certificate_arn   = module.route53.certificate_arn
 }
 
 data "aws_ssm_parameter" "db_password" {
@@ -89,12 +90,12 @@ module "rds" {
 }
 
 module "redis" {
-  source             = "../../modules/redis" # 모듈 경로 확인해주세요!
-  project_name       = var.project_name
-  env                = var.env
-  private_subnet_ids = module.vpc.private_db_subnet_ids
-  redis_sg_id        = module.security_group.redis_sg_id
-  kms_key_arn        = module.common.kms_key_arn
+  source                     = "../../modules/redis" # 모듈 경로 확인해주세요!
+  project_name               = var.project_name
+  env                        = var.env
+  private_subnet_ids         = module.vpc.private_db_subnet_ids
+  redis_sg_id                = module.security_group.redis_sg_id
+  kms_key_arn                = module.common.kms_key_arn
   transit_encryption_enabled = var.env == "prod" ? true : false
 }
 
@@ -131,4 +132,13 @@ module "ecs" {
   ecs_task_role_arn           = module.common.ecs_task_role_arn
   cloud_map_namespace_arn     = module.common.cloud_map_namespace_arn
   kms_key_arn                 = module.common.kms_key_arn
+}
+
+module "route53" {
+  source           = "../../modules/route53"
+  domain_name      = "dev.un-box.click"
+  hosted_zone_name = "un-box.click"
+  project_name     = var.project_name
+  alb_dns_name     = module.alb.alb_dns_name
+  alb_zone_id      = module.alb.alb_zone_id
 }

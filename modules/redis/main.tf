@@ -4,7 +4,19 @@ resource "aws_elasticache_subnet_group" "this" {
   subnet_ids = var.private_subnet_ids
 }
 
-# 2. Redis 복제 그룹 (Replication Group)
+# 2. Redis 커스텀 파라미터 그룹 (Keyspace Notifications 활성화)
+resource "aws_elasticache_parameter_group" "this" {
+  name   = "${var.project_name}-${var.env}-redis-params"
+  family = "redis7"
+
+  # Redis Keyspace Notifications 활성화 (만료 이벤트)
+  parameter {
+    name  = "notify-keyspace-events"
+    value = "Ex"  # E = Keyspace events, x = Expired events
+  }
+}
+
+# 3. Redis 복제 그룹 (Replication Group)
 resource "aws_elasticache_replication_group" "this" {
   replication_group_id          = "${var.project_name}-${var.env}-redis"
   description = "Redis cluster for ${var.project_name}"
@@ -14,7 +26,7 @@ resource "aws_elasticache_replication_group" "this" {
   node_type            = var.env == "prod" ? "cache.t4g.small" :"cache.t4g.micro" # DB와 마찬가지로 작고 소중한 가성비 사양
   port                 = 6379
   
-  parameter_group_name = "default.redis7"
+  parameter_group_name = aws_elasticache_parameter_group.this.name
   subnet_group_name    = aws_elasticache_subnet_group.this.name
   security_group_ids   = [var.redis_sg_id]
 

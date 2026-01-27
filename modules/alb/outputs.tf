@@ -19,5 +19,10 @@ output "http_listener_arn" {
 # 4. 타겟 그룹 ARN 맵 (중요: 나중에 ECS 서비스 만들 때 이 ARN들을 하나씩 꽂아줘야 함)
 output "target_group_arns" {
   description = "A map of target group ARNs"
-  value       = { for k, v in aws_lb_target_group.services : k => v.arn }
+  value       = { for key, tg in aws_lb_target_group.services : key => tg.arn }
+}
+
+output "alb_zone_id" {
+  description = "ALB의 Hosted Zone ID"
+  value       = aws_lb.this.zone_id
 }
