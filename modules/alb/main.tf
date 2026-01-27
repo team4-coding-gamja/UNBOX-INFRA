@@ -14,7 +14,7 @@ resource "aws_lb_target_group" "services" {
   for_each = var.service_config
   
   name_prefix = "${substr(each.key, 0, 5)}-"
-  port        = each.value
+  port        = 8080  # All containers use port 8080 internally
   protocol    = "HTTP"
   vpc_id      = var.vpc_id
   target_type = "ip"
