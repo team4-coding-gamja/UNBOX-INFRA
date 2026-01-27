@@ -97,14 +97,14 @@ resource "aws_ecs_task_definition" "services" {
           }
         ] : []
         ) : concat([
-        {
-          name      = "SPRING_DATASOURCE_PASSWORD"
-          valueFrom = "arn:aws:ssm:${var.aws_region}:${var.account_id}:parameter/${var.project_name}/${var.env}/${each.key}/DB_PASSWORD"
-        },
-        {
-          name      = "SPRING_JWT_SECRET"
-          valueFrom = "arn:aws:ssm:${var.aws_region}:${var.account_id}:parameter/${var.project_name}/${var.env}/common/JWT_SECRET"
-        }
+          {
+            name      = "SPRING_DATASOURCE_PASSWORD"
+            valueFrom = "arn:aws:ssm:${var.aws_region}:${var.account_id}:parameter/${var.project_name}/${var.env}/${each.key}/DB_PASSWORD"
+          },
+          {
+            name      = "SPRING_JWT_SECRET"
+            valueFrom = "arn:aws:ssm:${var.aws_region}:${var.account_id}:parameter/${var.project_name}/${var.env}/common/JWT_SECRET"
+          }
         ],
         # Payment 서비스에만 Toss API 키 추가
         each.key == "payment" ? [
@@ -124,7 +124,7 @@ resource "aws_ecs_task_definition" "services" {
         interval    = 30
         timeout     = 5
         retries     = 3
-        startPeriod = 120
+        startPeriod = 300
       }
 
       logConfiguration = {
@@ -163,7 +163,7 @@ resource "aws_ecs_service" "services" {
   }
 
   # Health check grace period
-  health_check_grace_period_seconds = 120
+  health_check_grace_period_seconds = 300
 
   service_connect_configuration {
     enabled   = true
