@@ -193,7 +193,7 @@ resource "aws_ecs_service" "services" {
   load_balancer {
     target_group_arn = var.target_group_arns[each.key]
     container_name   = var.container_name_suffix ? "${each.key}-service" : each.key
-    container_port   = var.service_config[each.key]
+    container_port   = 8080  # 모든 서비스 8080 포트 사용
   }
 
 }
