@@ -89,6 +89,35 @@ resource "aws_iam_role_policy" "ecs_task_custom" {
         Effect = "Allow"
         Action = ["cloudwatch:PutMetricData"]
         Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "kafka-cluster:Connect",
+          "kafka-cluster:AlterCluster",
+          "kafka-cluster:DescribeCluster"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "kafka-cluster:*Topic*",
+          "kafka-cluster:WriteData",
+          "kafka-cluster:ReadData"
+        ]
+        Resource = [
+          "arn:aws:kafka:*:*:topic/*/*",
+          "arn:aws:kafka:*:*:cluster/*/*"
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "kafka-cluster:AlterGroup",
+          "kafka-cluster:DescribeGroup"
+        ]
+        Resource = "arn:aws:kafka:*:*:group/*/*"
       }
     ]
   })
@@ -233,8 +262,11 @@ resource "aws_iam_role" "github_actions_ecr" {
       Principal = { Federated = aws_iam_openid_connect_provider.github.arn }
       Condition = {
         StringLike = {
-          # 특정 레포지토리에서만 이 역할을 쓸 수 있게 제한 (중요!)
           "token.actions.githubusercontent.com:sub" = "repo:team4-coding-gamja/UNBOX-BE:*"
+        }
+        # 아래 StringEquals 블록이 반드시 포함되어야 인증이 성공합니다.
+        StringEquals = {
+          "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
         }
       }
     }]

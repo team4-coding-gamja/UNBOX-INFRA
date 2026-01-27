@@ -25,9 +25,12 @@ def lambda_handler(event, context):
         message = log_event['message']
         timestamp = datetime.fromtimestamp(log_event['timestamp'] / 1000).strftime('%Y-%m-%d %H:%M:%S')
         
-        # ERROR 또는 WARNING 레벨 확인
-        log_level = 'ERROR' if 'ERROR' in message.upper() else 'WARNING'
-        color = 15158332 if log_level == 'ERROR' else 16776960  # Red for ERROR, Yellow for WARNING
+        # ERROR 레벨만 처리 (WARNING 제외)
+        if 'ERROR' not in message.upper():
+            continue
+            
+        log_level = 'ERROR'
+        color = 15158332  # Red for ERROR
         
         # Discord 임베드 메시지 생성
         embed = {

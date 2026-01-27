@@ -29,8 +29,8 @@ resource "aws_ecs_task_definition" "services" {
   family                   = "${var.project_name}-${var.env}-${each.key}"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
-  cpu                      = 1024  # 0.5 vCPU -> 1 vCPU로 증가
-  memory                   = 4096  # 2GB -> 4GB로 증가 (OOM 방지)
+  cpu                      = 2048  # 1 vCPU -> 2 vCPU로 증가
+  memory                   = 8192  # 4GB -> 8GB로 증가 (Kafka 재연결 시 OOM 방지)
   execution_role_arn       = var.ecs_task_execution_role_arn
   task_role_arn            = var.ecs_task_role_arn
 
@@ -51,6 +51,9 @@ resource "aws_ecs_task_definition" "services" {
         { name = "SPRING_PROFILES_ACTIVE", value = var.env },
         { name = "SERVER_PORT", value = "8080" },  # 모든 서비스 8080 포트 사용
         { name = "KAFKA_BOOTSTRAP_SERVERS", value = var.msk_bootstrap_brokers },
+        
+        # JVM 메모리 설정 (8GB 컨테이너에서 5GB 힙 사용, 나머지는 네이티브 메모리)
+        { name = "JAVA_OPTS", value = "-Xms1g -Xmx5g -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:MaxMetaspaceSize=512m" },
 
         # [환경별 로직] RDS 연결 정보
         # dev: 공유 RDS 1개 사용 (모든 서비스가 같은 RDS, 다른 DB)
