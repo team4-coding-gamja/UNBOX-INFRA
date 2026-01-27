@@ -29,8 +29,8 @@ resource "aws_ecs_task_definition" "services" {
   family                   = "${var.project_name}-${var.env}-${each.key}"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
-  cpu                      = 512
-  memory                   = 2048
+  cpu                      = 2048  # 1 vCPU -> 2 vCPU로 증가
+  memory                   = 8192  # 4GB -> 8GB로 증가 (Kafka 재연결 시 OOM 방지)
   execution_role_arn       = var.ecs_task_execution_role_arn
   task_role_arn            = var.ecs_task_role_arn
 
@@ -41,16 +41,25 @@ resource "aws_ecs_task_definition" "services" {
       essential = true
       portMappings = [
         {
-          containerPort = var.service_config[each.key]
-          hostPort      = var.service_config[each.key]
+          containerPort = 8080  # 모든 서비스 8080 포트 사용 (ECS Service와 일치)
+          hostPort      = 8080
           name          = "http"
           protocol      = "tcp"
         }
       ]
       environment = [
         { name = "SPRING_PROFILES_ACTIVE", value = var.env },
-        { name = "SERVER_PORT", value = tostring(var.service_config[each.key]) },
+        { name = "SERVER_PORT", value = "8080" },  # 모든 서비스 8080 포트 사용
         { name = "KAFKA_BOOTSTRAP_SERVERS", value = var.msk_bootstrap_brokers },
+        
+        # MSK Serverless 보안 설정을 환경변수로 강제 적용 (Java 코드 설정보다 우선순위 높음)
+        { name = "SPRING_KAFKA_PROPERTIES_SECURITY_PROTOCOL", value = "SASL_SSL" },
+        { name = "SPRING_KAFKA_PROPERTIES_SASL_MECHANISM", value = "AWS_MSK_IAM" },
+        { name = "SPRING_KAFKA_PROPERTIES_SASL_JAAS_CONFIG", value = "software.amazon.msk.auth.iam.IAMLoginModule required;" },
+        { name = "SPRING_KAFKA_PROPERTIES_SASL_CLIENT_CALLBACK_HANDLER_CLASS", value = "software.amazon.msk.auth.iam.IAMClientCallbackHandler" },
+        
+        # JVM 메모리 설정 (8GB 컨테이너에서 5GB 힙 사용, 나머지는 네이티브 메모리)
+        { name = "JAVA_OPTS", value = "-Xms1g -Xmx5g -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:MaxMetaspaceSize=512m" },
 
         # [환경별 로직] RDS 연결 정보
         # dev: 공유 RDS 1개 사용 (모든 서비스가 같은 RDS, 다른 DB)
@@ -120,7 +129,7 @@ resource "aws_ecs_task_definition" "services" {
       )
 
       healthCheck = {
-        command     = ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:${var.service_config[each.key]}/actuator/health || exit 1"]
+        command     = ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1"]  # 8080 포트로 통일
         interval    = 30
         timeout     = 5
         retries     = 3
@@ -188,7 +197,7 @@ resource "aws_ecs_service" "services" {
   load_balancer {
     target_group_arn = var.target_group_arns[each.key]
     container_name   = var.container_name_suffix ? "${each.key}-service" : each.key
-    container_port   = var.service_config[each.key]
+    container_port   = 8080  # 모든 서비스 8080 포트 사용
   }
 
 }

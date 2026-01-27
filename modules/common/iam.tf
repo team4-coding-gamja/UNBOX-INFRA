@@ -5,8 +5,8 @@ resource "aws_iam_role" "ecs_task_execution_role" {
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Action = "sts:AssumeRole"
-      Effect = "Allow"
+      Action    = "sts:AssumeRole"
+      Effect    = "Allow"
       Principal = { Service = "ecs-tasks.amazonaws.com" }
     }]
   })
@@ -30,8 +30,8 @@ resource "aws_iam_role_policy" "ecs_execution_prod_secrets" {
     Version = "2012-10-17"
     Statement = [
       {
-        Effect   = "Allow"
-        Action   = [
+        Effect = "Allow"
+        Action = [
           "kms:Decrypt",
           "ssm:GetParameters",
           "secretsmanager:GetSecretValue" # 시크릿 매니저 값을 읽기 위한 한 줄 추가
@@ -44,7 +44,7 @@ resource "aws_iam_role_policy" "ecs_execution_prod_secrets" {
           # 환경별 Secrets Manager 경로 분기
           var.env == "prod" ? [
             "arn:aws:secretsmanager:ap-northeast-2:*:secret:unbox-prod-*"
-          ] : [
+            ] : [
             "arn:aws:secretsmanager:ap-northeast-2:*:secret:unbox-dev-*"
           ]
         )
@@ -62,8 +62,8 @@ resource "aws_iam_role" "ecs_task_role" {
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Action = "sts:AssumeRole"
-      Effect = "Allow"
+      Action    = "sts:AssumeRole"
+      Effect    = "Allow"
       Principal = { Service = "ecs-tasks.amazonaws.com" }
     }]
   })
@@ -88,9 +88,47 @@ resource "aws_iam_role_policy" "ecs_task_custom" {
         Resource = "*"
       },
       {
-        Effect = "Allow"
-        Action = ["cloudwatch:PutMetricData"]
+        Effect   = "Allow"
+        Action   = ["cloudwatch:PutMetricData"]
         Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "kafka-cluster:Connect",
+          "kafka-cluster:AlterCluster",
+          "kafka-cluster:DescribeCluster"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "kafka-cluster:Connect",
+          "kafka-cluster:AlterCluster",
+          "kafka-cluster:DescribeCluster"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "kafka-cluster:*Topic*",
+          "kafka-cluster:WriteData",
+          "kafka-cluster:ReadData"
+        ]
+        Resource = [
+          "arn:aws:kafka:*:*:topic/*/*",
+          "arn:aws:kafka:*:*:cluster/*/*"
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "kafka-cluster:AlterGroup",
+          "kafka-cluster:DescribeGroup"
+        ]
+        Resource = "arn:aws:kafka:*:*:group/*/*"
       }
     ]
   })
@@ -228,20 +266,21 @@ resource "aws_iam_role" "github_actions_ecr" {
   name = "github-actions-ecr-role"
 
   assume_role_policy = jsonencode({
-      Version = "2012-10-17"
-      Statement = [
-        {
-          Action = "sts:AssumeRoleWithWebIdentity"
-          Effect = "Allow"
-          # [수정] aws_iam_openid_connect_provider -> data.aws_iam_openid_connect_provider
-          Principal = { Federated = data.aws_iam_openid_connect_provider.github.arn }
-          Condition = {
-            StringLike = {
-              "token.actions.githubusercontent.com:sub" : "repo:your-github-id/*"
-            }
-          }
+    Version = "2012-10-17"
+    Statement = [{
+      Action    = "sts:AssumeRoleWithWebIdentity"
+      Effect    = "Allow"
+      Principal = { Federated = aws_iam_openid_connect_provider.github.arn }
+      Condition = {
+        StringLike = {
+          "token.actions.githubusercontent.com:sub" = "repo:team4-coding-gamja/UNBOX-BE:*"
         }
-      ]
+        # 아래 StringEquals 블록이 반드시 포함되어야 인증이 성공합니다.
+        StringEquals = {
+          "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
+        }
+      }
+    }]
   })
 }
 
@@ -263,10 +302,10 @@ resource "aws_iam_role_policy" "github_actions_ecs" {
         # ECS 서비스 및 Task Definition 관리 권한
         Effect = "Allow"
         Action = [
-          "ecs:DescribeServices",        # 현재 서비스 상태 조회
-          "ecs:DescribeTaskDefinition",  # 현재 Task Definition 조회
-          "ecs:RegisterTaskDefinition",  # 새 Task Definition 등록
-          "ecs:UpdateService"            # 서비스 업데이트 (새 이미지 배포)
+          "ecs:DescribeServices",       # 현재 서비스 상태 조회
+          "ecs:DescribeTaskDefinition", # 현재 Task Definition 조회
+          "ecs:RegisterTaskDefinition", # 새 Task Definition 등록
+          "ecs:UpdateService"           # 서비스 업데이트 (새 이미지 배포)
         ]
         Resource = "*"
       },
@@ -278,52 +317,10 @@ resource "aws_iam_role_policy" "github_actions_ecs" {
           "iam:PassRole"
         ]
         Resource = [
-          aws_iam_role.ecs_task_execution_role.arn,  # Task 실행 Role
-          aws_iam_role.ecs_task_role.arn             # Task Role
+          aws_iam_role.ecs_task_execution_role.arn, # Task 실행 Role
+          aws_iam_role.ecs_task_role.arn            # Task Role
         ]
       }
     ]
   })
-}
-
-
-# modules/common/iam.tf
-
-# 1. 시크릿 조회용 정책 생성
-resource "aws_iam_policy" "ecs_secrets_access" {
-  name        = "${var.project_name}-${var.env}-ecs-secrets-policy"
-  description = "Allow ECS task execution role to access secrets and KMS key"
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid    = "AllowSecretsManager"
-        Effect = "Allow"
-        Action = [
-          "secretsmanager:GetSecretValue",
-          "secretsmanager:DescribeSecret"
-        ]
-        # unbox/prod 경로 하위의 모든 시크릿 허용
-        Resource = "arn:aws:secretsmanager:${var.aws_region}:${var.account_id}:secret:${var.project_name}/${var.env}/*"
-      },
-      {
-        Sid    = "AllowKMSDecrypt"
-        Effect = "Allow"
-        Action = [
-          "kms:Decrypt",
-          "kms:GenerateDataKey"
-        ]
-        # 암호화에 사용된 KMS 키 (dev_kms) 허용
-        Resource = var.kms_key_arn 
-      }
-    ]
-  })
-}
-
-# 2. 실행 역할(Execution Role)에 정책 연결
-resource "aws_iam_role_policy_attachment" "ecs_execution_secrets" {
-  # 기존에 정의된 실행 역할 이름 참조 (코드 상의 리소스 이름 확인 필요)
-  role       = aws_iam_role.ecs_task_execution_role.name 
-  policy_arn = aws_iam_policy.ecs_secrets_access.arn
 }
