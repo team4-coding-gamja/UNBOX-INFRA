@@ -52,6 +52,12 @@ resource "aws_ecs_task_definition" "services" {
         { name = "SERVER_PORT", value = "8080" },  # 모든 서비스 8080 포트 사용
         { name = "KAFKA_BOOTSTRAP_SERVERS", value = var.msk_bootstrap_brokers },
         
+        # MSK Serverless 보안 설정을 환경변수로 강제 적용 (Java 코드 설정보다 우선순위 높음)
+        { name = "SPRING_KAFKA_PROPERTIES_SECURITY_PROTOCOL", value = "SASL_SSL" },
+        { name = "SPRING_KAFKA_PROPERTIES_SASL_MECHANISM", value = "AWS_MSK_IAM" },
+        { name = "SPRING_KAFKA_PROPERTIES_SASL_JAAS_CONFIG", value = "software.amazon.msk.auth.iam.IAMLoginModule required;" },
+        { name = "SPRING_KAFKA_PROPERTIES_SASL_CLIENT_CALLBACK_HANDLER_CLASS", value = "software.amazon.msk.auth.iam.IAMClientCallbackHandler" },
+        
         # JVM 메모리 설정 (8GB 컨테이너에서 5GB 힙 사용, 나머지는 네이티브 메모리)
         { name = "JAVA_OPTS", value = "-Xms1g -Xmx5g -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:MaxMetaspaceSize=512m" },
 
