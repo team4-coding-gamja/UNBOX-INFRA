@@ -29,8 +29,8 @@ resource "aws_ecs_task_definition" "services" {
   family                   = "${var.project_name}-${var.env}-${each.key}"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
-  cpu                      = 512
-  memory                   = 2048
+  cpu                      = 1024  # 0.5 vCPU -> 1 vCPU로 증가
+  memory                   = 4096  # 2GB -> 4GB로 증가 (OOM 방지)
   execution_role_arn       = var.ecs_task_execution_role_arn
   task_role_arn            = var.ecs_task_role_arn
 
@@ -41,15 +41,15 @@ resource "aws_ecs_task_definition" "services" {
       essential = true
       portMappings = [
         {
-          containerPort = var.service_config[each.key]
-          hostPort      = var.service_config[each.key]
+          containerPort = 8080  # 모든 서비스 8080 포트 사용 (ECS Service와 일치)
+          hostPort      = 8080
           name          = "http"
           protocol      = "tcp"
         }
       ]
       environment = [
         { name = "SPRING_PROFILES_ACTIVE", value = var.env },
-        { name = "SERVER_PORT", value = tostring(var.service_config[each.key]) },
+        { name = "SERVER_PORT", value = "8080" },  # 모든 서비스 8080 포트 사용
         { name = "KAFKA_BOOTSTRAP_SERVERS", value = var.msk_bootstrap_brokers },
 
         # [환경별 로직] RDS 연결 정보
@@ -116,7 +116,7 @@ resource "aws_ecs_task_definition" "services" {
       )
 
       healthCheck = {
-        command     = ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:${var.service_config[each.key]}/actuator/health || exit 1"]
+        command     = ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1"]  # 8080 포트로 통일
         interval    = 30
         timeout     = 5
         retries     = 3

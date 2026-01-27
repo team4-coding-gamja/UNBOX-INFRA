@@ -108,18 +108,30 @@ module "ecs" {
   app_subnet_ids = module.vpc.private_app_subnet_ids
   aws_region     = data.aws_region.current.name
   account_id     = data.aws_caller_identity.current.account_id
-  # 1. MSK 주소 전달 (이게 빠져서 에러가 난 겁니다!)
+  
+  # MSK 주소 전달
   msk_bootstrap_brokers = module.msk.bootstrap_brokers
   service_config        = local.service_config
-  # 2. ALB 타겟 그룹 전달
+  
+  # ALB 타겟 그룹 전달
   target_group_arns = module.alb.target_group_arns
 
-  # 3. 보안 그룹 전달 (중복 제거 및 이름 확인)
-  # 아까 SG 아웃풋에 ecs_sg_id가 없었으니, 공통으로 쓸 app_sg_ids["user"] 등을 넣거나
-  # SG 모듈의 아웃풋 이름을 ecs_sg_id로 수정해야 합니다.
-  ecs_sg_id = module.security_group.app_sg_ids["user"]
+  # 보안 그룹 전달 (모든 서비스에 동일한 SG 사용)
+  ecs_sg_ids = {
+    for service in keys(local.service_config) :
+    service => module.security_group.app_sg_ids["user"]
+  }
 
-  # 4. IAM 역할 전달
+  # RDS 엔드포인트 전달
+  rds_endpoints = module.rds.db_endpoints
+  
+  # Redis 엔드포인트 전달
+  redis_endpoint = module.redis.redis_primary_endpoint
+  
+  # 컨테이너 이름 suffix 비활성화 (기존 이름 유지)
+  container_name_suffix = false
+
+  # IAM 역할 전달
   ecs_task_execution_role_arn = module.common.ecs_task_execution_role_arn
   ecs_task_role_arn           = module.common.ecs_task_role_arn
   cloud_map_namespace_arn     = module.common.cloud_map_namespace_arn
