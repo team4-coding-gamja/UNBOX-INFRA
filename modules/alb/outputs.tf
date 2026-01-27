@@ -21,7 +21,3 @@ output "target_group_arns" {
   description = "A map of target group ARNs"
   value       = { for k, v in aws_lb_target_group.services : k => v.arn }
 }
-output "alb_arn" {
-  description = "ALB arn"
-  value = aws_lb.this.arn
-}

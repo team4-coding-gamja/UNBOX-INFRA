@@ -27,9 +27,9 @@ variable "app_subnet_ids" {
   type        = list(string)
 }
 
-variable "ecs_sg_id" {
+variable "ecs_sg_ids" {
   description = "ECS Task에 적용할 보안 그룹 ID"
-  type        = string
+  type        = map(string)
 }
 
 # --- 로드 밸런서 연결 ---
@@ -110,4 +110,16 @@ variable "image_tags" {
   description = "각 서비스별 Docker 이미지 태그 맵 (예: {user = 'sha-abc123'})"
   type        = map(string)
   default     = {}
+}
+
+
+variable "db_password_arns" {
+  type        = map(string)
+  description = "서비스별 DB 패스워드 Secrets Manager/SSM ARN 맵"
+}
+
+variable "redis_password_arn" {
+  type        = string
+  description = "Redis 패스워드 Secrets Manager ARN"
+  default     = ""
 }

@@ -39,6 +39,8 @@ module "common" {
   users = var.users
   kms_key_arn  = data.aws_kms_alias.infra_key.target_key_arn
   alb_arn      = module.alb.alb_arn
+  aws_region = var.aws_region
+  account_id = var.account_id
 }
 
 module "s3" {
@@ -82,7 +84,7 @@ module "rds" {
   rds_sg_ids     = module.security_group.rds_sg_ids
 
   # [핵심] SSM에서 읽어온 실제 비밀번호 값을 전달
-  db_password = var.env == "prod" ? var.rds_admin_password : data.aws_ssm_parameter.db_password["user"].value
+  service_db_passwords = var.env == "prod" ? module.common.db_password_arns : data.aws_ssm_parameter.db_password["user"].value
 }
 
 module "redis" {
@@ -92,6 +94,8 @@ module "redis" {
   private_subnet_ids = module.vpc.private_db_subnet_ids
   redis_sg_id        = module.security_group.redis_sg_id
   kms_key_arn        = module.common.kms_key_arn
+  auth_token                 = var.env == "prod" ? module.common.redis_password_raw : null
+  transit_encryption_enabled = var.env == "prod" ? true : false
 }
 
 # module "msk" {
@@ -118,11 +122,15 @@ module "ecs" {
   target_group_arns = module.alb.target_group_arns
 
   # 보안 그룹 전달 (중복 제거 및 이름 확인)
-  ecs_sg_id = module.security_group.app_sg_ids["user"]
+  ecs_sg_ids = module.security_group.app_sg_ids
 
   # IAM 역할 전달
   ecs_task_execution_role_arn = module.common.ecs_task_execution_role_arn
   ecs_task_role_arn           = module.common.ecs_task_role_arn
   cloud_map_namespace_arn     = module.common.cloud_map_namespace_arn
   kms_key_arn                 = module.common.kms_key_arn
+  rds_endpoints =  module.rds.db_endpoints
+  redis_endpoint = module.redis.redis_primary_endpoint
+  db_password_arns = module.common.db_password_arns
+  jwt_secret_arn   = module.common.jwt_secret_arn
 }

@@ -11,7 +11,9 @@ resource "aws_iam_role" "ecs_task_execution_role" {
     }]
   })
 }
-
+data "aws_iam_openid_connect_provider" "github" {
+  url = "https://token.actions.githubusercontent.com"
+}
 # 1-1. 기본 실행 권한 (ECR 이미지 가져오기, CloudWatch 기본 로그)
 resource "aws_iam_role_policy_attachment" "ecs_task_execution_standard" {
   role       = aws_iam_role.ecs_task_execution_role.name
@@ -222,24 +224,26 @@ resource "aws_iam_role_policy" "cloudtrail_cloudwatch_policy" {
 #   thumbprint_list = [data.tls_certificate.github.certificates[0].sha1_fingerprint]
 # }
 
-# resource "aws_iam_role" "github_actions_ecr" {
-#   name = "github-actions-ecr-role"
+resource "aws_iam_role" "github_actions_ecr" {
+  name = "github-actions-ecr-role"
 
-#   assume_role_policy = jsonencode({
-#     Version = "2012-10-17"
-#     Statement = [{
-#       Action = "sts:AssumeRoleWithWebIdentity"
-#       Effect = "Allow"
-#       Principal = { Federated = aws_iam_openid_connect_provider.github.arn }
-#       Condition = {
-#         StringLike = {
-#           # 특정 레포지토리에서만 이 역할을 쓸 수 있게 제한 (중요!)
-#           "token.actions.githubusercontent.com:sub" = "repo:team4-coding-gamja/UNBOX-BE:*"
-#         }
-#       }
-#     }]
-#   })
-# }
+  assume_role_policy = jsonencode({
+      Version = "2012-10-17"
+      Statement = [
+        {
+          Action = "sts:AssumeRoleWithWebIdentity"
+          Effect = "Allow"
+          # [수정] aws_iam_openid_connect_provider -> data.aws_iam_openid_connect_provider
+          Principal = { Federated = data.aws_iam_openid_connect_provider.github.arn }
+          Condition = {
+            StringLike = {
+              "token.actions.githubusercontent.com:sub" : "repo:your-github-id/*"
+            }
+          }
+        }
+      ]
+  })
+}
 
 # 1. GitHub Actions ECR 권한 (CI용 - 이미지 빌드 및 푸시)
 resource "aws_iam_role_policy_attachment" "ecr_power_user" {
@@ -280,4 +284,46 @@ resource "aws_iam_role_policy" "github_actions_ecs" {
       }
     ]
   })
+}
+
+
+# modules/common/iam.tf
+
+# 1. 시크릿 조회용 정책 생성
+resource "aws_iam_policy" "ecs_secrets_access" {
+  name        = "${var.project_name}-${var.env}-ecs-secrets-policy"
+  description = "Allow ECS task execution role to access secrets and KMS key"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "AllowSecretsManager"
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:GetSecretValue",
+          "secretsmanager:DescribeSecret"
+        ]
+        # unbox/prod 경로 하위의 모든 시크릿 허용
+        Resource = "arn:aws:secretsmanager:${var.aws_region}:${var.account_id}:secret:${var.project_name}/${var.env}/*"
+      },
+      {
+        Sid    = "AllowKMSDecrypt"
+        Effect = "Allow"
+        Action = [
+          "kms:Decrypt",
+          "kms:GenerateDataKey"
+        ]
+        # 암호화에 사용된 KMS 키 (dev_kms) 허용
+        Resource = var.kms_key_arn 
+      }
+    ]
+  })
+}
+
+# 2. 실행 역할(Execution Role)에 정책 연결
+resource "aws_iam_role_policy_attachment" "ecs_execution_secrets" {
+  # 기존에 정의된 실행 역할 이름 참조 (코드 상의 리소스 이름 확인 필요)
+  role       = aws_iam_role.ecs_task_execution_role.name 
+  policy_arn = aws_iam_policy.ecs_secrets_access.arn
 }

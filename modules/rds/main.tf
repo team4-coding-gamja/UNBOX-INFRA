@@ -18,7 +18,11 @@ resource "aws_db_instance" "postgresql" {
 
   db_name  = var.env == "prod" ? "${each.key}_db" : "dev_db"
   username = "unbox_admin"
-  password = var.db_password
+  password = (
+    var.env == "prod" 
+    ? var.service_db_passwords[each.key] 
+    : var.service_db_passwords["user"]
+  )
 
   db_subnet_group_name = aws_db_subnet_group.this.name
 

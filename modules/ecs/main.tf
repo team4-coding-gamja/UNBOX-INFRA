@@ -56,15 +56,16 @@ resource "aws_ecs_task_definition" "services" {
         # dev: 공유 RDS 1개 사용 (모든 서비스가 같은 RDS, 다른 DB)
         # prod: 서비스별 RDS 사용
         { 
-          name  = "DB_URL"
-          value = "jdbc:postgresql://${var.env == "dev" ? var.rds_endpoints["common"] : var.rds_endpoints[each.key]}/unbox_${each.key}"
+          name  = "SPRING_DATASOURCE_URL"
+          value = "jdbc:postgresql://${var.env == "dev" ? var.rds_endpoints["common"] : var.rds_endpoints[each.key]}/${each.key}_db"
         },
-        { name = "DB_USERNAME", value = "unbox_${each.key}" },
+        { name = "SPRING_DATASOURCE_USERNAME", value = "unbox_admin" },
         { name = "DB_DRIVER_CLASS_NAME", value = "org.postgresql.Driver" },
         
         # Redis 연결 정보 (dev/prod 모두 공유 Redis 1개 사용)
         { name = "SPRING_DATA_REDIS_HOST", value = split(":", var.redis_endpoint)[0] },
-        { name = "SPRING_DATA_REDIS_PORT", value = "6379" }
+        { name = "SPRING_DATA_REDIS_PORT", value = "6379" },
+        { name = "SPRING_DATA_REDIS_SSL_ENABLED", value = "true" }
       ]
       
       # [환경별 로직] Secrets 설정
@@ -72,8 +73,8 @@ resource "aws_ecs_task_definition" "services" {
       # prod: DB Password는 SSM, JWT는 Secrets Manager
       secrets = var.env == "prod" ? [
         {
-          name      = "DB_PASSWORD"
-          valueFrom = "arn:aws:ssm:${var.aws_region}:${var.account_id}:parameter/${var.project_name}/${var.env}/${each.key}/DB_PASSWORD"
+          name      = "SPRING_DATASOURCE_PASSWORD"
+          valueFrom = var.db_password_arns[each.key]
         },
         {
           name      = "SPRING_JWT_SECRET"
@@ -81,7 +82,7 @@ resource "aws_ecs_task_definition" "services" {
         }
       ] : [
         {
-          name      = "DB_PASSWORD"
+          name      = "SPRING_DATASOURCE_PASSWORD"
           valueFrom = "arn:aws:ssm:${var.aws_region}:${var.account_id}:parameter/${var.project_name}/${var.env}/${each.key}/DB_PASSWORD"
         },
         {
@@ -91,7 +92,7 @@ resource "aws_ecs_task_definition" "services" {
       ]
       
       healthCheck = {
-        command     = ["CMD-SHELL", "curl -f http://localhost:${var.service_config[each.key]}${var.health_check_path} || exit 1"]
+        command = ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:${var.service_config[each.key]}${var.health_check_path} || exit 1"]
         interval    = 30
         timeout     = 5
         retries     = 3
@@ -139,7 +140,7 @@ resource "aws_ecs_service" "services" {
   }
   network_configuration {
     subnets          = var.env == "dev" ? [var.app_subnet_ids[0]] : var.app_subnet_ids
-    security_groups  = [var.ecs_sg_id]
+    security_groups  = [var.ecs_sg_ids[each.key]]
     assign_public_ip = false
   }
 

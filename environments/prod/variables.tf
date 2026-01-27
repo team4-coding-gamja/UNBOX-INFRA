@@ -31,8 +31,10 @@ variable "kms_key_arn" {
   type        = string
 }
 
-variable "rds_admin_password" {
-  description = "RDS root administrator password"
-  type        = string
-  sensitive   = true  # 터미널 로그에 비번이 찍히지 않게 보호합니다.
+variable "aws_region" {
+  type = string
+}
+
+variable "account_id" {
+  type = string
 }
