@@ -49,6 +49,12 @@ output "service_db_passwords" {
   sensitive = true
 }
 
+output "service_db_passwords_values" {
+  description = "생성된 실제 비밀번호 문자열 (Map)"
+  value       = { for k, v in random_password.service_db_passwords : k => v.result }
+  sensitive   = true
+}
+
 output "redis_password_arn" {
   description = "Redis 비밀번호 주소"
   value = var.env == "prod" ? data.aws_secretsmanager_secret.redis_password[0].arn : ""

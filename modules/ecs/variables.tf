@@ -28,7 +28,7 @@ variable "app_subnet_ids" {
 }
 
 variable "ecs_sg_ids" {
-  description = "ECS Task에 적용할 보안 그룹 ID"
+  description = "각 서비스별 ECS Task에 적용할 보안 그룹 ID 맵"
   type        = map(string)
 }
 
@@ -79,11 +79,13 @@ variable "kms_key_arn" {
 variable "rds_endpoints" {
   description = "각 서비스별 RDS 엔드포인트 맵 (예: {user = 'user-db.xxx.rds.amazonaws.com:5432'})"
   type        = map(string)
+  default = null
 }
 
 variable "redis_endpoint" {
   description = "Redis 클러스터 primary 엔드포인트 (예: 'redis.xxx.cache.amazonaws.com:6379')"
   type        = string
+  default = null
 }
 
 # 2. Secrets Manager ARN (Prod 환경에서만 사용)
@@ -116,6 +118,7 @@ variable "image_tags" {
 variable "db_password_arns" {
   type        = map(string)
   description = "서비스별 DB 패스워드 Secrets Manager/SSM ARN 맵"
+  default = null
 }
 
 variable "redis_password_arn" {

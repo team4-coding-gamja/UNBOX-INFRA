@@ -36,8 +36,8 @@ resource "aws_db_instance" "postgresql" {
   
   storage_encrypted = true
   kms_key_id        = var.kms_key_arn
-  lifecycle { 
-    ignore_changes = [password]
-  }
+  # lifecycle { 
+  #   ignore_changes = [password]
+  # }
   tags = { Name = "${var.project_name}-${var.env}-${each.key}-db" }
 }

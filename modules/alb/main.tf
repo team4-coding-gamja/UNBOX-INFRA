@@ -13,22 +13,28 @@ resource "aws_lb" "this" {
 resource "aws_lb_target_group" "services" {
   for_each = var.service_config
   
-  name        = "${var.project_name}-${var.env}-${each.key}-tg"
-  #이 부분 실제 서비스 포트로 바꾸기 each.value -> 자동으로 health check도 해당 경로로 보냄
-  port        = 80
+  name_prefix = "${substr(each.key, 0, 5)}-"
+  port        = each.value
   protocol    = "HTTP"
   vpc_id      = var.vpc_id
   target_type = "ip"
 
+  # Dev 환경에서는 빠른 배포를 위해 30초, Prod는 300초 (기본값)
+  deregistration_delay = var.env == "prod" ? 300 : 30
+
   health_check {
     enabled             = true
-    path                = "/${each.key}/actuator/health"
+    path                = "/actuator/health"
     port                = "traffic-port"
     healthy_threshold   = 3
-    unhealthy_threshold = 2
+    unhealthy_threshold = 5
     timeout             = 5
     interval            = 30
     matcher             = "200"
+  }
+
+  lifecycle {
+    create_before_destroy = true
   }
 }
 

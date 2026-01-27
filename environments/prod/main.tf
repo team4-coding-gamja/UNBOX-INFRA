@@ -84,7 +84,7 @@ module "rds" {
   rds_sg_ids     = module.security_group.rds_sg_ids
 
   # [핵심] SSM에서 읽어온 실제 비밀번호 값을 전달
-  service_db_passwords = var.env == "prod" ? module.common.db_password_arns : data.aws_ssm_parameter.db_password["user"].value
+  service_db_passwords = var.env == "prod" ? module.common.service_db_passwords : data.aws_ssm_parameter.db_password["user"].value
 }
 
 module "redis" {
@@ -133,4 +133,5 @@ module "ecs" {
   redis_endpoint = module.redis.redis_primary_endpoint
   db_password_arns = module.common.db_password_arns
   jwt_secret_arn   = module.common.jwt_secret_arn
+  redis_password_arn = module.common.redis_password_arn
 }

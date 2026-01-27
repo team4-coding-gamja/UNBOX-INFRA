@@ -11,13 +11,13 @@ resource "aws_ecs_cluster" "this" {
 # 2. ECR 경로 가져오기
 data "aws_ecr_repository" "service_ecr" {
   for_each = var.service_config
-  name = "${var.project_name}-${var.env}-${each.key}-repo"
+  name     = "${var.project_name}-${var.env}-${each.key}-repo"
 }
 
 # 3. 서비스별 로그 그룹
 resource "aws_cloudwatch_log_group" "services" {
-  for_each = toset(var.service_names)
-  name     = "/ecs/${var.project_name}-${var.env}/${each.key}"
+  for_each          = toset(var.service_names)
+  name              = "/ecs/${var.project_name}-${var.env}/${each.key}"
   retention_in_days = 7
   kms_key_id        = var.kms_key_arn
 }
@@ -51,27 +51,27 @@ resource "aws_ecs_task_definition" "services" {
         { name = "SPRING_PROFILES_ACTIVE", value = var.env },
         { name = "SERVER_PORT", value = tostring(var.service_config[each.key]) },
         { name = "KAFKA_BOOTSTRAP_SERVERS", value = var.msk_bootstrap_brokers },
-        
+
         # [환경별 로직] RDS 연결 정보
         # dev: 공유 RDS 1개 사용 (모든 서비스가 같은 RDS, 다른 DB)
         # prod: 서비스별 RDS 사용
-        { 
+        {
           name  = "SPRING_DATASOURCE_URL"
           value = "jdbc:postgresql://${var.env == "dev" ? var.rds_endpoints["common"] : var.rds_endpoints[each.key]}/${each.key}_db"
         },
         { name = "SPRING_DATASOURCE_USERNAME", value = "unbox_admin" },
         { name = "DB_DRIVER_CLASS_NAME", value = "org.postgresql.Driver" },
-        
+
         # Redis 연결 정보 (dev/prod 모두 공유 Redis 1개 사용)
         { name = "SPRING_DATA_REDIS_HOST", value = split(":", var.redis_endpoint)[0] },
         { name = "SPRING_DATA_REDIS_PORT", value = "6379" },
         { name = "SPRING_DATA_REDIS_SSL_ENABLED", value = "true" }
       ]
-      
+
       # [환경별 로직] Secrets 설정
       # dev: SSM만 사용
       # prod: DB Password는 SSM, JWT는 Secrets Manager
-      secrets = var.env == "prod" ? [
+      secrets = var.env == "prod" ? concat([
         {
           name      = "SPRING_DATASOURCE_PASSWORD"
           valueFrom = var.db_password_arns[each.key]
@@ -79,8 +79,24 @@ resource "aws_ecs_task_definition" "services" {
         {
           name      = "SPRING_JWT_SECRET"
           valueFrom = var.jwt_secret_arn
+        },
+        {
+          name      = "SPRING_DATA_REDIS_PASSWORD"
+          valueFrom = var.redis_password_arn
         }
-      ] : [
+        ],
+        # Payment 서비스에만 Toss API 키 추가
+        each.key == "payment" ? [
+          {
+            name      = "TOSS_SECRET_KEY"
+            valueFrom = "arn:aws:ssm:${var.aws_region}:${var.account_id}:parameter/${var.project_name}/${var.env}/payment/TOSS_SECRET_KEY"
+          },
+          {
+            name      = "TOSS_SECURITY_KEY"
+            valueFrom = "arn:aws:ssm:${var.aws_region}:${var.account_id}:parameter/${var.project_name}/${var.env}/payment/TOSS_SECURITY_KEY"
+          }
+        ] : []
+        ) : concat([
         {
           name      = "SPRING_DATASOURCE_PASSWORD"
           valueFrom = "arn:aws:ssm:${var.aws_region}:${var.account_id}:parameter/${var.project_name}/${var.env}/${each.key}/DB_PASSWORD"
@@ -89,14 +105,26 @@ resource "aws_ecs_task_definition" "services" {
           name      = "SPRING_JWT_SECRET"
           valueFrom = "arn:aws:ssm:${var.aws_region}:${var.account_id}:parameter/${var.project_name}/${var.env}/common/JWT_SECRET"
         }
-      ]
-      
+        ],
+        # Payment 서비스에만 Toss API 키 추가
+        each.key == "payment" ? [
+          {
+            name      = "TOSS_SECRET_KEY"
+            valueFrom = "arn:aws:ssm:${var.aws_region}:${var.account_id}:parameter/${var.project_name}/${var.env}/payment/TOSS_SECRET_KEY"
+          },
+          {
+            name      = "TOSS_SECURITY_KEY"
+            valueFrom = "arn:aws:ssm:${var.aws_region}:${var.account_id}:parameter/${var.project_name}/${var.env}/payment/TOSS_SECURITY_KEY"
+          }
+        ] : []
+      )
+
       healthCheck = {
-        command = ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:${var.service_config[each.key]}${var.health_check_path} || exit 1"]
+        command     = ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:${var.service_config[each.key]}/actuator/health || exit 1"]
         interval    = 30
         timeout     = 5
         retries     = 3
-        startPeriod = 60
+        startPeriod = 120
       }
 
       logConfiguration = {
@@ -115,15 +143,27 @@ resource "aws_ecs_task_definition" "services" {
 resource "aws_ecs_service" "services" {
   for_each = toset(var.service_names)
 
-  name            = "${var.project_name}-${var.env}-${each.key}"
-  cluster         = aws_ecs_cluster.this.id
-  task_definition = aws_ecs_task_definition.services[each.key].arn
-  desired_count   = 1
-  launch_type     = "FARGATE"
+  name                   = "${var.project_name}-${var.env}-${each.key}"
+  cluster                = aws_ecs_cluster.this.id
+  task_definition        = aws_ecs_task_definition.services[each.key].arn
+  desired_count          = 1
+  launch_type            = "FARGATE"
   enable_execute_command = true
 
   # 타겟 그룹 변경 시 서비스 재생성을 위한 설정
   force_new_deployment = true
+
+  # 배포 설정 최적화
+  deployment_minimum_healthy_percent = var.env == "dev" ? 0 : 100
+  deployment_maximum_percent         = 200
+
+  deployment_circuit_breaker {
+    enable   = true
+    rollback = true
+  }
+
+  # Health check grace period
+  health_check_grace_period_seconds = 120
 
   service_connect_configuration {
     enabled   = true
@@ -138,6 +178,7 @@ resource "aws_ecs_service" "services" {
       }
     }
   }
+
   network_configuration {
     subnets          = var.env == "dev" ? [var.app_subnet_ids[0]] : var.app_subnet_ids
     security_groups  = [var.ecs_sg_ids[each.key]]
@@ -149,5 +190,5 @@ resource "aws_ecs_service" "services" {
     container_name   = var.container_name_suffix ? "${each.key}-service" : each.key
     container_port   = var.service_config[each.key]
   }
-  
+
 }

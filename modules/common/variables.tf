@@ -55,8 +55,10 @@ variable "alb_arn" {
 
 variable "aws_region" {
   type = string
+  default = null
 }
 
 variable "account_id" {
   type = string
+  default = null
 }

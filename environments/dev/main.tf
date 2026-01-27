@@ -85,7 +85,7 @@ module "rds" {
   rds_sg_ids     = module.security_group.rds_sg_ids
 
   # [핵심] SSM에서 읽어온 실제 비밀번호 값을 전달
-  db_password = data.aws_ssm_parameter.db_password.value
+  service_db_passwords = data.aws_ssm_parameter.db_password.value
 }
 
 module "redis" {
@@ -95,6 +95,7 @@ module "redis" {
   private_subnet_ids = module.vpc.private_db_subnet_ids
   redis_sg_id        = module.security_group.redis_sg_id
   kms_key_arn        = module.common.kms_key_arn
+  transit_encryption_enabled = var.env == "prod" ? true : false
 }
 
 module "msk" {
@@ -123,7 +124,7 @@ module "ecs" {
   # 3. 보안 그룹 전달 (중복 제거 및 이름 확인)
   # 아까 SG 아웃풋에 ecs_sg_id가 없었으니, 공통으로 쓸 app_sg_ids["user"] 등을 넣거나
   # SG 모듈의 아웃풋 이름을 ecs_sg_id로 수정해야 합니다.
-  ecs_sg_id = module.security_group.app_sg_ids["user"]
+  ecs_sg_ids = module.security_group.app_sg_ids["user"]
 
   # 4. IAM 역할 전달
   ecs_task_execution_role_arn = module.common.ecs_task_execution_role_arn
