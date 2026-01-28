@@ -14,7 +14,7 @@ resource "aws_lb_target_group" "services" {
   for_each = var.service_config
 
   name_prefix = "${substr(each.key, 0, 5)}-"
-  port        = 8080  # All containers use port 8080 internally
+  port        = 8080 # All containers use port 8080 internally
   protocol    = "HTTP"
   vpc_id      = var.vpc_id
   target_type = "ip"
@@ -25,7 +25,7 @@ resource "aws_lb_target_group" "services" {
   health_check {
     enabled             = true
     path                = "/${each.key}/actuator/health"
-    port                = "traffic-port"
+    port                = 8080
     healthy_threshold   = 3
     unhealthy_threshold = 5
     timeout             = 5
@@ -59,7 +59,7 @@ resource "aws_lb_listener" "http" {
 
 # HTTP -> HTTPS 리다이렉트 규칙 (인증서가 있을 때만 생성)
 resource "aws_lb_listener_rule" "http_to_https" {
-  count = var.certificate_arn != null ? 1 : 0
+  count = var.enable_https ? 1 : 0
 
   listener_arn = aws_lb_listener.http.arn
   priority     = 100 # 가장 낮은 우선순위 (마지막에 걸리도록)
@@ -82,7 +82,7 @@ resource "aws_lb_listener_rule" "http_to_https" {
 
 # 2. HTTPS Listener (443) - 인증서가 있을 때만 생성
 resource "aws_lb_listener" "https" {
-  count = var.certificate_arn != null ? 1 : 0
+  count = var.enable_https ? 1 : 0
 
   load_balancer_arn = aws_lb.this.arn
   port              = "443"
@@ -105,7 +105,7 @@ resource "aws_lb_listener_rule" "services" {
   for_each = var.service_config
 
   # 인증서가 있으면 HTTPS 리스너에, 없으면 HTTP 리스너에 붙임
-  listener_arn = var.certificate_arn != null ? aws_lb_listener.https[0].arn : aws_lb_listener.http.arn
+  listener_arn = var.enable_https ? aws_lb_listener.https[0].arn : aws_lb_listener.http.arn
   priority     = 10 + index(keys(var.service_config), each.key)
 
   action {

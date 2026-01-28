@@ -62,6 +62,7 @@ module "alb" {
   alb_sg_id         = module.security_group.alb_sg_id # 아까 만든 보안 그룹 ID
   service_config    = local.service_config
   certificate_arn   = module.route53.certificate_arn
+  enable_https      = true
 }
 
 data "aws_ssm_parameter" "db_password" {
@@ -86,7 +87,7 @@ module "rds" {
   rds_sg_ids     = module.security_group.rds_sg_ids
 
   # [핵심] SSM에서 읽어온 실제 비밀번호 값을 전달
-  service_db_passwords = data.aws_ssm_parameter.db_password.value
+  service_db_passwords = { user = data.aws_ssm_parameter.db_password.value }
 }
 
 module "redis" {

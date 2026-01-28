@@ -1,10 +1,10 @@
 locals {
   service_config = {
-    "user"    = 8081
-    "product" = 8082
-    "trade"   = 8083
-    "order"   = 8084
-    "payment" = 8085
+    "user"    = 8080
+    "product" = 8080
+    "trade"   = 8080
+    "order"   = 8080
+    "payment" = 8080
   }
 }
 

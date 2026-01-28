@@ -43,7 +43,7 @@ resource "aws_iam_role_policy" "ecs_execution_prod_secrets" {
           ],
           # 환경별 Secrets Manager 경로 분기
           var.env == "prod" ? [
-            "arn:aws:secretsmanager:ap-northeast-2:*:secret:unbox-prod-*"
+            "arn:aws:secretsmanager:ap-northeast-2:*:secret:unbox/prod/*"
             ] : [
             "arn:aws:secretsmanager:ap-northeast-2:*:secret:unbox-dev-*"
           ]
@@ -270,7 +270,7 @@ resource "aws_iam_role" "github_actions_ecr" {
     Statement = [{
       Action    = "sts:AssumeRoleWithWebIdentity"
       Effect    = "Allow"
-      Principal = { Federated = aws_iam_openid_connect_provider.github.arn }
+      Principal = { Federated = data.aws_iam_openid_connect_provider.github.arn }
       Condition = {
         StringLike = {
           "token.actions.githubusercontent.com:sub" = "repo:team4-coding-gamja/UNBOX-BE:*"
