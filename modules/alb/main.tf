@@ -12,9 +12,9 @@ resource "aws_lb" "this" {
 
 resource "aws_lb_target_group" "services" {
   for_each = var.service_config
-  
+
   name_prefix = "${substr(each.key, 0, 5)}-"
-  port        = 8080  # All containers use port 8080 internally
+  port        = 8080 # All containers use port 8080 internally
   protocol    = "HTTP"
   vpc_id      = var.vpc_id
   target_type = "ip"
@@ -25,7 +25,7 @@ resource "aws_lb_target_group" "services" {
   health_check {
     enabled             = true
     path                = "/${each.key}/actuator/health"
-    port                = "traffic-port"
+    port                = 8080
     healthy_threshold   = 3
     unhealthy_threshold = 5
     timeout             = 5
@@ -38,10 +38,57 @@ resource "aws_lb_target_group" "services" {
   }
 }
 
+# 1. HTTP Listener (80)
+# - HTTPS 인증서가 있으면: HTTPS로 리다이렉트 (Prod)
+# - HTTPS 인증서가 없으면: 404 반환 (Dev - 혹은 Dev도 HTTP 트래픽 허용한다면 forward로 해야 함. 여기서는 일단 Prod HTTPS 강제화를 가정)
 resource "aws_lb_listener" "http" {
   load_balancer_arn = aws_lb.this.arn
   port              = "80"
   protocol          = "HTTP"
+
+  default_action {
+    type = "fixed-response" # 기본값 (데드엔드)
+
+    fixed_response {
+      content_type = "text/plain"
+      message_body = "404: Not Found"
+      status_code  = "404"
+    }
+  }
+}
+
+# HTTP -> HTTPS 리다이렉트 규칙 (인증서가 있을 때만 생성)
+resource "aws_lb_listener_rule" "http_to_https" {
+  count = var.enable_https ? 1 : 0
+
+  listener_arn = aws_lb_listener.http.arn
+  priority     = 100 # 가장 낮은 우선순위 (마지막에 걸리도록)
+
+  action {
+    type = "redirect"
+    redirect {
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301"
+    }
+  }
+
+  condition {
+    path_pattern {
+      values = ["*"]
+    }
+  }
+}
+
+# 2. HTTPS Listener (443) - 인증서가 있을 때만 생성
+resource "aws_lb_listener" "https" {
+  count = var.enable_https ? 1 : 0
+
+  load_balancer_arn = aws_lb.this.arn
+  port              = "443"
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-2016-08"
+  certificate_arn   = var.certificate_arn
 
   default_action {
     type = "fixed-response"
@@ -53,10 +100,12 @@ resource "aws_lb_listener" "http" {
   }
 }
 
+# 3. 서비스별 라우팅 규칙
 resource "aws_lb_listener_rule" "services" {
   for_each = var.service_config
 
-  listener_arn = aws_lb_listener.http.arn
+  # 인증서가 있으면 HTTPS 리스너에, 없으면 HTTP 리스너에 붙임
+  listener_arn = var.enable_https ? aws_lb_listener.https[0].arn : aws_lb_listener.http.arn
   priority     = 10 + index(keys(var.service_config), each.key)
 
   action {

@@ -31,3 +31,12 @@ variable "node_type" {
   type        = string
   default     = "cache.t4g.micro"
 }
+
+variable "auth_token" {
+  type        = string
+  description = "Redis AUTH password"
+  sensitive   = true
+  default     = null
+}
+
+variable "transit_encryption_enabled" { }

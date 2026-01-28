@@ -11,8 +11,8 @@ resource "aws_ssm_parameter" "common_secrets" {
 }
 
 # 2. 서비스별 DB 비밀번호
-resource "aws_ssm_parameter" "service_secrets" {
-  for_each = var.service_config
+resource "aws_ssm_parameter" "dev_db_passwords" {
+  for_each = var.env == "dev" ? var.service_config : {}
 
   name   = "/${var.project_name}/${var.env}/${each.key}/DB_PASSWORD"
   type   = "SecureString"

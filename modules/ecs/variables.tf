@@ -42,6 +42,7 @@ variable "target_group_arns" {
 variable "msk_bootstrap_brokers" {
   description = "MSK 클러스터 접속 주소 (IAM 인증용)"
   type        = string
+  default   = ""
 }
 
 variable "ecs_task_execution_role_arn" {
@@ -78,11 +79,13 @@ variable "kms_key_arn" {
 variable "rds_endpoints" {
   description = "각 서비스별 RDS 엔드포인트 맵 (예: {user = 'user-db.xxx.rds.amazonaws.com:5432'})"
   type        = map(string)
+  default = null
 }
 
 variable "redis_endpoint" {
   description = "Redis 클러스터 primary 엔드포인트 (예: 'redis.xxx.cache.amazonaws.com:6379')"
   type        = string
+  default = null
 }
 
 # 2. Secrets Manager ARN (Prod 환경에서만 사용)
@@ -109,4 +112,17 @@ variable "image_tags" {
   description = "각 서비스별 Docker 이미지 태그 맵 (예: {user = 'sha-abc123'})"
   type        = map(string)
   default     = {}
+}
+
+
+variable "db_password_arns" {
+  type        = map(string)
+  description = "서비스별 DB 패스워드 Secrets Manager/SSM ARN 맵"
+  default = null
+}
+
+variable "redis_password_arn" {
+  type        = string
+  description = "Redis 패스워드 Secrets Manager ARN"
+  default     = ""
 }

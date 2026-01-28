@@ -195,11 +195,11 @@ resource "aws_security_group_rule" "nat_egress_all" {
 resource "aws_security_group_rule" "alb_egress_to_app" {
   for_each                 = local.service_config
   type                     = "egress"
-  from_port                = each.value 
+  from_port                = each.value
   to_port                  = each.value
   protocol                 = "tcp"
-  security_group_id        = aws_security_group.alb.id     
-  source_security_group_id = aws_security_group.service_app[each.key].id 
+  security_group_id        = aws_security_group.alb.id
+  source_security_group_id = aws_security_group.service_app[each.key].id
 }
 
 resource "aws_security_group_rule" "app_egress_all" {
@@ -207,7 +207,7 @@ resource "aws_security_group_rule" "app_egress_all" {
   type              = "egress"
   from_port         = 0
   to_port           = 0
-  protocol          = "-1"           # 모든 프로토콜 (TCP, UDP, ICMP 등)
-  cidr_blocks       = ["0.0.0.0/0"]  # 모든 목적지 허용
+  protocol          = "-1"          # 모든 프로토콜 (TCP, UDP, ICMP 등)
+  cidr_blocks       = ["0.0.0.0/0"] # 모든 목적지 허용
   security_group_id = aws_security_group.service_app[each.key].id
 }

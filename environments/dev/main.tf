@@ -1,7 +1,7 @@
 locals {
   service_config = {
     "user"    = 8081
-    "product" = 8081
+    "product" = 8082
     "trade"   = 8083
     "order"   = 8084
     "payment" = 8085
@@ -11,6 +11,11 @@ data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 data "aws_kms_alias" "infra_key" {
   name = "alias/${var.project_name}/${var.env}/main-key"
+}
+#ECR경로 가져오기
+data "aws_ecr_repository" "service_ecr" {
+  for_each = local.service_config
+  name     = "${var.project_name}-${var.env}-${each.key}-repo"
 }
 
 module "vpc" {
@@ -37,7 +42,8 @@ module "common" {
   vpc_id               = module.vpc.vpc_id
   cloudtrail_bucket_id = module.s3.cloudtrail_bucket_id
   users                = var.users
-  kms_key_arn  = data.aws_kms_alias.infra_key.target_key_arn
+  kms_key_arn          = data.aws_kms_alias.infra_key.target_key_arn
+  alb_arn              = module.alb.alb_arn
 }
 
 module "s3" {
@@ -55,6 +61,8 @@ module "alb" {
   public_subnet_ids = module.vpc.public_subnet_ids
   alb_sg_id         = module.security_group.alb_sg_id # 아까 만든 보안 그룹 ID
   service_config    = local.service_config
+  certificate_arn   = module.route53.certificate_arn
+  enable_https      = true
 }
 
 data "aws_ssm_parameter" "db_password" {
@@ -79,16 +87,17 @@ module "rds" {
   rds_sg_ids     = module.security_group.rds_sg_ids
 
   # [핵심] SSM에서 읽어온 실제 비밀번호 값을 전달
-  db_password = data.aws_ssm_parameter.db_password.value
+  service_db_passwords = { user = data.aws_ssm_parameter.db_password.value }
 }
 
 module "redis" {
-  source             = "../../modules/redis" # 모듈 경로 확인해주세요!
-  project_name       = var.project_name
-  env                = var.env
-  private_subnet_ids = module.vpc.private_db_subnet_ids
-  redis_sg_id        = module.security_group.redis_sg_id
-  kms_key_arn        = module.common.kms_key_arn
+  source                     = "../../modules/redis" # 모듈 경로 확인해주세요!
+  project_name               = var.project_name
+  env                        = var.env
+  private_subnet_ids         = module.vpc.private_db_subnet_ids
+  redis_sg_id                = module.security_group.redis_sg_id
+  kms_key_arn                = module.common.kms_key_arn
+  transit_encryption_enabled = var.env == "prod" ? true : false
 }
 
 module "msk" {
@@ -108,11 +117,11 @@ module "ecs" {
   app_subnet_ids = module.vpc.private_app_subnet_ids
   aws_region     = data.aws_region.current.name
   account_id     = data.aws_caller_identity.current.account_id
-  
+
   # MSK 주소 전달
   msk_bootstrap_brokers = module.msk.bootstrap_brokers
   service_config        = local.service_config
-  
+
   # ALB 타겟 그룹 전달
   target_group_arns = module.alb.target_group_arns
 
@@ -124,10 +133,10 @@ module "ecs" {
 
   # RDS 엔드포인트 전달
   rds_endpoints = module.rds.db_endpoints
-  
+
   # Redis 엔드포인트 전달
   redis_endpoint = module.redis.redis_primary_endpoint
-  
+
   # 컨테이너 이름 suffix 비활성화 (기존 이름 유지)
   container_name_suffix = false
 
@@ -136,4 +145,13 @@ module "ecs" {
   ecs_task_role_arn           = module.common.ecs_task_role_arn
   cloud_map_namespace_arn     = module.common.cloud_map_namespace_arn
   kms_key_arn                 = module.common.kms_key_arn
+}
+
+module "route53" {
+  source           = "../../modules/route53"
+  domain_name      = "dev.un-box.click"
+  hosted_zone_name = "un-box.click"
+  project_name     = var.project_name
+  alb_dns_name     = module.alb.alb_dns_name
+  alb_zone_id      = module.alb.alb_zone_id
 }

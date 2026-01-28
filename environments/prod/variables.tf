@@ -30,3 +30,11 @@ variable "kms_key_arn" {
   description = "KMS ARN from bootstrap"
   type        = string
 }
+
+variable "aws_region" {
+  type = string
+}
+
+variable "account_id" {
+  type = string
+}

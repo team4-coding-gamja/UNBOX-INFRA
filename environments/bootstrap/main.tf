@@ -77,57 +77,60 @@ resource "aws_dynamodb_table" "terraform_locks" {
 }
 
 
-# 1. 환경별 KMS 마스터 키 생성
-resource "aws_kms_key" "this" {
-  # 리스트를 set으로 변환하여 순회
-  for_each = toset(var.env)
+# # 1. 환경별 KMS 마스터 키 생성
+# resource "aws_kms_key" "this" {
+#   # 리스트를 set으로 변환하여 순회
+#   for_each = toset(var.env)
 
-  description             = "${var.project_name}-${each.key}-main-kms"
-  deletion_window_in_days = 7
-  enable_key_rotation     = true
+#   description             = "${var.project_name}-${each.key}-main-kms"
+#   deletion_window_in_days = 7
+#   enable_key_rotation     = true
 
-  # [보안] 키 정책: CloudWatch Logs 등이 이 키를 쓸 수 있게 허용
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid    = "Enable IAM User Permissions"
-        Effect = "Allow"
-        Principal = { AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root" }
-        Action   = "kms:*"
-        Resource = "*"
-      },
-      {
-        Sid    = "Allow CloudWatch Logs to use the key"
-        Effect = "Allow"
-        Principal = { Service = "logs.ap-northeast-2.amazonaws.com" }
-        Action = ["kms:Encrypt*", "kms:Decrypt*", "kms:ReEncrypt*", "kms:GenerateDataKey*", "kms:Describe*"]
-        Resource = "*"
-      }
-    ]
-  })
+#   # [보안] 키 정책: CloudWatch Logs 등이 이 키를 쓸 수 있게 허용
+#   policy = jsonencode({
+#     Version = "2012-10-17"
+#     Statement = [
+#       {
+#         Sid    = "Enable IAM User Permissions"
+#         Effect = "Allow"
+#         Principal = { AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root" }
+#         Action   = "kms:*"
+#         Resource = "*"
+#       },
+#       {
+#         Sid    = "Allow CloudWatch Logs to use the key"
+#         Effect = "Allow"
+#         Principal = { Service = "logs.ap-northeast-2.amazonaws.com" }
+#         Action = ["kms:Encrypt*", "kms:Decrypt*", "kms:ReEncrypt*", "kms:GenerateDataKey*", "kms:Describe*"]
+#         Resource = "*"
+#       }
+#     ]
+#   })
 
-  tags = {
-    Name        = "${var.project_name}-${each.key}-kms"
-    Environment = each.key
-  }
+#   tags = {
+#     Name        = "${var.project_name}-${each.key}-kms"
+#     Environment = each.key
+#   }
+# }
+
+# # 2. 환경별 별칭(Alias) 생성
+# resource "aws_kms_alias" "this" {
+#   for_each = toset(var.env)
+
+#   # alias/unbox/dev/main-key 형식
+#   name          = "alias/${var.project_name}/${each.key}/main-key"
+#   target_key_id = aws_kms_key.this[each.key].key_id
+# }
+
+# # 3. 결과 출력 (Map 형태)
+# output "kms_key_arns" {
+#   description = "환경별 KMS ARN 맵"
+#   value       = { for k, v in aws_kms_key.this : k => v.arn }
+# }
+data "aws_kms_alias" "dev_kms" {
+  # 기존에 콘솔에서 만드신 별칭 이름 (alias/unbox/dev/main-key 등)
+  name = "alias/unbox/dev/main-key"
 }
-
-# 2. 환경별 별칭(Alias) 생성
-resource "aws_kms_alias" "this" {
-  for_each = toset(var.env)
-
-  # alias/unbox/dev/main-key 형식
-  name          = "alias/${var.project_name}/${each.key}/main-key"
-  target_key_id = aws_kms_key.this[each.key].key_id
-}
-
-# 3. 결과 출력 (Map 형태)
-output "kms_key_arns" {
-  description = "환경별 KMS ARN 맵"
-  value       = { for k, v in aws_kms_key.this : k => v.arn }
-}
-
 # --- 데이터 및 변수 ---
 data "aws_caller_identity" "current" {}
 
@@ -177,3 +180,78 @@ resource "aws_ecr_repository" "services" {
   }
 }
 
+
+# ---------------------------------------------------------
+# 1. 환경별 x 서비스별 조합 데이터 생성 (Locals)
+# ---------------------------------------------------------
+locals {
+  # 환경(dev, prod)과 서비스(user, product 등)를 조합하여 시크릿 생성용 맵 생성
+  secret_map = {
+    for pair in setproduct(var.env, keys(local.service_config)) :
+    "${pair[0]}-${pair[1]}" => {
+      env     = pair[0]
+      service = pair[1]
+    }
+  }
+}
+
+# ---------------------------------------------------------
+# 2. 랜덤 패스워드 생성 (모든 환경 x 모든 서비스)
+# ---------------------------------------------------------
+resource "random_password" "db_password" {
+  for_each = local.secret_map
+  length   = 16
+  special  = true
+  override_special = "!#$%&*()-_=+[]{}<>" 
+}
+
+resource "random_password" "redis_password" {
+  for_each = toset(var.env) # 환경별로(dev, prod) 하나씩 생성
+  length   = 20
+  special  = false 
+}
+
+# ---------------------------------------------------------
+# 3. Secrets Manager 생성 (Prod 환경만 생성하도록 필터링)
+# ---------------------------------------------------------
+
+# 3-1. 서비스별 DB 비밀번호
+resource "aws_secretsmanager_secret" "db_password" {
+  # 'prod' 환경인 조합만 골라서 생성
+  for_each = { for k, v in local.secret_map : k => v if v.env == "prod" }
+
+  name        = "${var.project_name}/${each.value.env}/${each.value.service}/db-password"
+  description = "Database password for ${each.value.service} in ${each.value.env}"
+  kms_key_id = data.aws_kms_alias.dev_kms.target_key_arn
+
+  # 부트스트랩이므로 삭제 방지 및 유예기간 설정
+  recovery_window_in_days = 7
+  lifecycle {
+    prevent_destroy = true 
+    ignore_changes  = [name, description, kms_key_id]
+  }
+}
+
+# resource "aws_secretsmanager_secret_version" "db_password" {
+#   for_each      = { for k, v in local.secret_map : k => v if v.env == "prod" }
+#   secret_id     = aws_secretsmanager_secret.db_password[each.key].id
+#   secret_string = random_password.db_password[each.key].result
+# }
+
+# 3-2. Redis 비밀번호
+resource "aws_secretsmanager_secret" "redis_password" {
+  for_each = toset([for e in var.env : e if e == "prod"])
+
+  name       = "${var.project_name}/${each.key}/redis_password"
+  kms_key_id = data.aws_kms_alias.dev_kms.target_key_arn
+  lifecycle { 
+    prevent_destroy = true 
+    ignore_changes  = [name, description] # 이름 변경 방지
+  }
+}
+
+resource "aws_secretsmanager_secret_version" "redis_password" {
+  for_each      = toset([for e in var.env : e if e == "prod"])
+  secret_id     = aws_secretsmanager_secret.redis_password[each.key].id
+  secret_string = random_password.redis_password[each.key].result
+}

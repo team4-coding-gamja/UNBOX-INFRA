@@ -9,7 +9,6 @@ resource "aws_wafv2_web_acl" "main" {
     allow {}
   }
 
-  # 딱 이거 하나! Core Rule Set (CRS)
   rule {
     name     = "AWS-AWSManagedRulesCommonRuleSet"
     priority = 1

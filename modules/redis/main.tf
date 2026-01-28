@@ -41,6 +41,6 @@ resource "aws_elasticache_replication_group" "this" {
   at_rest_encryption_enabled = true
   kms_key_id                 = var.kms_key_arn
   transit_encryption_enabled = true # 전송 중 암호화 (보안 권장)
-
+  auth_token                 = var.auth_token
   tags = { Name = "${var.project_name}-${var.env}-redis" }
 }
