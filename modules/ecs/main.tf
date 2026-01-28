@@ -66,7 +66,7 @@ resource "aws_ecs_task_definition" "services" {
         # prod: 서비스별 RDS 사용
         {
           name  = "SPRING_DATASOURCE_URL"
-          value = "jdbc:postgresql://${var.env == "dev" ? var.rds_endpoints["common"] : var.rds_endpoints[each.key]}/${each.key}_db"
+          value = "jdbc:postgresql://${var.env == "dev" ? "${var.rds_endpoints["common"]}/dev_db" : "${var.rds_endpoints[each.key]}/${each.key}_db"}"
         },
         { name = "SPRING_DATASOURCE_USERNAME", value = "unbox_admin" },
         { name = "DB_DRIVER_CLASS_NAME", value = "org.postgresql.Driver" },
@@ -79,7 +79,8 @@ resource "aws_ecs_task_definition" "services" {
         { name = "PRODUCT_SERVICE_URL", value = "http://product.unbox.local" },
         { name = "PAYMENT_SERVICE_URL", value = "http://payment.unbox.local" },
         { name = "ORDER_SERVICE_URL", value = "http://order.unbox.local" },
-        { name = "TRADE_SERVICE_URL", value = "http://trade.unbox.local" }
+        { name = "TRADE_SERVICE_URL", value = "http://trade.unbox.local" },
+        { name = "CORS_ALLOWED_ORIGINS", value = "https://dev.un-box.click/" }
       ]
 
       # [환경별 로직] Secrets 설정
@@ -113,7 +114,7 @@ resource "aws_ecs_task_definition" "services" {
         ) : concat([
           {
             name      = "SPRING_DATASOURCE_PASSWORD"
-            valueFrom = "arn:aws:ssm:${var.aws_region}:${var.account_id}:parameter/${var.project_name}/${var.env}/${each.key}/DB_PASSWORD"
+            valueFrom = "arn:aws:ssm:${var.aws_region}:${var.account_id}:parameter/${var.project_name}/${var.env}/common/DB_PASSWORD"
           },
           {
             name      = "SPRING_JWT_SECRET"

@@ -67,7 +67,7 @@ module "alb" {
 
 data "aws_ssm_parameter" "db_password" {
   # common 모듈 배포 후에 값이 수동으로 채워져 있어야 합니다.
-  name = "/${var.project_name}/${var.env}/user/DB_PASSWORD"
+  name = "/${var.project_name}/${var.env}/common/DB_PASSWORD"
 
   # common 모듈이 먼저 생성되어야 하므로 명시적 의존성 추가
   depends_on = [module.common]
@@ -87,7 +87,7 @@ module "rds" {
   rds_sg_ids     = module.security_group.rds_sg_ids
 
   # [핵심] SSM에서 읽어온 실제 비밀번호 값을 전달
-  service_db_passwords = { user = data.aws_ssm_parameter.db_password.value }
+  service_db_passwords = { common = data.aws_ssm_parameter.db_password.value }
 }
 
 module "redis" {
