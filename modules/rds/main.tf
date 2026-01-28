@@ -10,18 +10,19 @@ resource "aws_db_instance" "postgresql" {
   # [로직] Prod는 5개 서비스 각각 / Dev는 'common' 하나만
   for_each = var.env == "prod" ? toset(keys(var.service_config)) : (var.env == "dev" ? toset(["common"]) : toset([]))
 
-  identifier        = "${var.project_name}-${var.env}-${each.key}-db"
-  engine            = "postgres"
-  engine_version    = "16"
-  instance_class    = "db.t4g.micro"
-  allocated_storage = 20
+  identifier          = "${var.project_name}-${var.env}-${each.key}-db"
+  engine              = "postgres"
+  engine_version      = "16"
+  instance_class      = "db.t4g.micro"
+  allocated_storage   = 20
+  publicly_accessible = true
 
   db_name  = var.env == "prod" ? "${each.key}_db" : "dev_db"
   username = "unbox_admin"
   password = (
     var.env == "prod"
     ? var.service_db_passwords[each.key]
-    : var.service_db_passwords["user"]
+    : var.service_db_passwords["common"]
   )
 
   db_subnet_group_name = aws_db_subnet_group.this.name
@@ -42,8 +43,8 @@ resource "aws_db_instance" "postgresql" {
 
   # CloudWatch Logs 활성화 (RDS로그 보내기)
   enabled_cloudwatch_logs_exports = ["postgresql"]
-  lifecycle {
-    ignore_changes = [password]
-  }
+  # lifecycle {
+  #   ignore_changes = [password]
+  # }
   tags = { Name = "${var.project_name}-${var.env}-${each.key}-db" }
 }

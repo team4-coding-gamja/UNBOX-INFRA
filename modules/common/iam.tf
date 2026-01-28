@@ -11,7 +11,7 @@ resource "aws_iam_role" "ecs_task_execution_role" {
     }]
   })
 }
-data "aws_iam_openid_connect_provider" "github" {
+data "tls_certificate" "github" {
   url = "https://token.actions.githubusercontent.com"
 }
 # 1-1. 기본 실행 권한 (ECR 이미지 가져오기, CloudWatch 기본 로그)
@@ -252,15 +252,11 @@ resource "aws_iam_role_policy" "cloudtrail_cloudwatch_policy" {
 #   target_type = "AWS_ACCOUNT"
 # }
 
-# data "tls_certificate" "github" {
-#   url = "https://token.actions.githubusercontent.com"
-# }
-
-# resource "aws_iam_openid_connect_provider" "github" {
-#   url             = "https://token.actions.githubusercontent.com"
-#   client_id_list  = ["sts.amazonaws.com"]
-#   thumbprint_list = [data.tls_certificate.github.certificates[0].sha1_fingerprint]
-# }
+resource "aws_iam_openid_connect_provider" "github" {
+  url             = "https://token.actions.githubusercontent.com"
+  client_id_list  = ["sts.amazonaws.com"]
+  thumbprint_list = [data.tls_certificate.github.certificates[0].sha1_fingerprint]
+}
 
 resource "aws_iam_role" "github_actions_ecr" {
   name = "github-actions-ecr-role"
@@ -270,7 +266,7 @@ resource "aws_iam_role" "github_actions_ecr" {
     Statement = [{
       Action    = "sts:AssumeRoleWithWebIdentity"
       Effect    = "Allow"
-      Principal = { Federated = data.aws_iam_openid_connect_provider.github.arn }
+      Principal = { Federated = aws_iam_openid_connect_provider.github.arn }
       Condition = {
         StringLike = {
           "token.actions.githubusercontent.com:sub" = "repo:team4-coding-gamja/UNBOX-BE:*"
