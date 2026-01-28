@@ -32,6 +32,9 @@ resource "aws_db_instance" "postgresql" {
   
   storage_encrypted = true
   kms_key_id        = var.kms_key_arn
+  
+  # CloudWatch Logs 활성화 (RDS로그 보내기)
+  enabled_cloudwatch_logs_exports = ["postgresql"]
   lifecycle { 
     ignore_changes = [password]
   }
