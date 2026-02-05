@@ -1,0 +1,10 @@
+# 로컬 테스트용 가벼운 설정
+replicaCount: 1
+service:
+  type: ClusterIP
+  port: 9411
+resources:
+  limits:
+    memory: 512Mi
+  requests:
+    memory: 128Mi
