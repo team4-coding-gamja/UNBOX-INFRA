@@ -1,0 +1,21 @@
+# 기본적으로 Linkerd는 끔 (필요하면 켬)
+linkerd:
+  enabled: false
+
+# 기본 리소스 (작게)
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "250m"
+  limits:
+    memory: "1024Mi"
+    cpu: "1000m"
+
+# 환경변수 리스트 (비워둠)
+env: 
+  USER_SERVICE_URL: "http://user-service.unbox-app"
+  PRODUCT_SERVICE_URL: "http://product-service.unbox-app"
+  ORDER_SERVICE_URL: "http://order-service.unbox-app"
+  PAYMENT_SERVICE_URL: "http://payment-service.unbox-app"
+  TRADE_SERVICE_URL: "http://trade-service.unbox-app"
+  

@@ -1,0 +1,16 @@
+# 이미지 설정
+image:
+  repository: apache/kafka
+  tag: 3.9.0
+  pullPolicy: IfNotPresent
+
+# 서비스 포트 설정
+service:
+  port: 9092
+
+# 리소스 (필요하면 수정)
+resources:
+  limits:
+    memory: 1Gi
+  requests:
+    memory: 512Mi
