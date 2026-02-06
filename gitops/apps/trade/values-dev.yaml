@@ -1,0 +1,30 @@
+# Trade Service - Dev 환경 오버라이드
+replicaCount: 2
+
+image:
+  repository: 632941626317.dkr.ecr.ap-northeast-2.amazonaws.com/unbox-dev-trade-repo
+  tag: dev-2044477
+
+# Dev 환경에서는 Linkerd 활성화
+linkerd:
+  enabled: true
+
+env:
+  SPRING_JWT_SECRET: "c2VjcmV0S2V5Rm9yTG9jYWxEZXZlbG9wbWVudFRoaXNJc1ZlcnlJbXBvcnRhbnQ="
+  # Dev RDS
+  SPRING_DATASOURCE_URL: "jdbc:postgresql://unbox-dev-common-db.crmw2cqokxc4.ap-northeast-2.rds.amazonaws.com:5432/dev_db"
+  SPRING_DATASOURCE_USERNAME: "unbox_admin"
+  SPRING_DATASOURCE_PASSWORD:
+    valueFrom:
+      secretKeyRef:
+        name: db-secret
+        key: DB_PASSWORD
+  
+  # Dev Kafka
+  SPRING_KAFKA_BOOTSTRAP_SERVERS: "kafka.unbox-infra.svc.cluster.local:9092"
+  
+  # Dev Redis (ElastiCache)
+  SPRING_DATA_REDIS_HOST: "master.unbox-dev-redis.r0vran.apn2.cache.amazonaws.com"
+  
+  # Dev Zipkin
+  MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: "http://zipkin.unbox-infra.svc.cluster.local:9411/api/v2/spans"

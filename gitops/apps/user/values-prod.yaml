@@ -1,0 +1,45 @@
+# User Service - Prod 환경 오버라이드
+replicaCount: 3
+
+image:
+  repository: 632941626317.dkr.ecr.ap-northeast-2.amazonaws.com/unbox-prod-user-repo
+  tag: prod-2044477
+
+# 프로덕션에서는 Linkerd 활성화
+linkerd:
+  enabled: true
+
+# 프로덕션 리소스 제한
+resources:
+  requests:
+    memory: "512Mi"
+    cpu: "250m"
+  limits:
+    memory: "1Gi"
+    cpu: "500m"
+
+env:
+  SPRING_JWT_SECRET:
+    valueFrom:
+      secretKeyRef:
+        name: app-secret
+        key: JWT_SECRET
+  SPRING_JPA_HIBERNATE_DDL_AUTO: "validate"  # 프로덕션에서는 validate만
+  
+  # Prod RDS
+  SPRING_DATASOURCE_URL: "jdbc:postgresql://unbox-prod-common-db.endpoint.ap-northeast-2.rds.amazonaws.com:5432/prod_db"
+  SPRING_DATASOURCE_USERNAME: "unbox_admin"
+  SPRING_DATASOURCE_PASSWORD:
+    valueFrom:
+      secretKeyRef:
+        name: db-secret
+        key: DB_PASSWORD
+  
+  # Prod Kafka
+  SPRING_KAFKA_BOOTSTRAP_SERVERS: "prod-kafka.unbox-infra.svc.cluster.local:9092"
+  
+  # Prod Redis
+  SPRING_DATA_REDIS_HOST: "master.unbox-prod-redis.endpoint.apn2.cache.amazonaws.com"
+  
+  # Prod Zipkin
+  MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: "http://zipkin.unbox-infra.svc.cluster.local:9411/api/v2/spans"

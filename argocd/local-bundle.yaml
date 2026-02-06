@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: unbox-local-services
+  namespace: argocd
+  labels:
+    env: local
+    bundle: services
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/team4-coding-gamja/UNBOX-INFRA.git
+    targetRevision: HEAD
+    path: gitops/apps
+    directory:
+      recurse: true
+      include: "*/application-local.yaml"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

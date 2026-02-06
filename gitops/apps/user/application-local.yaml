@@ -1,0 +1,31 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: user-service-local
+  namespace: argocd
+  labels:
+    app: user-service
+    env: local
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/team4-coding-gamja/UNBOX-INFRA.git
+    targetRevision: HEAD
+    path: gitops/charts
+    helm:
+      valueFiles:
+        - values.yaml                       # 차트 기본값
+        - ../apps/user/values.yaml          # 서비스 공통값
+        - ../apps/user/values-local.yaml    # 환경별 오버라이드
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: unbox-local
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+  revisionHistoryLimit: 10

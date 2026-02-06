@@ -1,43 +1,42 @@
-# 1. 앱 기본 정보
+# Payment Service - 공통 기본값
 appName: payment-service
 replicaCount: 1
+
 image:
-  repository: 632941626317.dkr.ecr.ap-northeast-2.amazonaws.com/unbox-dev-payment-repo  # 로컬 도커 이미지 이름
-  tag: latest                   # 태그
+  repository: ""  # 환경별로 오버라이드
+  tag: latest
   pullPolicy: Always
 
-# 2. 로컬이니까 Linkerd 끄기 (테스트할 때만 true)
+# 서비스 메시 설정
 linkerd:
-  enabled: false
+  enabled: false  # 기본값은 비활성화
+
 service:
   port: 80
   targetPort: 8085
 
 containerPort: 8085
 
+# 공통 환경변수
 env:
   SERVER_PORT: "8085"
-  SPRING_JWT_SECRET: "c2VjcmV0S2V5Rm9yTG9jYWxEZXZlbG9wbWVudFRoaXNJc1ZlcnlJbXBvcnRhbnQ="
   DB_DRIVER_CLASS_NAME: "org.postgresql.Driver"
-  # DB 연결 (아까 설치한 postgres 서비스명 사용)
-  SPRING_DATASOURCE_URL: "jdbc:postgresql://unbox-dev-common-db.crmw2cqokxc4.ap-northeast-2.rds.amazonaws.com:5432/dev_db"
-  SPRING_DATASOURCE_USERNAME: "unbox_admin"
-  SPRING_DATASOURCE_PASSWORD:
-    valueFrom:
-      secretKeyRef:
-        name: db-secret
-        key: DB_PASSWORD
   SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
+  SPRING_JPA_SHOW_SQL: "false"
   
-  # (참고) SQL 쿼리 나가는 거 보고 싶으면 이것도 추가
-  SPRING_JPA_SHOW_SQL: "true"
-  # Kafka 연결 (아까 설치한 kafka 서비스명 사용)
-  SPRING_KAFKA_BOOTSTRAP_SERVERS: "kafka.unbox-infra.svc.cluster.local:9092"
-  
-  # Redis 연결 (아까 설치한 redis 서비스명 사용)
-  SPRING_DATA_REDIS_HOST: "master.unbox-dev-redis.r0vran.apn2.cache.amazonaws.com"
+  # 기본 연결 설정 (환경별로 오버라이드)
+  SPRING_DATASOURCE_URL: ""
+  SPRING_DATASOURCE_USERNAME: ""
+  SPRING_KAFKA_BOOTSTRAP_SERVERS: ""
+  SPRING_DATA_REDIS_HOST: ""
   SPRING_DATA_REDIS_PORT: "6379"
-  # SPRING_DATA_REDIS_PASSWORD: "1234"
-  
-  # Zipkin 연결
-  MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: "http://zipkin.unbox-infra.svc.cluster.local:9411/api/v2/spans"
+  MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: ""
+
+# 리소스 제한 (기본값)
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "100m"
+  limits:
+    memory: "512Mi"
+    cpu: "250m"

@@ -1,0 +1,26 @@
+var.account_id
+  Enter a value: 
+var.aws_region
+  Enter a value: 
+var.kms_key_arn
+  KMS ARN from bootstrap
+
+  Enter a value: 
+var.users
+  Enter a value: 
+
+Error: Missing expression
+
+  on <value for var.users> line 1:
+  (source code not available)
+
+Expected the start of an expression, but found the end of the file.
+
+Error: No value for required variable
+
+  on variables.tf line 20:
+  20: variable "users" {
+
+The root module input variable "users" is not set, and has no default value.
+Use a -var or -var-file command line argument to provide a value for this
+variable.

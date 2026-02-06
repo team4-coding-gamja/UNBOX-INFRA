@@ -29,13 +29,13 @@ spec:
               protocol: TCP
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-          # 환경변수 주입 (DB 주소 등)
+          # 환경변수 주입 (DB 주소, Secret 참조 등)
           env:
             {{- range $key, $value := .Values.env }}
             - name: {{ $key }}
-{{- if kindIs "string" $value }}
+              {{- if kindIs "string" $value }}
               value: {{ $value | quote }}
-{{- else }}
-{{ toYaml $value | indent 14 }}
-{{- end }}
+              {{- else if kindIs "map" $value }}
+              {{- toYaml $value | nindent 14 }}
+              {{- end }}
             {{- end }}
