@@ -1,0 +1,11 @@
+apiVersion: elbv2.k8s.aws/v1beta1
+kind: TargetGroupBinding
+metadata:
+  name: {{ .Values.appName }}-tgb
+  labels:
+    app: {{ .Values.appName }}
+spec:
+  serviceRef:
+    name: {{ .Values.appName }} # Service Name must match
+    port: {{ .Values.service.port }}
+  targetGroupARN: {{ .Values.targetGroupArn }}
