@@ -1,0 +1,71 @@
+# ArgoCD 관련 알림 규칙
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-alerts
+  namespace: unbox-monitoring
+  labels:
+    grafana_alert: "1"
+data:
+  argocd-alerts.yaml: |
+    groups:
+      - name: argocd
+        interval: 30s
+        rules:
+          # ArgoCD Sync 실패
+          - alert: ArgoCD_Sync_Failed
+            expr: |
+              argocd_app_sync_total{phase="Failed"} > 0
+            for: 1m
+            labels:
+              severity: cd
+              component: argocd
+            annotations:
+              summary: "ArgoCD Sync 실패"
+              description: "애플리케이션 {{ $labels.name }}의 Sync가 실패했습니다."
+          
+          # ArgoCD 애플리케이션 Degraded 상태
+          - alert: ArgoCD_App_Degraded
+            expr: |
+              argocd_app_health_status{health_status="Degraded"} > 0
+            for: 5m
+            labels:
+              severity: warning
+              component: argocd
+            annotations:
+              summary: "ArgoCD 애플리케이션 Degraded"
+              description: "애플리케이션 {{ $labels.name }}이 Degraded 상태입니다."
+          
+          # ArgoCD 애플리케이션 OutOfSync
+          - alert: ArgoCD_App_OutOfSync
+            expr: |
+              argocd_app_sync_status{sync_status="OutOfSync"} > 0
+            for: 10m
+            labels:
+              severity: warning
+              component: argocd
+            annotations:
+              summary: "ArgoCD 애플리케이션 OutOfSync"
+              description: "애플리케이션 {{ $labels.name }}이 10분 이상 OutOfSync 상태입니다."
+          
+          # ArgoCD Sync 시작 (정보성 알림)
+          - alert: ArgoCD_Sync_Started
+            expr: |
+              increase(argocd_app_sync_total{phase="Running"}[1m]) > 0
+            labels:
+              severity: cd
+              component: argocd
+            annotations:
+              summary: "🚀 ArgoCD Sync 시작"
+              description: "애플리케이션 {{ $labels.name }}의 배포가 시작되었습니다."
+          
+          # ArgoCD Sync 성공 (정보성 알림)
+          - alert: ArgoCD_Sync_Succeeded
+            expr: |
+              increase(argocd_app_sync_total{phase="Succeeded"}[1m]) > 0
+            labels:
+              severity: cd
+              component: argocd
+            annotations:
+              summary: "✅ ArgoCD Sync 완료"
+              description: "애플리케이션 {{ $labels.name }}의 배포가 성공적으로 완료되었습니다."

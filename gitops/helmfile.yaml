@@ -1,126 +1,131 @@
-# helmfile.yaml
+# ⚠️ 이 파일은 더 이상 사용하지 않습니다 ⚠️
+# ArgoCD App-of-Apps 패턴으로 전환했습니다.
+# 새로운 배포 방식: argocd/infra-bundle.yaml 사용
 
-# 1. 사용할 헬름 저장소 등록 (자동으로 repo add 해줌)
-repositories:
-  - name: bitnami
-    url: https://charts.bitnami.com/bitnami
-  - name: openzipkin
-    url: https://openzipkin.github.io/zipkin
-  - name: linkerd
-    url: https://helm.linkerd.io/stable
 
-# 2. 배포할 리스트 (위에서 아래로 순서대로 실행됨)
-releases:
-  ###################################################
-  # [Step 1] 인프라 (DB, MsgQueue, Service Mesh)
-  ###################################################
-  
-  # Linkerd (순서 중요: CRD -> Control Plane)
-  - name: linkerd-crds
-    namespace: linkerd
-    chart: linkerd/linkerd-crds
-    createNamespace: true
-
-  - name: linkerd-control-plane
-    chart: linkerd/linkerd-control-plane
-    namespace: linkerd
-    createNamespace: true
-    values:
-      - identityTrustAnchorsPEM: {{ readFile "ca.crt" | quote }}
-        identity:
-          issuer:
-            tls:
-              crtPEM: {{ readFile "issuer.crt" | quote }}
-              keyPEM: {{ readFile "issuer.key" | quote }}
-            crtExpiry: "2027-02-05T00:00:00Z"
-
-  # # Zipkin
-  # - name: zipkin
-  #   namespace: unbox-infra
-  #   createNamespace: true
-  #   chart: openzipkin/zipkin
-  #   values:
-  #     - ./k8s/infra/zipkin/values.yaml
-
-  # Kafka
-  - name: kafka
-    namespace: unbox-infra
-    createNamespace: true
-    # 중요: 인터넷 주소 대신 로컬 경로를 적습니다.
-    chart: ./infra/kafka
-  #로컬용 DB
-  # PostgreSQL
-  # - name: postgres
-  #   namespace: unbox-db
-  #   createNamespace: true
-  #   chart: bitnami/postgresql
-  #   values:
-  #     - ./k8s/database/postgresql/values.yaml
-
-  # # Redis
-  # - name: redis
-  #   namespace: unbox-db
-  #   createNamespace: true
-  #   chart: bitnami/redis
-  #   values:
-  #     - ./k8s/database/redis/values.yaml
-
-  ###################################################
-  # [Step 2] 애플리케이션 (My Microservices)
-  ###################################################
-  # needs: [postgres, kafka] -> DB가 다 뜨고 나서 앱을 띄우라는 뜻
-
-  # 1. User Service
-  - name: user-svc
-    namespace: unbox-app
-    createNamespace: true
-    chart: ./charts
-    values:
-      - ./apps/user/values.yaml
-    needs:
-      - unbox-db/postgres
-      - unbox-infra/kafka
-
-  # 2. Product Service
-  - name: product-svc
-    namespace: unbox-app
-    createNamespace: true
-    chart: ./charts
-    values:
-      - ./apps/product/values.yaml
-    needs:
-      - unbox-db/postgres
-      - unbox-infra/kafka
-
-  # 3. Order Service
-  - name: order-svc
-    namespace: unbox-app
-    createNamespace: true
-    chart: ./charts
-    values:
-      - ./apps/order/values.yaml
-    needs:
-      - unbox-db/postgres
-      - unbox-infra/kafka
-
-  # 4. Trade Service
-  - name: trade-svc
-    namespace: unbox-app
-    createNamespace: true
-    chart: ./charts
-    values:
-      - ./apps/trade/values.yaml
-    needs:
-      - unbox-db/postgres
-      - unbox-infra/kafka
-
-  # 5. Payment Service
-  - name: payment-svc
-    namespace: unbox-app
-    createNamespace: true
-    chart: ./charts
-    values:
-      - ./apps/payment/values.yaml
-    needs:
-      - unbox-db/postgres
-      - unbox-infra/kafka
+# # helmfile.yaml
+# 
+# # 1. 사용할 헬름 저장소 등록 (자동으로 repo add 해줌)
+# repositories:
+#   - name: bitnami
+#     url: https://charts.bitnami.com/bitnami
+#   - name: openzipkin
+#     url: https://openzipkin.github.io/zipkin
+#   - name: linkerd
+#     url: https://helm.linkerd.io/stable
+# 
+# # 2. 배포할 리스트 (위에서 아래로 순서대로 실행됨)
+# releases:
+#   ###################################################
+#   # [Step 1] 인프라 (DB, MsgQueue, Service Mesh)
+#   ###################################################
+#   
+#   # Linkerd (순서 중요: CRD -> Control Plane)
+#   - name: linkerd-crds
+#     namespace: linkerd
+#     chart: linkerd/linkerd-crds
+#     createNamespace: true
+# 
+#   - name: linkerd-control-plane
+#     chart: linkerd/linkerd-control-plane
+#     namespace: linkerd
+#     createNamespace: true
+#     values:
+#       - identityTrustAnchorsPEM: {{ readFile "ca.crt" | quote }}
+#         identity:
+#           issuer:
+#             tls:
+#               crtPEM: {{ readFile "issuer.crt" | quote }}
+#               keyPEM: {{ readFile "issuer.key" | quote }}
+#             crtExpiry: "2027-02-05T00:00:00Z"
+# 
+#   # # Zipkin
+#   # - name: zipkin
+#   #   namespace: unbox-infra
+#   #   createNamespace: true
+#   #   chart: openzipkin/zipkin
+#   #   values:
+#   #     - ./k8s/infra/zipkin/values.yaml
+# 
+#   # Kafka
+#   - name: kafka
+#     namespace: unbox-infra
+#     createNamespace: true
+#     # 중요: 인터넷 주소 대신 로컬 경로를 적습니다.
+#     chart: ./infra/kafka
+#   #로컬용 DB
+#   # PostgreSQL
+#   # - name: postgres
+#   #   namespace: unbox-db
+#   #   createNamespace: true
+#   #   chart: bitnami/postgresql
+#   #   values:
+#   #     - ./k8s/database/postgresql/values.yaml
+# 
+#   # # Redis
+#   # - name: redis
+#   #   namespace: unbox-db
+#   #   createNamespace: true
+#   #   chart: bitnami/redis
+#   #   values:
+#   #     - ./k8s/database/redis/values.yaml
+# 
+#   ###################################################
+#   # [Step 2] 애플리케이션 (My Microservices)
+#   ###################################################
+#   # needs: [postgres, kafka] -> DB가 다 뜨고 나서 앱을 띄우라는 뜻
+# 
+#   # 1. User Service
+#   - name: user-svc
+#     namespace: unbox-app
+#     createNamespace: true
+#     chart: ./charts
+#     values:
+#       - ./apps/user/values.yaml
+#     needs:
+#       - unbox-db/postgres
+#       - unbox-infra/kafka
+# 
+#   # 2. Product Service
+#   - name: product-svc
+#     namespace: unbox-app
+#     createNamespace: true
+#     chart: ./charts
+#     values:
+#       - ./apps/product/values.yaml
+#     needs:
+#       - unbox-db/postgres
+#       - unbox-infra/kafka
+# 
+#   # 3. Order Service
+#   - name: order-svc
+#     namespace: unbox-app
+#     createNamespace: true
+#     chart: ./charts
+#     values:
+#       - ./apps/order/values.yaml
+#     needs:
+#       - unbox-db/postgres
+#       - unbox-infra/kafka
+# 
+#   # 4. Trade Service
+#   - name: trade-svc
+#     namespace: unbox-app
+#     createNamespace: true
+#     chart: ./charts
+#     values:
+#       - ./apps/trade/values.yaml
+#     needs:
+#       - unbox-db/postgres
+#       - unbox-infra/kafka
+# 
+#   # 5. Payment Service
+#   - name: payment-svc
+#     namespace: unbox-app
+#     createNamespace: true
+#     chart: ./charts
+#     values:
+#       - ./apps/payment/values.yaml
+#     needs:
+#       - unbox-db/postgres
+#       - unbox-infra/kafka

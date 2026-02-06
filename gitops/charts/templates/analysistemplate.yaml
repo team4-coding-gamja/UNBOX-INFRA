@@ -4,8 +4,12 @@ kind: AnalysisTemplate
 metadata:
   name: {{ .Values.appName }}-success-rate
 spec:
+  args:
+  - name: canary-hash
+    # Argo Rollouts가 자동으로 Canary Pod의 hash를 전달
+  
   metrics:
-  # HTTP 성공률 체크
+  # HTTP 성공률 체크 (Canary만)
   - name: success-rate
     interval: {{ .Values.rollout.analysis.interval }}
     successCondition: result[0] >= {{ .Values.rollout.analysis.successRate }}
@@ -17,17 +21,19 @@ spec:
           sum(rate(
             http_server_requests_seconds_count{
               app="{{ .Values.appName }}",
+              rollouts_pod_template_hash="{{`{{args.canary-hash}}`}}",
               status=~"2.."
             }[{{ .Values.rollout.analysis.queryRange }}]
           )) 
           / 
           sum(rate(
             http_server_requests_seconds_count{
-              app="{{ .Values.appName }}"
+              app="{{ .Values.appName }}",
+              rollouts_pod_template_hash="{{`{{args.canary-hash}}`}}"
             }[{{ .Values.rollout.analysis.queryRange }}]
           )) * 100
   
-  # 에러율 체크
+  # 에러율 체크 (Canary만)
   - name: error-rate
     interval: {{ .Values.rollout.analysis.interval }}
     successCondition: result[0] <= {{ .Values.rollout.analysis.errorRate }}
@@ -39,17 +45,19 @@ spec:
           sum(rate(
             http_server_requests_seconds_count{
               app="{{ .Values.appName }}",
+              rollouts_pod_template_hash="{{`{{args.canary-hash}}`}}",
               status=~"5.."
             }[{{ .Values.rollout.analysis.queryRange }}]
           )) 
           / 
           sum(rate(
             http_server_requests_seconds_count{
-              app="{{ .Values.appName }}"
+              app="{{ .Values.appName }}",
+              rollouts_pod_template_hash="{{`{{args.canary-hash}}`}}"
             }[{{ .Values.rollout.analysis.queryRange }}]
           )) * 100
   
-  # 평균 응답 시간 체크
+  # 평균 응답 시간 체크 (Canary만)
   - name: avg-response-time
     interval: {{ .Values.rollout.analysis.interval }}
     successCondition: result[0] <= {{ .Values.rollout.analysis.avgResponseTime }}
@@ -60,13 +68,15 @@ spec:
         query: |
           sum(rate(
             http_server_requests_seconds_sum{
-              app="{{ .Values.appName }}"
+              app="{{ .Values.appName }}",
+              rollouts_pod_template_hash="{{`{{args.canary-hash}}`}}"
             }[{{ .Values.rollout.analysis.queryRange }}]
           )) 
           / 
           sum(rate(
             http_server_requests_seconds_count{
-              app="{{ .Values.appName }}"
+              app="{{ .Values.appName }}",
+              rollouts_pod_template_hash="{{`{{args.canary-hash}}`}}"
             }[{{ .Values.rollout.analysis.queryRange }}]
           )) * 1000
 {{- end }}

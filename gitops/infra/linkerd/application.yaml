@@ -1,0 +1,94 @@
+# ⚠️ 주의: Linkerd는 2단계로 설치해야 합니다
+# 1. linkerd-crds.yaml (CRD 먼저)
+# 2. linkerd-control-plane.yaml (Control Plane 나중에)
+#
+# 이 파일은 Control Plane만 설치합니다.
+# CRD는 linkerd-crds.yaml을 참고하세요.
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: linkerd-control-plane
+  namespace: argocd
+  labels:
+    type: infrastructure
+    component: service-mesh
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"  # CRD 다음에 배포
+spec:
+  project: default
+  source:
+    repoURL: https://helm.linkerd.io/stable
+    chart: linkerd-control-plane
+    targetRevision: 1.16.11
+    helm:
+      releaseName: linkerd-control-plane
+      values: |
+        # 고가용성(HA) 모드 끄기
+        enableHA: false
+        
+        # 컨트롤러 파드 개수 제한
+        controllerReplicas: 1
+        
+        # 구성 요소별 레플리카 1개로 고정
+        proxyInjector:
+          replicaCount: 1
+        spValidator:
+          replicaCount: 1
+        
+        # 프로메테우스 내장
+        prometheus:
+          enabled: true
+        
+        # 정책 설정 (기본 허용)
+        policyValidator:
+          enabled: false
+        
+        # TLS 인증서 설정
+        # 
+        # 옵션 1: 자동 생성 (기본값, 개발/테스트용)
+        # - Linkerd가 자동으로 자체 서명 인증서 생성
+        # - 별도 설정 불필요
+        # 
+        # 옵션 2: 수동 인증서 (프로덕션용)
+        # - 아래 주석을 해제하고 실제 인증서 내용 입력
+        # - Kubernetes Secret으로 관리하는 것을 권장
+        # 
+        # identityTrustAnchorsPEM: |
+        #   -----BEGIN CERTIFICATE-----
+        #   (ca.crt 내용)
+        #   -----END CERTIFICATE-----
+        # 
+        # identity:
+        #   issuer:
+        #     scheme: kubernetes.io/tls
+        #     tls:
+        #       crtPEM: |
+        #         -----BEGIN CERTIFICATE-----
+        #         (issuer.crt 내용)
+        #         -----END CERTIFICATE-----
+        #       keyPEM: |
+        #         -----BEGIN PRIVATE KEY-----
+        #         (issuer.key 내용)
+        #         -----END PRIVATE KEY-----
+        #     crtExpiry: "2027-02-05T00:00:00Z"
+        # 
+        # 옵션 3: cert-manager 사용 (프로덕션 권장)
+        # identity:
+        #   issuer:
+        #     scheme: cert-manager
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: linkerd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
