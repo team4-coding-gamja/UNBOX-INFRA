@@ -1,0 +1,15 @@
+{{- if and .Values.rollout.enabled (eq .Values.rollout.strategy "blueGreen") }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.appName }}-preview
+  labels:
+    app: {{ .Values.appName }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: {{ .Values.containerPort | default 8080 }}
+  selector:
+    app: {{ .Values.appName }}
+{{- end }}
