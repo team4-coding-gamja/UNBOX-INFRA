@@ -55,6 +55,18 @@ resource "aws_launch_template" "eks_node" {
       delete_on_termination = true
     }
   }
+
+  metadata_options {
+    http_endpoint               = "enabled"
+    http_tokens                 = "required"
+    http_put_response_hop_limit = 2
+    instance_metadata_tags      = "enabled"
+  }
+
+  network_interfaces {
+    associate_public_ip_address = false
+    security_groups             = [var.node_security_group_id]
+  }
 }
 
 resource "aws_eks_node_group" "main" {

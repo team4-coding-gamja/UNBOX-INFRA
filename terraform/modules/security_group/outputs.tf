@@ -7,6 +7,8 @@ output "rds_sg_ids" {
 }
 
 output "redis_sg_id" { value = aws_security_group.redis.id }
-output "msk_sg_id"   { value = aws_security_group.msk.id }
-output "nat_sg_id"   { value = var.env != "prod" ? aws_security_group.nat[0].id : null }
-output "alb_sg_id"   { value = aws_security_group.alb.id }
+output "msk_sg_id" { value = aws_security_group.msk.id }
+output "nat_sg_id" { value = var.env != "prod" ? aws_security_group.nat[0].id : null }
+
+output "alb_sg_id" { value = aws_security_group.alb.id }
+output "eks_node_sg_id" { value = aws_security_group.eks_node.id }

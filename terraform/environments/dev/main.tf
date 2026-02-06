@@ -29,10 +29,11 @@ module "vpc" {
 }
 
 module "security_group" {
-  source       = "../../modules/security_group"
-  env          = var.env
-  project_name = var.project_name
-  vpc_id       = module.vpc.vpc_id
+  source         = "../../modules/security_group"
+  env            = var.env
+  project_name   = var.project_name
+  vpc_id         = module.vpc.vpc_id
+  service_config = local.service_config
 }
 
 module "common" {
@@ -138,6 +139,7 @@ module "eks" {
   node_role_arn            = module.common.eks_node_role_arn
   fargate_profile_role_arn = module.common.eks_fargate_role_arn
   kms_key_arn              = module.common.kms_key_arn
+  node_security_group_id   = module.security_group.eks_node_sg_id
 }
 
 # [Fix] EKS Cluster -> RDS Security Group Rule (Avoid Cyclic Dependency)
@@ -148,6 +150,6 @@ resource "aws_security_group_rule" "rds_ingress_from_eks_cluster" {
   to_port                  = 5432
   protocol                 = "tcp"
   security_group_id        = module.security_group.rds_sg_ids[each.key]
-  source_security_group_id = module.eks.cluster_security_group_id
-  description              = "Allow EKS Cluster Nodes to access RDS"
+  source_security_group_id = module.security_group.eks_node_sg_id
+  description              = "Allow EKS Worker Nodes to access RDS"
 }

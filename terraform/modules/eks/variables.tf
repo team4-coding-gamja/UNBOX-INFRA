@@ -84,9 +84,13 @@ variable "fargate_profile_role_arn" {
   default     = null
 }
 
+variable "node_security_group_id" {
+  description = "Security Group ID to attach to Worker Nodes"
+  type        = string
+  default     = ""
+}
+
 variable "kms_key_arn" {
   description = "EKS Node EBS Volume KMS Key ARN"
   type        = string
 }
-
-

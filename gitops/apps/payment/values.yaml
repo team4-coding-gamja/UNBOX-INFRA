@@ -2,9 +2,11 @@
 appName: payment-service
 replicaCount: 1
 image:
-  repository: 632941626317.dkr.ecr.ap-northeast-2.amazonaws.com/unbox-dev-payment-repo  # 로컬 도커 이미지 이름
-  tag: latest                   # 태그
+  repository: 632941626317.dkr.ecr.ap-northeast-2.amazonaws.com/unbox-dev-payment-repo
+  tag: latest
   pullPolicy: Always
+
+targetGroupArn: "arn:aws:elasticloadbalancing:ap-northeast-2:632941626317:targetgroup/payme-2026020523301244430000000f/f4fbd46cddfdfc53"
 
 # 2. 로컬이니까 Linkerd 끄기 (테스트할 때만 true)
 linkerd:
@@ -17,7 +19,12 @@ containerPort: 8085
 
 env:
   SERVER_PORT: "8085"
-  SPRING_JWT_SECRET: "c2VjcmV0S2V5Rm9yTG9jYWxEZXZlbG9wbWVudFRoaXNJc1ZlcnlJbXBvcnRhbnQ="
+  SERVER_SERVLET_CONTEXT_PATH: "/payment"
+  SPRING_JWT_SECRET:
+    valueFrom:
+      secretKeyRef:
+        name: db-secret
+        key: JWT_SECRET
   DB_DRIVER_CLASS_NAME: "org.postgresql.Driver"
   # DB 연결 (아까 설치한 postgres 서비스명 사용)
   SPRING_DATASOURCE_URL: "jdbc:postgresql://unbox-dev-common-db.crmw2cqokxc4.ap-northeast-2.rds.amazonaws.com:5432/dev_db"
@@ -37,7 +44,10 @@ env:
   # Redis 연결 (아까 설치한 redis 서비스명 사용)
   SPRING_DATA_REDIS_HOST: "master.unbox-dev-redis.r0vran.apn2.cache.amazonaws.com"
   SPRING_DATA_REDIS_PORT: "6379"
+  SPRING_DATA_REDIS_SSL: "true"
   # SPRING_DATA_REDIS_PASSWORD: "1234"
   
   # Zipkin 연결
   MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: "http://zipkin.unbox-infra.svc.cluster.local:9411/api/v2/spans"
+  TOSS_SECRET_KEY: "test_sk_vZnjEJeQVxJj574wXDnP8PmOoBN0"
+  TOSS_SECURITY_KEY: "1bca83b538ebfacd601d91c295f2cc6e24dfde5b0705550473ac1a74fed0dd09"
