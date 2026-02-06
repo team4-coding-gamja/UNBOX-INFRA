@@ -22,6 +22,10 @@ rollout:
     - pause: {duration: 120s}  # 2분 대기
     - setWeight: 75   # 75% 트래픽
     - pause: {duration: 120s}  # 2분 대기
+  analysis:
+    enabled: true  # Prod에서 Analysis 활성화
+    successRate: 98  # Prod는 더 엄격한 기준 (98%)
+    errorRate: 2     # 2% 이하 에러율
 
 # 프로덕션 리소스 제한
 resources:

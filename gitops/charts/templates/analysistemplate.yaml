@@ -1,0 +1,72 @@
+{{- if and .Values.rollout.enabled (eq .Values.rollout.strategy "canary") .Values.rollout.analysis.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: {{ .Values.appName }}-success-rate
+spec:
+  metrics:
+  # HTTP 성공률 체크
+  - name: success-rate
+    interval: {{ .Values.rollout.analysis.interval }}
+    successCondition: result[0] >= {{ .Values.rollout.analysis.successRate }}
+    failureLimit: {{ .Values.rollout.analysis.failureLimit }}
+    provider:
+      prometheus:
+        address: {{ .Values.rollout.analysis.prometheusAddress }}
+        query: |
+          sum(rate(
+            http_server_requests_seconds_count{
+              app="{{ .Values.appName }}",
+              status=~"2.."
+            }[{{ .Values.rollout.analysis.queryRange }}]
+          )) 
+          / 
+          sum(rate(
+            http_server_requests_seconds_count{
+              app="{{ .Values.appName }}"
+            }[{{ .Values.rollout.analysis.queryRange }}]
+          )) * 100
+  
+  # 에러율 체크
+  - name: error-rate
+    interval: {{ .Values.rollout.analysis.interval }}
+    successCondition: result[0] <= {{ .Values.rollout.analysis.errorRate }}
+    failureLimit: {{ .Values.rollout.analysis.failureLimit }}
+    provider:
+      prometheus:
+        address: {{ .Values.rollout.analysis.prometheusAddress }}
+        query: |
+          sum(rate(
+            http_server_requests_seconds_count{
+              app="{{ .Values.appName }}",
+              status=~"5.."
+            }[{{ .Values.rollout.analysis.queryRange }}]
+          )) 
+          / 
+          sum(rate(
+            http_server_requests_seconds_count{
+              app="{{ .Values.appName }}"
+            }[{{ .Values.rollout.analysis.queryRange }}]
+          )) * 100
+  
+  # 평균 응답 시간 체크
+  - name: avg-response-time
+    interval: {{ .Values.rollout.analysis.interval }}
+    successCondition: result[0] <= {{ .Values.rollout.analysis.avgResponseTime }}
+    failureLimit: {{ .Values.rollout.analysis.failureLimit }}
+    provider:
+      prometheus:
+        address: {{ .Values.rollout.analysis.prometheusAddress }}
+        query: |
+          sum(rate(
+            http_server_requests_seconds_sum{
+              app="{{ .Values.appName }}"
+            }[{{ .Values.rollout.analysis.queryRange }}]
+          )) 
+          / 
+          sum(rate(
+            http_server_requests_seconds_count{
+              app="{{ .Values.appName }}"
+            }[{{ .Values.rollout.analysis.queryRange }}]
+          )) * 1000
+{{- end }}

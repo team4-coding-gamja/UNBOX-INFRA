@@ -20,6 +20,8 @@ rollout:
     - pause: {duration: 45s}  # 45초 대기
     - setWeight: 75   # 75% 트래픽
     - pause: {duration: 45s}  # 45초 대기
+  featureFlag:
+    enabled: true  # Dev에서 Feature Flag 활성화
 
 env:
   SPRING_JWT_SECRET: "c2VjcmV0S2V5Rm9yTG9jYWxEZXZlbG9wbWVudFRoaXNJc1ZlcnlJbXBvcnRhbnQ="

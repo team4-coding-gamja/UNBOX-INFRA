@@ -22,6 +22,10 @@ rollout:
     - pause: {duration: 120s}  # 2분 대기
     - setWeight: 75   # 75% 트래픽
     - pause: {duration: 120s}  # 2분 대기
+  featureFlag:
+    enabled: true  # Prod에서 Feature Flag 활성화
+    headerName: "X-Canary-User"  # Prod는 특정 사용자만 테스트
+    headerValue: "beta-tester"
 
 # 프로덕션 리소스 제한
 resources:

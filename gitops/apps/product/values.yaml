@@ -56,13 +56,22 @@ rollout:
   # Canary 전략 설정
   canary:
     steps:
-    - setWeight: 20   # 20% 트래픽
-    - pause: {duration: 60s}  # 1분 대기
-    - setWeight: 40   # 40% 트래픽
-    - pause: {duration: 60s}  # 1분 대기
-    - setWeight: 60   # 60% 트래픽
-    - pause: {duration: 60s}  # 1분 대기
-    - setWeight: 80   # 80% 트래픽
-    - pause: {duration: 60s}  # 1분 대기
+    - setWeight: 10   # 10% 트래픽
+    - pause: {duration: 120s}  # 2분 대기
+    - setWeight: 25   # 25% 트래픽
+    - pause: {duration: 120s}  # 2분 대기
+    - setWeight: 50   # 50% 트래픽
+    - pause: {duration: 120s}  # 2분 대기
+    - setWeight: 75   # 75% 트래픽
+    - pause: {duration: 120s}  # 2분 대기
     maxSurge: "25%"
     maxUnavailable: 0
+    trafficRouting:
+      managedRoutes:
+      - name: header-route
+  
+  # Feature Flag 설정 (헤더 기반 트래픽 라우팅)
+  featureFlag:
+    enabled: false  # 기본적으로 비활성화
+    headerName: "X-Feature-Flag"  # 헤더 이름
+    headerValue: "canary"  # 헤더 값

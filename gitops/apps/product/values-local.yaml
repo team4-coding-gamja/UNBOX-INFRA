@@ -32,4 +32,3 @@ rollout:
     steps:
     - setWeight: 50   # 50% 트래픽
     - pause: {duration: 30s}  # 30초 대기
-    - setWeight: 100  # 100% 트래픽
