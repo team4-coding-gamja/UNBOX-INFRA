@@ -9,6 +9,20 @@ image:
 linkerd:
   enabled: true
 
+# Prod 환경에서 Rollout 활성화 (Canary - 점진적 배포)
+rollout:
+  enabled: true
+  canary:
+    steps:
+    - setWeight: 10   # 10% 트래픽
+    - pause: {duration: 120s}  # 2분 대기
+    - setWeight: 25   # 25% 트래픽
+    - pause: {duration: 120s}  # 2분 대기
+    - setWeight: 50   # 50% 트래픽
+    - pause: {duration: 120s}  # 2분 대기
+    - setWeight: 75   # 75% 트래픽
+    - pause: {duration: 120s}  # 2분 대기
+
 # 프로덕션 리소스 제한
 resources:
   requests:

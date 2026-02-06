@@ -24,3 +24,11 @@ env:
   
   # 로컬 Zipkin
   MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: "http://zipkin.unbox-infra.svc.cluster.local:9411/api/v2/spans"
+
+# Argo Rollouts 설정 (Local 환경)
+rollout:
+  enabled: true
+  blueGreen:
+    autoPromotionEnabled: true   # Local에서는 자동 전환
+    autoPromotionSeconds: 120    # 2분 후 자동 전환
+    scaleDownDelaySeconds: 30    # 30초 후 이전 버전 삭제

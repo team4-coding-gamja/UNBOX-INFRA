@@ -40,3 +40,21 @@ resources:
   limits:
     memory: "512Mi"
     cpu: "250m"
+
+# Argo Rollouts 설정
+rollout:
+  enabled: false  # 기본적으로 비활성화 (환경별로 활성화)
+  strategy: "blueGreen"  # User는 Blue/Green 전략 (Tier 1 - 전체 마비 방지)
+  
+  # Health Check 설정
+  healthCheck:
+    enabled: true
+    path: "/actuator/health"
+    initialDelaySeconds: 30
+    periodSeconds: 10
+  
+  # Blue/Green 전략 설정
+  blueGreen:
+    autoPromotionEnabled: false  # 수동 승인 필요
+    autoPromotionSeconds: 600    # 10분 후 자동 전환
+    scaleDownDelaySeconds: 300   # 5분 후 이전 버전 삭제

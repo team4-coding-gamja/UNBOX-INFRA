@@ -9,6 +9,14 @@ image:
 linkerd:
   enabled: true
 
+# Prod 환경에서 Rollout 활성화
+rollout:
+  enabled: true
+  blueGreen:
+    autoPromotionEnabled: false  # Prod에서는 수동 승인
+    autoPromotionSeconds: 600    # 10분 후 자동 전환 (수동 승인 없을 시)
+    scaleDownDelaySeconds: 300   # 5분 후 이전 버전 삭제
+
 # 프로덕션 리소스 제한
 resources:
   requests:

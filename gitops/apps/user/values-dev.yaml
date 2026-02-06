@@ -9,6 +9,14 @@ image:
 linkerd:
   enabled: true
 
+# Dev 환경에서 Rollout 활성화
+rollout:
+  enabled: true
+  blueGreen:
+    autoPromotionEnabled: true   # Dev에서는 자동 전환
+    autoPromotionSeconds: 180    # 3분 후 자동 전환
+    scaleDownDelaySeconds: 60    # 1분 후 이전 버전 삭제
+
 env:
   SPRING_JWT_SECRET: "c2VjcmV0S2V5Rm9yTG9jYWxEZXZlbG9wbWVudFRoaXNJc1ZlcnlJbXBvcnRhbnQ="
   # Dev RDS

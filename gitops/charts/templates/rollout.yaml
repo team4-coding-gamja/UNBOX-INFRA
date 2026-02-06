@@ -1,0 +1,71 @@
+{{- if .Values.rollout.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: {{ .Values.appName }}
+  labels:
+    app: {{ .Values.appName }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: {{ .Values.appName }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.appName }}
+      {{- if .Values.linkerd.enabled }}
+      annotations:
+        linkerd.io/inject: enabled
+      {{- end }}
+    spec:
+      containers:
+      - name: {{ .Values.appName }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.containerPort }}
+        env:
+        {{- range $key, $value := .Values.env }}
+        {{- if kindIs "map" $value }}
+        - name: {{ $key }}
+          {{- toYaml $value | nindent 10 }}
+        {{- else }}
+        - name: {{ $key }}
+          value: {{ $value | quote }}
+        {{- end }}
+        {{- end }}
+        {{- if .Values.rollout.healthCheck.enabled }}
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.rollout.healthCheck.path }}
+            port: {{ .Values.containerPort }}
+          initialDelaySeconds: {{ .Values.rollout.healthCheck.initialDelaySeconds }}
+          periodSeconds: {{ .Values.rollout.healthCheck.periodSeconds }}
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.rollout.healthCheck.path }}
+            port: {{ .Values.containerPort }}
+          initialDelaySeconds: {{ .Values.rollout.healthCheck.initialDelaySeconds }}
+          periodSeconds: {{ .Values.rollout.healthCheck.periodSeconds }}
+        {{- end }}
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+  
+  {{- if eq .Values.rollout.strategy "blueGreen" }}
+  strategy:
+    blueGreen:
+      activeService: {{ .Values.appName }}
+      previewService: {{ .Values.appName }}-preview
+      autoPromotionEnabled: {{ .Values.rollout.blueGreen.autoPromotionEnabled }}
+      {{- if .Values.rollout.blueGreen.autoPromotionEnabled }}
+      autoPromotionSeconds: {{ .Values.rollout.blueGreen.autoPromotionSeconds }}
+      {{- end }}
+      scaleDownDelaySeconds: {{ .Values.rollout.blueGreen.scaleDownDelaySeconds }}
+  {{- else if eq .Values.rollout.strategy "canary" }}
+  strategy:
+    canary:
+      {{- toYaml .Values.rollout.canary | nindent 6 }}
+  {{- end }}
+{{- end }}

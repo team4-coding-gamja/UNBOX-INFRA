@@ -9,6 +9,18 @@ image:
 linkerd:
   enabled: true
 
+# Dev 환경에서 Rollout 활성화 (Canary)
+rollout:
+  enabled: true
+  canary:
+    steps:
+    - setWeight: 25   # 25% 트래픽
+    - pause: {duration: 45s}  # 45초 대기
+    - setWeight: 50   # 50% 트래픽
+    - pause: {duration: 45s}  # 45초 대기
+    - setWeight: 75   # 75% 트래픽
+    - pause: {duration: 45s}  # 45초 대기
+
 env:
   SPRING_JWT_SECRET: "c2VjcmV0S2V5Rm9yTG9jYWxEZXZlbG9wbWVudFRoaXNJc1ZlcnlJbXBvcnRhbnQ="
   # Dev RDS

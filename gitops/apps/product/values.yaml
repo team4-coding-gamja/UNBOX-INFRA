@@ -40,3 +40,29 @@ resources:
   limits:
     memory: "512Mi"
     cpu: "250m"
+
+# Argo Rollouts 설정
+rollout:
+  enabled: false  # 기본적으로 비활성화 (환경별로 활성화)
+  strategy: "canary"  # Product는 Canary 전략 (Tier 2 - 트래픽 병목)
+  
+  # Health Check 설정
+  healthCheck:
+    enabled: true
+    path: "/actuator/health"
+    initialDelaySeconds: 30
+    periodSeconds: 10
+  
+  # Canary 전략 설정
+  canary:
+    steps:
+    - setWeight: 20   # 20% 트래픽
+    - pause: {duration: 60s}  # 1분 대기
+    - setWeight: 40   # 40% 트래픽
+    - pause: {duration: 60s}  # 1분 대기
+    - setWeight: 60   # 60% 트래픽
+    - pause: {duration: 60s}  # 1분 대기
+    - setWeight: 80   # 80% 트래픽
+    - pause: {duration: 60s}  # 1분 대기
+    maxSurge: "25%"
+    maxUnavailable: 0

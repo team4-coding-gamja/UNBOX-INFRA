@@ -24,3 +24,12 @@ env:
   
   # 로컬 Zipkin
   MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: "http://zipkin.unbox-infra.svc.cluster.local:9411/api/v2/spans"
+
+# Argo Rollouts 설정 (Local 환경 - Canary 빠른 테스트)
+rollout:
+  enabled: true
+  canary:
+    steps:
+    - setWeight: 50   # 50% 트래픽
+    - pause: {duration: 30s}  # 30초 대기
+    - setWeight: 100  # 100% 트래픽
