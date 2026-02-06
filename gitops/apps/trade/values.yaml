@@ -13,13 +13,13 @@ linkerd:
 
 service:
   port: 80
-  targetPort: 8087
+  targetPort: 8083
 
-containerPort: 8087
+containerPort: 8083
 
 # 공통 환경변수
 env:
-  SERVER_PORT: "8087"
+  SERVER_PORT: "8083"
   DB_DRIVER_CLASS_NAME: "org.postgresql.Driver"
   SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
   SPRING_JPA_SHOW_SQL: "false"
