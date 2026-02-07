@@ -1,0 +1,160 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: prometheus-local
+  namespace: argocd
+  labels:
+    type: infrastructure
+    component: monitoring
+    environment: local
+  annotations:
+    argocd.argoproj.io/sync-wave: "6"  # Tempo 다음에 배포
+spec:
+  project: default
+  source:
+    repoURL: https://prometheus-community.github.io/helm-charts
+    chart: kube-prometheus-stack
+    targetRevision: 55.5.0
+    helm:
+      releaseName: prometheus
+      values: |
+        # Prometheus 설정
+        prometheus:
+          prometheusSpec:
+            # 데이터 보관 기간 (Local은 짧게)
+            retention: 2d
+            
+            # 리소스 제한 (Local은 최소)
+            resources:
+              requests:
+                memory: "512Mi"
+                cpu: "200m"
+              limits:
+                memory: "1Gi"
+                cpu: "500m"
+            
+            # 스토리지 비활성화 (메모리만 사용)
+            storageSpec: {}
+            
+            # Service Monitor 자동 발견
+            serviceMonitorSelectorNilUsesHelmValues: false
+            podMonitorSelectorNilUsesHelmValues: false
+            
+            # Argo Rollouts 메트릭 수집
+            additionalScrapeConfigs:
+              - job_name: 'argo-rollouts'
+                kubernetes_sd_configs:
+                  - role: pod
+                    namespaces:
+                      names:
+                        - unbox-local
+                relabel_configs:
+                  - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
+                    action: keep
+                    regex: argo-rollouts
+                  - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+                    action: keep
+                    regex: true
+                  - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+                    action: replace
+                    target_label: __metrics_path__
+                    regex: (.+)
+                  - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+                    action: replace
+                    regex: ([^:]+)(?::\d+)?;(\d+)
+                    replacement: $1:$2
+                    target_label: __address__
+        
+        # Grafana 설정
+        grafana:
+          enabled: true
+          
+          # Admin 계정
+          adminPassword: "admin"
+          
+          # 서비스 타입 (k3d LoadBalancer)
+          service:
+            type: LoadBalancer
+            port: 80
+          
+          # 리소스 제한
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "200m"
+          
+          # 대시보드 자동 로드
+          dashboardProviders:
+            dashboardproviders.yaml:
+              apiVersion: 1
+              providers:
+                - name: 'default'
+                  orgId: 1
+                  folder: ''
+                  type: file
+                  disableDeletion: false
+                  editable: true
+                  options:
+                    path: /var/lib/grafana/dashboards/default
+          
+          # ConfigMap으로 대시보드 로드
+          dashboardsConfigMaps:
+            default: "grafana-dashboards"
+          
+          # 데이터소스 설정
+          datasources:
+            datasources.yaml:
+              apiVersion: 1
+              datasources:
+                - name: Prometheus
+                  type: prometheus
+                  url: http://prometheus-kube-prometheus-prometheus:9090
+                  access: proxy
+                  isDefault: true
+                  jsonData:
+                    timeInterval: 30s
+                
+                - name: Tempo
+                  type: tempo
+                  url: http://tempo.unbox-infra.svc.cluster.local:3100
+                  access: proxy
+                  jsonData:
+                    tracesToLogs:
+                      datasourceUid: 'Loki'
+          
+          # 알림 비활성화 (Local 환경)
+          alerting:
+            enabled: false
+        
+        # AlertManager 비활성화 (Local 환경)
+        alertmanager:
+          enabled: false
+        
+        # Node Exporter (시스템 메트릭)
+        nodeExporter:
+          enabled: true
+        
+        # Kube State Metrics (K8s 리소스 메트릭)
+        kubeStateMetrics:
+          enabled: true
+  
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: unbox-monitoring
+  
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
