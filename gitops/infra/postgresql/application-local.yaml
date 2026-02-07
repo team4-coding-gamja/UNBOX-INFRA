@@ -18,6 +18,12 @@ spec:
     helm:
       releaseName: postgresql
       values: |
+        # 이미지 설정 (안정 버전)
+        image:
+          registry: docker.io
+          repository: bitnami/postgresql
+          tag: 15.5.0-debian-11-r14
+        
         # 로컬 개발용 경량 설정
         auth:
           username: unbox_admin

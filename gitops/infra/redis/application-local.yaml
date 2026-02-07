@@ -18,6 +18,12 @@ spec:
     helm:
       releaseName: redis
       values: |
+        # 이미지 설정 (안정 버전)
+        image:
+          registry: docker.io
+          repository: bitnami/redis
+          tag: 7.2.3-debian-11-r2
+        
         # 로컬 개발용 경량 설정
         auth:
           enabled: false  # 로컬 개발용 (인증 비활성화)
