@@ -14,7 +14,7 @@ spec:
   source:
     repoURL: https://charts.bitnami.com/bitnami
     chart: postgresql
-    targetRevision: 16.2.1
+    targetRevision: 13.2.24
     helm:
       releaseName: postgresql
       values: |

@@ -14,7 +14,7 @@ spec:
   source:
     repoURL: https://charts.bitnami.com/bitnami
     chart: redis
-    targetRevision: 20.3.0
+    targetRevision: 18.4.0
     helm:
       releaseName: redis
       values: |
