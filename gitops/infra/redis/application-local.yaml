@@ -22,7 +22,7 @@ spec:
         image:
           registry: docker.io
           repository: bitnami/redis
-          tag: 7.2.3-debian-11-r2
+          tag: 7.2
         
         # 로컬 개발용 경량 설정
         auth:
