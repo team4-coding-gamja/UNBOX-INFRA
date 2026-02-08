@@ -21,6 +21,12 @@ env:
   
   # 로컬 Zipkin
   MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: "http://zipkin.unbox-infra.svc.cluster.local:9411/api/v2/spans"
+  
+  # 로컬 환경 시작 속도 최적화
+  SPRING_MAIN_LAZY_INITIALIZATION: "true"  # Lazy initialization으로 빠른 시작
+  SPRING_JPA_PROPERTIES_HIBERNATE_TEMP_USE_JDBC_METADATA_DEFAULTS: "false"  # Hibernate 메타데이터 스캔 스킵
+  SPRING_DATA_JPA_REPOSITORIES_BOOTSTRAP_MODE: "lazy"  # JPA Repository lazy 로딩
+  JAVA_TOOL_OPTIONS: "-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:InitialRAMPercentage=50.0 -XX:+TieredCompilation -XX:TieredStopAtLevel=1"  # JVM 최적화
 
 # 로컬 환경 리소스 최적화 (빠른 시작을 위해)
 resources:
