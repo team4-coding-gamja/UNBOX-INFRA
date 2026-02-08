@@ -37,17 +37,33 @@ spec:
         {{- end }}
         {{- end }}
         {{- if .Values.rollout.healthCheck.enabled }}
+        {{- if .Values.rollout.healthCheck.startupProbe }}
+        startupProbe:
+          httpGet:
+            path: {{ .Values.rollout.healthCheck.path }}
+            port: {{ .Values.containerPort }}
+          failureThreshold: {{ .Values.rollout.healthCheck.startupProbe.failureThreshold | default 30 }}
+          periodSeconds: {{ .Values.rollout.healthCheck.startupProbe.periodSeconds | default 10 }}
+        {{- end }}
         livenessProbe:
           httpGet:
             path: {{ .Values.rollout.healthCheck.path }}
             port: {{ .Values.containerPort }}
+          {{- if .Values.rollout.healthCheck.startupProbe }}
+          initialDelaySeconds: 0
+          {{- else }}
           initialDelaySeconds: {{ .Values.rollout.healthCheck.initialDelaySeconds }}
+          {{- end }}
           periodSeconds: {{ .Values.rollout.healthCheck.periodSeconds }}
         readinessProbe:
           httpGet:
             path: {{ .Values.rollout.healthCheck.path }}
             port: {{ .Values.containerPort }}
+          {{- if .Values.rollout.healthCheck.startupProbe }}
+          initialDelaySeconds: 0
+          {{- else }}
           initialDelaySeconds: {{ .Values.rollout.healthCheck.initialDelaySeconds }}
+          {{- end }}
           periodSeconds: {{ .Values.rollout.healthCheck.periodSeconds }}
         {{- end }}
         resources:

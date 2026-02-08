@@ -22,14 +22,30 @@ env:
   # 로컬 Zipkin
   MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: "http://zipkin.unbox-infra.svc.cluster.local:9411/api/v2/spans"
 
+# 로컬 환경 리소스 최적화 (빠른 시작을 위해)
+resources:
+  requests:
+    memory: "512Mi"
+    cpu: "100m"  # 낮게 설정해서 시작 시 CPU 제한 완화
+  limits:
+    memory: "1024Mi"
+    # cpu limit 제거 - 시작할 때 맘껏 쓰게 함
+
 # Argo Rollouts 설정 (Local 환경 - Canary 빠른 테스트)
 rollout:
   enabled: true
   canary:
     steps:
     - setWeight: 50   # 50% 트래픽
-    - pause: {duration: 30s}  # 30초 대기  analysis:
+    - pause: {duration: 30s}  # 30초 대기
+  analysis:
     enabled: false  # 로컬에서는 analysis 비활성화
   healthCheck:
-    initialDelaySeconds: 300  # 3분으로 증가 (로컬 환경은 느림)
+    enabled: true
+    path: /actuator/health
+    # startupProbe 사용 - 앱이 뜨자마자 즉시 다음 단계로
+    startupProbe:
+      failureThreshold: 30  # 30번 실패까지 허용 (30 * 10초 = 최대 5분)
+      periodSeconds: 10     # 10초마다 체크
+    initialDelaySeconds: 0  # startupProbe 사용 시 불필요
     periodSeconds: 10
