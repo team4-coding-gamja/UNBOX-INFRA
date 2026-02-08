@@ -8,7 +8,7 @@ env:
   SPRING_JPA_SHOW_SQL: "true"  # 로컬에서는 SQL 로그 활성화
   
   # 로컬 PostgreSQL 사용
-  SPRING_DATASOURCE_URL: "jdbc:postgresql://postgresql.unbox-db.svc.cluster.local:5432/local_db"
+  SPRING_DATASOURCE_URL: "jdbc:postgresql://postgresql.unbox-db.svc.cluster.local:5432/unbox_order"
   SPRING_DATASOURCE_USERNAME: "unbox_admin"
   SPRING_DATASOURCE_PASSWORD: "local_password_123"
   

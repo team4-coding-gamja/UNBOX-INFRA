@@ -22,7 +22,8 @@ spec:
         image:
           registry: docker.io
           repository: bitnami/redis
-          tag: 7.2
+          tag: latest
+          pullPolicy: IfNotPresent
         
         # 로컬 개발용 경량 설정
         auth:

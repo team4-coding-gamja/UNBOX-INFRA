@@ -7,20 +7,17 @@ env:
   SPRING_JWT_SECRET: "c2VjcmV0S2V5Rm9yTG9jYWxEZXZlbG9wbWVudFRoaXNJc1ZlcnlJbXBvcnRhbnQ="
   SPRING_JPA_SHOW_SQL: "true"  # 로컬에서는 SQL 로그 활성화
   
-  # 로컬 k3d에서 AWS RDS 접근
-  SPRING_DATASOURCE_URL: "jdbc:postgresql://unbox-dev-common-db.crmw2cqokxc4.ap-northeast-2.rds.amazonaws.com:5432/dev_db"
+  # 로컬 PostgreSQL 사용
+  SPRING_DATASOURCE_URL: "jdbc:postgresql://postgresql.unbox-db.svc.cluster.local:5432/unbox_trade"
   SPRING_DATASOURCE_USERNAME: "unbox_admin"
-  SPRING_DATASOURCE_PASSWORD:
-    valueFrom:
-      secretKeyRef:
-        name: db-secret
-        key: DB_PASSWORD
+  SPRING_DATASOURCE_PASSWORD: "local_password_123"
   
   # 로컬 Kafka
   SPRING_KAFKA_BOOTSTRAP_SERVERS: "kafka.unbox-infra.svc.cluster.local:9092"
   
-  # 로컬 k3d에서 AWS ElastiCache 접근
-  SPRING_DATA_REDIS_HOST: "master.unbox-dev-redis.r0vran.apn2.cache.amazonaws.com"
+  # 로컬 Redis 사용
+  SPRING_DATA_REDIS_HOST: "redis-master.unbox-db.svc.cluster.local"
+  SPRING_DATA_REDIS_PORT: "6379"
   
   # 로컬 Zipkin
   MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: "http://zipkin.unbox-infra.svc.cluster.local:9411/api/v2/spans"

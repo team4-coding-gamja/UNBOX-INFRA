@@ -1,243 +1,358 @@
 {
-  "dashboard": {
-    "title": "Deployment Monitoring - UNBOX",
-    "tags": ["unbox", "deployment", "rollout", "argocd"],
-    "timezone": "browser",
-    "schemaVersion": 16,
-    "version": 1,
-    "refresh": "10s",
-    "panels": [
-      {
-        "id": 1,
-        "title": "ArgoCD Sync 상태",
-        "type": "stat",
-        "gridPos": {"h": 4, "w": 8, "x": 0, "y": 0},
-        "targets": [
-          {
-            "expr": "count(argocd_app_info{sync_status=\"Synced\"})",
-            "legendFormat": "Synced"
-          },
-          {
-            "expr": "count(argocd_app_info{sync_status=\"OutOfSync\"})",
-            "legendFormat": "OutOfSync"
-          }
-        ],
-        "options": {
-          "colorMode": "value",
-          "graphMode": "none",
-          "orientation": "horizontal"
+  "title": "Deployment Monitoring - UNBOX",
+  "tags": [
+    "unbox",
+    "deployment",
+    "rollout",
+    "argocd"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 16,
+  "version": 1,
+  "refresh": "10s",
+  "panels": [
+    {
+      "id": 1,
+      "title": "ArgoCD Sync 상태",
+      "type": "stat",
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 0,
+        "y": 0
+      },
+      "targets": [
+        {
+          "expr": "count(argocd_app_info{sync_status=\"Synced\"})",
+          "legendFormat": "Synced"
+        },
+        {
+          "expr": "count(argocd_app_info{sync_status=\"OutOfSync\"})",
+          "legendFormat": "OutOfSync"
         }
-      },
-      {
-        "id": 2,
-        "title": "ArgoCD Health 상태",
-        "type": "stat",
-        "gridPos": {"h": 4, "w": 8, "x": 8, "y": 0},
-        "targets": [
-          {
-            "expr": "count(argocd_app_info{health_status=\"Healthy\"})",
-            "legendFormat": "Healthy"
-          },
-          {
-            "expr": "count(argocd_app_info{health_status=\"Degraded\"})",
-            "legendFormat": "Degraded"
-          }
-        ],
-        "options": {
-          "colorMode": "value",
-          "graphMode": "none"
-        }
-      },
-      {
-        "id": 3,
-        "title": "활성 Rollout 수",
-        "type": "stat",
-        "gridPos": {"h": 4, "w": 8, "x": 16, "y": 0},
-        "targets": [
-          {
-            "expr": "count(rollout_phase{phase=\"Progressing\"})",
-            "legendFormat": "Progressing"
-          }
-        ],
-        "options": {
-          "colorMode": "value",
-          "graphMode": "area"
-        }
-      },
-      {
-        "id": 4,
-        "title": "ArgoCD Sync 히스토리",
-        "type": "graph",
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
-        "targets": [
-          {
-            "expr": "increase(argocd_app_sync_total{phase=\"Succeeded\"}[5m])",
-            "legendFormat": "{{name}} - Success"
-          },
-          {
-            "expr": "increase(argocd_app_sync_total{phase=\"Failed\"}[5m])",
-            "legendFormat": "{{name}} - Failed"
-          }
-        ],
-        "yaxes": [
-          {"format": "short", "label": "Sync Count"},
-          {"format": "short"}
-        ]
-      },
-      {
-        "id": 5,
-        "title": "Rollout Phase 상태",
-        "type": "graph",
-        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
-        "targets": [
-          {
-            "expr": "rollout_phase",
-            "legendFormat": "{{rollout}} - {{phase}}"
-          }
-        ],
-        "yaxes": [
-          {"format": "short", "label": "Phase"},
-          {"format": "short"}
-        ]
-      },
-      {
-        "id": 6,
-        "title": "Canary 가중치 (실시간)",
-        "type": "graph",
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
-        "targets": [
-          {
-            "expr": "rollout_info_replicas_desired{rollout=~\".*\"}",
-            "legendFormat": "{{rollout}} - Desired"
-          },
-          {
-            "expr": "rollout_info_replicas_available{rollout=~\".*\"}",
-            "legendFormat": "{{rollout}} - Available"
-          }
-        ],
-        "yaxes": [
-          {"format": "short", "label": "Replicas"},
-          {"format": "short"}
-        ]
-      },
-      {
-        "id": 7,
-        "title": "Canary Pod 에러율 (실시간)",
-        "type": "graph",
-        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12},
-        "targets": [
-          {
-            "expr": "(sum(rate(http_requests_total{status=~\"5..\",rollouts_pod_template_hash!=\"\"}[2m])) by (service, rollouts_pod_template_hash) / sum(rate(http_requests_total{rollouts_pod_template_hash!=\"\"}[2m])) by (service, rollouts_pod_template_hash)) * 100",
-            "legendFormat": "{{service}} - Canary ({{rollouts_pod_template_hash}})"
-          },
-          {
-            "expr": "(sum(rate(http_requests_total{status=~\"5..\",rollouts_pod_template_hash=\"\"}[2m])) by (service) / sum(rate(http_requests_total{rollouts_pod_template_hash=\"\"}[2m])) by (service)) * 100",
-            "legendFormat": "{{service}} - Stable"
-          }
-        ],
-        "yaxes": [
-          {"format": "percent", "label": "Error Rate %"},
-          {"format": "short"}
-        ],
-        "alert": {
-          "conditions": [
-            {
-              "evaluator": {"params": [5], "type": "gt"},
-              "operator": {"type": "and"},
-              "query": {"params": ["A", "2m", "now"]},
-              "reducer": {"params": [], "type": "avg"},
-              "type": "query"
-            }
-          ],
-          "executionErrorState": "alerting",
-          "frequency": "30s",
-          "handler": 1,
-          "name": "Canary High Error Rate",
-          "noDataState": "no_data"
-        }
-      },
-      {
-        "id": 8,
-        "title": "Canary Pod 성공률 (실시간)",
-        "type": "graph",
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 20},
-        "targets": [
-          {
-            "expr": "(sum(rate(http_requests_total{status=~\"2..\",rollouts_pod_template_hash!=\"\"}[2m])) by (service, rollouts_pod_template_hash) / sum(rate(http_requests_total{rollouts_pod_template_hash!=\"\"}[2m])) by (service, rollouts_pod_template_hash)) * 100",
-            "legendFormat": "{{service}} - Canary ({{rollouts_pod_template_hash}})"
-          },
-          {
-            "expr": "(sum(rate(http_requests_total{status=~\"2..\",rollouts_pod_template_hash=\"\"}[2m])) by (service) / sum(rate(http_requests_total{rollouts_pod_template_hash=\"\"}[2m])) by (service)) * 100",
-            "legendFormat": "{{service}} - Stable"
-          }
-        ],
-        "yaxes": [
-          {"format": "percent", "label": "Success Rate %"},
-          {"format": "short"}
-        ],
-        "alert": {
-          "conditions": [
-            {
-              "evaluator": {"params": [95], "type": "lt"},
-              "operator": {"type": "and"},
-              "query": {"params": ["A", "2m", "now"]},
-              "reducer": {"params": [], "type": "avg"},
-              "type": "query"
-            }
-          ],
-          "executionErrorState": "alerting",
-          "frequency": "30s",
-          "handler": 1,
-          "name": "Canary Low Success Rate"
-        }
-      },
-      {
-        "id": 9,
-        "title": "Canary Pod 응답 시간 (P95)",
-        "type": "graph",
-        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 20},
-        "targets": [
-          {
-            "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{rollouts_pod_template_hash!=\"\"}[2m])) by (service, rollouts_pod_template_hash, le))",
-            "legendFormat": "{{service}} - Canary ({{rollouts_pod_template_hash}})"
-          },
-          {
-            "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{rollouts_pod_template_hash=\"\"}[2m])) by (service, le))",
-            "legendFormat": "{{service}} - Stable"
-          }
-        ],
-        "yaxes": [
-          {"format": "s", "label": "P95 Latency"},
-          {"format": "short"}
-        ]
-      },
-      {
-        "id": 10,
-        "title": "배포 타임라인 (최근 1시간)",
-        "type": "table",
-        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 28},
-        "targets": [
-          {
-            "expr": "changes(argocd_app_info[1h]) > 0",
-            "format": "table",
-            "instant": true
-          }
-        ],
-        "transformations": [
-          {
-            "id": "organize",
-            "options": {
-              "excludeByName": {},
-              "indexByName": {},
-              "renameByName": {
-                "name": "Application",
-                "sync_status": "Sync Status",
-                "health_status": "Health Status"
-              }
-            }
-          }
-        ]
+      ],
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "orientation": "horizontal"
       }
-    ]
-  }
+    },
+    {
+      "id": 2,
+      "title": "ArgoCD Health 상태",
+      "type": "stat",
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 8,
+        "y": 0
+      },
+      "targets": [
+        {
+          "expr": "count(argocd_app_info{health_status=\"Healthy\"})",
+          "legendFormat": "Healthy"
+        },
+        {
+          "expr": "count(argocd_app_info{health_status=\"Degraded\"})",
+          "legendFormat": "Degraded"
+        }
+      ],
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 3,
+      "title": "활성 Rollout 수",
+      "type": "stat",
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 16,
+        "y": 0
+      },
+      "targets": [
+        {
+          "expr": "count(rollout_phase{phase=\"Progressing\"})",
+          "legendFormat": "Progressing"
+        }
+      ],
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area"
+      }
+    },
+    {
+      "id": 4,
+      "title": "ArgoCD Sync 히스토리",
+      "type": "graph",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 4
+      },
+      "targets": [
+        {
+          "expr": "increase(argocd_app_sync_total{phase=\"Succeeded\"}[5m])",
+          "legendFormat": "{{name}} - Success"
+        },
+        {
+          "expr": "increase(argocd_app_sync_total{phase=\"Failed\"}[5m])",
+          "legendFormat": "{{name}} - Failed"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "short",
+          "label": "Sync Count"
+        },
+        {
+          "format": "short"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Rollout Phase 상태",
+      "type": "graph",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 4
+      },
+      "targets": [
+        {
+          "expr": "rollout_phase",
+          "legendFormat": "{{rollout}} - {{phase}}"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "short",
+          "label": "Phase"
+        },
+        {
+          "format": "short"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Canary 가중치 (실시간)",
+      "type": "graph",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 12
+      },
+      "targets": [
+        {
+          "expr": "rollout_info_replicas_desired{rollout=~\".*\"}",
+          "legendFormat": "{{rollout}} - Desired"
+        },
+        {
+          "expr": "rollout_info_replicas_available{rollout=~\".*\"}",
+          "legendFormat": "{{rollout}} - Available"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "short",
+          "label": "Replicas"
+        },
+        {
+          "format": "short"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Canary Pod 에러율 (실시간)",
+      "type": "graph",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 12
+      },
+      "targets": [
+        {
+          "expr": "(sum(rate(http_requests_total{status=~\"5..\",rollouts_pod_template_hash!=\"\"}[2m])) by (service, rollouts_pod_template_hash) / sum(rate(http_requests_total{rollouts_pod_template_hash!=\"\"}[2m])) by (service, rollouts_pod_template_hash)) * 100",
+          "legendFormat": "{{service}} - Canary ({{rollouts_pod_template_hash}})"
+        },
+        {
+          "expr": "(sum(rate(http_requests_total{status=~\"5..\",rollouts_pod_template_hash=\"\"}[2m])) by (service) / sum(rate(http_requests_total{rollouts_pod_template_hash=\"\"}[2m])) by (service)) * 100",
+          "legendFormat": "{{service}} - Stable"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "percent",
+          "label": "Error Rate %"
+        },
+        {
+          "format": "short"
+        }
+      ],
+      "alert": {
+        "conditions": [
+          {
+            "evaluator": {
+              "params": [
+                5
+              ],
+              "type": "gt"
+            },
+            "operator": {
+              "type": "and"
+            },
+            "query": {
+              "params": [
+                "A",
+                "2m",
+                "now"
+              ]
+            },
+            "reducer": {
+              "params": [],
+              "type": "avg"
+            },
+            "type": "query"
+          }
+        ],
+        "executionErrorState": "alerting",
+        "frequency": "30s",
+        "handler": 1,
+        "name": "Canary High Error Rate",
+        "noDataState": "no_data"
+      }
+    },
+    {
+      "id": 8,
+      "title": "Canary Pod 성공률 (실시간)",
+      "type": "graph",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 20
+      },
+      "targets": [
+        {
+          "expr": "(sum(rate(http_requests_total{status=~\"2..\",rollouts_pod_template_hash!=\"\"}[2m])) by (service, rollouts_pod_template_hash) / sum(rate(http_requests_total{rollouts_pod_template_hash!=\"\"}[2m])) by (service, rollouts_pod_template_hash)) * 100",
+          "legendFormat": "{{service}} - Canary ({{rollouts_pod_template_hash}})"
+        },
+        {
+          "expr": "(sum(rate(http_requests_total{status=~\"2..\",rollouts_pod_template_hash=\"\"}[2m])) by (service) / sum(rate(http_requests_total{rollouts_pod_template_hash=\"\"}[2m])) by (service)) * 100",
+          "legendFormat": "{{service}} - Stable"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "percent",
+          "label": "Success Rate %"
+        },
+        {
+          "format": "short"
+        }
+      ],
+      "alert": {
+        "conditions": [
+          {
+            "evaluator": {
+              "params": [
+                95
+              ],
+              "type": "lt"
+            },
+            "operator": {
+              "type": "and"
+            },
+            "query": {
+              "params": [
+                "A",
+                "2m",
+                "now"
+              ]
+            },
+            "reducer": {
+              "params": [],
+              "type": "avg"
+            },
+            "type": "query"
+          }
+        ],
+        "executionErrorState": "alerting",
+        "frequency": "30s",
+        "handler": 1,
+        "name": "Canary Low Success Rate"
+      }
+    },
+    {
+      "id": 9,
+      "title": "Canary Pod 응답 시간 (P95)",
+      "type": "graph",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 20
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{rollouts_pod_template_hash!=\"\"}[2m])) by (service, rollouts_pod_template_hash, le))",
+          "legendFormat": "{{service}} - Canary ({{rollouts_pod_template_hash}})"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{rollouts_pod_template_hash=\"\"}[2m])) by (service, le))",
+          "legendFormat": "{{service}} - Stable"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "s",
+          "label": "P95 Latency"
+        },
+        {
+          "format": "short"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "title": "배포 타임라인 (최근 1시간)",
+      "type": "table",
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 28
+      },
+      "targets": [
+        {
+          "expr": "changes(argocd_app_info[1h]) > 0",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {},
+            "indexByName": {},
+            "renameByName": {
+              "name": "Application",
+              "sync_status": "Sync Status",
+              "health_status": "Health Status"
+            }
+          }
+        }
+      ]
+    }
+  ]
 }
