@@ -26,7 +26,7 @@ env:
 rollout:
   enabled: true
   healthCheck:
-    initialDelaySeconds: 180  # 3분으로 증가 (로컬 환경은 느림)
+    initialDelaySeconds: 300  # 5분으로 증가 (로컬 환경 매우 느림)
     periodSeconds: 10
   canary:
     steps:
