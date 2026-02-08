@@ -42,7 +42,7 @@ rollout:
   enabled: true
   healthCheck:
     enabled: true
-    path: /actuator/health
+    path: /product/actuator/health  # context path 포함
     # startupProbe 사용 - 앱이 뜨자마자 즉시 다음 단계로
     startupProbe:
       failureThreshold: 60  # 60번 실패까지 허용 (60 * 10초 = 최대 10분)
