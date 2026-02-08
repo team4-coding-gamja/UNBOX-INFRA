@@ -28,4 +28,5 @@ rollout:
   canary:
     steps:
     - setWeight: 50   # 50% 트래픽
-    - pause: {duration: 30s}  # 30초 대기
+    - pause: {duration: 30s}  # 30초 대기  analysis:
+    enabled: false  # 로컬에서는 analysis 비활성화

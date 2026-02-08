@@ -28,4 +28,5 @@ rollout:
   blueGreen:
     autoPromotionEnabled: true   # Local에서는 자동 전환
     autoPromotionSeconds: 120    # 2분 후 자동 전환
-    scaleDownDelaySeconds: 30    # 30초 후 이전 버전 삭제
+    scaleDownDelaySeconds: 30    # 30초 후 이전 버전 삭제  analysis:
+    enabled: false  # 로컬에서는 analysis 비활성화
