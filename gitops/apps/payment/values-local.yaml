@@ -30,3 +30,6 @@ rollout:
     autoPromotionSeconds: 120    # 2분 후 자동 전환
     scaleDownDelaySeconds: 30    # 30초 후 이전 버전 삭제  analysis:
     enabled: false  # 로컬에서는 analysis 비활성화
+  healthCheck:
+    initialDelaySeconds: 180  # 3분으로 증가 (로컬 환경은 느림)
+    periodSeconds: 10
