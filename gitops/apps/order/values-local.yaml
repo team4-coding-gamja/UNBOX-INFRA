@@ -21,6 +21,12 @@ env:
   
   # 로컬 Tempo (Zipkin 호환)
   MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: "http://tempo.unbox-infra.svc.cluster.local:9411/api/v2/spans"
+  
+  # 로컬 환경 시작 속도 최적화
+  SPRING_MAIN_LAZY_INITIALIZATION: "true"
+  SPRING_JPA_PROPERTIES_HIBERNATE_TEMP_USE_JDBC_METADATA_DEFAULTS: "false"
+  SPRING_DATA_JPA_REPOSITORIES_BOOTSTRAP_MODE: "lazy"
+  JAVA_TOOL_OPTIONS: "-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:InitialRAMPercentage=50.0 -XX:+TieredCompilation -XX:TieredStopAtLevel=1"
 
 # 로컬 환경 리소스 최적화 (빠른 시작을 위해)
 resources:
@@ -42,7 +48,7 @@ rollout:
     enabled: false  # 로컬에서는 analysis 비활성화
   healthCheck:
     enabled: true
-    path: /actuator/health
+    path: /order/actuator/health  # context path 포함
     # startupProbe 사용 - 앱이 뜨자마자 즉시 다음 단계로
     startupProbe:
       failureThreshold: 30  # 30번 실패까지 허용 (30 * 10초 = 최대 5분)
