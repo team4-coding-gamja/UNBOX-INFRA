@@ -1,7 +1,7 @@
 # Payment Service - Local k3d 환경 오버라이드
 image:
   repository: 632941626317.dkr.ecr.ap-northeast-2.amazonaws.com/unbox-dev-payment-repo
-  tag: local-2044477
+  tag: dev-efb416d42ae42047a92476b3112627ab398a3064
 
 env:
   SPRING_JWT_SECRET: "c2VjcmV0S2V5Rm9yTG9jYWxEZXZlbG9wbWVudFRoaXNJc1ZlcnlJbXBvcnRhbnQ="

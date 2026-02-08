@@ -1,7 +1,7 @@
 # Trade Service - Local k3d 환경 오버라이드
 image:
   repository: 632941626317.dkr.ecr.ap-northeast-2.amazonaws.com/unbox-dev-trade-repo
-  tag: local-2044477
+  tag: dev-0ba83c114ebe11e6e89b1d9541a611d06049d7d6
 
 env:
   SPRING_JWT_SECRET: "c2VjcmV0S2V5Rm9yTG9jYWxEZXZlbG9wbWVudFRoaXNJc1ZlcnlJbXBvcnRhbnQ="
