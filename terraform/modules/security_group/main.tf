@@ -1,12 +1,4 @@
-locals {
-  service_config = {
-    "user"    = 8080
-    "product" = 8080
-    "trade"   = 8080
-    "order"   = 8080
-    "payment" = 8080
-  }
-}
+# locals removed, using var.service_config
 
 # 1. 보안 그룹 본체 (껍데기) 생성
 resource "aws_security_group" "alb" {
@@ -16,14 +8,14 @@ resource "aws_security_group" "alb" {
 }
 
 resource "aws_security_group" "service_app" {
-  for_each = local.service_config
+  for_each = var.service_config
   name     = "${var.project_name}-${var.env}-${each.key}-app-sg"
   vpc_id   = var.vpc_id
   tags     = { Name = "${var.project_name}-${var.env}-${each.key}-app-sg" }
 }
 
 resource "aws_security_group" "service_rds" {
-  for_each = local.service_config
+  for_each = var.service_config
   name     = "${var.project_name}-${var.env}-${each.key}-rds-sg"
   vpc_id   = var.vpc_id
   tags     = { Name = "${var.project_name}-${var.env}-${each.key}-rds-sg" }
@@ -69,7 +61,7 @@ resource "aws_security_group_rule" "alb_ingress_443" {
 
 # App Inbound (From ALB)
 resource "aws_security_group_rule" "app_ingress_from_alb" {
-  for_each                 = local.service_config
+  for_each                 = var.service_config
   type                     = "ingress"
   from_port                = each.value
   to_port                  = each.value
@@ -80,7 +72,7 @@ resource "aws_security_group_rule" "app_ingress_from_alb" {
 
 # App Inbound (Self - Envoy)
 resource "aws_security_group_rule" "app_ingress_self" {
-  for_each          = local.service_config
+  for_each          = var.service_config
   type              = "ingress"
   from_port         = 0
   to_port           = 0
@@ -91,7 +83,7 @@ resource "aws_security_group_rule" "app_ingress_self" {
 
 # RDS Inbound (From App)
 resource "aws_security_group_rule" "rds_ingress_from_app" {
-  for_each                 = local.service_config
+  for_each                 = var.service_config
   type                     = "ingress"
   from_port                = 5432
   to_port                  = 5432
@@ -102,7 +94,7 @@ resource "aws_security_group_rule" "rds_ingress_from_app" {
 
 # Redis Inbound (From App)
 resource "aws_security_group_rule" "redis_ingress_from_app" {
-  for_each                 = local.service_config
+  for_each                 = var.service_config
   type                     = "ingress"
   from_port                = 6379
   to_port                  = 6379
@@ -113,7 +105,7 @@ resource "aws_security_group_rule" "redis_ingress_from_app" {
 
 # MSK Inbound (From App)
 resource "aws_security_group_rule" "msk_ingress_from_app" {
-  for_each                 = local.service_config
+  for_each                 = var.service_config
   type                     = "ingress"
   from_port                = var.env == "prod" ? 9094 : 9098
   to_port                  = var.env == "prod" ? 9094 : 9098
@@ -137,7 +129,7 @@ resource "aws_security_group_rule" "nat_ingress_vpc" {
 
 # 1. App -> RDS (5432)
 resource "aws_security_group_rule" "app_egress_to_rds" {
-  for_each                 = local.service_config
+  for_each                 = var.service_config
   type                     = "egress"
   from_port                = 5432
   to_port                  = 5432
@@ -148,7 +140,7 @@ resource "aws_security_group_rule" "app_egress_to_rds" {
 
 # 2. App -> Redis (6379)
 resource "aws_security_group_rule" "app_egress_to_redis" {
-  for_each                 = local.service_config
+  for_each                 = var.service_config
   type                     = "egress"
   from_port                = 6379
   to_port                  = 6379
@@ -159,7 +151,7 @@ resource "aws_security_group_rule" "app_egress_to_redis" {
 
 # 3. App -> MSK (9094)
 resource "aws_security_group_rule" "app_egress_to_msk" {
-  for_each                 = local.service_config
+  for_each                 = var.service_config
   type                     = "egress"
   from_port                = var.env == "prod" ? 9094 : 9098
   to_port                  = var.env == "prod" ? 9094 : 9098
@@ -171,7 +163,7 @@ resource "aws_security_group_rule" "app_egress_to_msk" {
 # 4. App -> 인터넷 (HTTPS 443)
 # Secrets Manager, KMS, ECR 등을 위해 외부 443은 열어두어야 합니다.
 resource "aws_security_group_rule" "app_egress_https" {
-  for_each          = local.service_config
+  for_each          = var.service_config
   type              = "egress"
   from_port         = 443
   to_port           = 443
@@ -191,19 +183,19 @@ resource "aws_security_group_rule" "nat_egress_all" {
   security_group_id = aws_security_group.nat[0].id
 }
 
-#ALB -> Service
-resource "aws_security_group_rule" "alb_egress_to_app" {
-  for_each                 = local.service_config
+#ALB -> Service (Node Port)
+resource "aws_security_group_rule" "alb_egress_to_node" {
+  for_each                 = var.service_config
   type                     = "egress"
   from_port                = each.value
   to_port                  = each.value
   protocol                 = "tcp"
   security_group_id        = aws_security_group.alb.id
-  source_security_group_id = aws_security_group.service_app[each.key].id
+  source_security_group_id = aws_security_group.eks_node.id
 }
 
 resource "aws_security_group_rule" "app_egress_all" {
-  for_each          = local.service_config
+  for_each          = var.service_config
   type              = "egress"
   from_port         = 0
   to_port           = 0

@@ -3,11 +3,21 @@ appName: user-service
 replicaCount: 1
 
 image:
+<<<<<<< HEAD
   repository: ""  # 환경별로 오버라이드
   tag: latest
   pullPolicy: Always
 
 # 서비스 메시 설정
+=======
+  repository: 632941626317.dkr.ecr.ap-northeast-2.amazonaws.com/unbox-dev-user-repo
+  tag: latest
+  pullPolicy: Always
+
+targetGroupArn: "arn:aws:elasticloadbalancing:ap-northeast-2:632941626317:targetgroup/user-2026020523301243910000000e/255d23a26f2c60e4"
+
+# 2. 로컬이니까 Linkerd 끄기 (테스트할 때만 true)
+>>>>>>> origin/main
 linkerd:
   enabled: false  # 기본값은 비활성화
 
@@ -20,6 +30,15 @@ containerPort: 8081
 # 공통 환경변수
 env:
   SERVER_PORT: "8081"
+<<<<<<< HEAD
+=======
+  SERVER_SERVLET_CONTEXT_PATH: "/user"
+  SPRING_JWT_SECRET:
+    valueFrom:
+      secretKeyRef:
+        name: db-secret
+        key: JWT_SECRET
+>>>>>>> origin/main
   DB_DRIVER_CLASS_NAME: "org.postgresql.Driver"
   SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
   SPRING_JPA_SHOW_SQL: "false"
@@ -30,6 +49,7 @@ env:
   SPRING_KAFKA_BOOTSTRAP_SERVERS: ""
   SPRING_DATA_REDIS_HOST: ""
   SPRING_DATA_REDIS_PORT: "6379"
+<<<<<<< HEAD
   MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: ""
 
 # 리소스 제한 (기본값)
@@ -45,6 +65,10 @@ resources:
 rollout:
   enabled: false  # 기본적으로 비활성화 (환경별로 활성화)
   strategy: "blueGreen"  # User는 Blue/Green 전략 (Tier 1 - 전체 마비 방지)
+=======
+  SPRING_DATA_REDIS_SSL: "true"
+  # SPRING_DATA_REDIS_PASSWORD: "1234"
+>>>>>>> origin/main
   
   # Health Check 설정
   healthCheck:

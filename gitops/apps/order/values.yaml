@@ -7,6 +7,8 @@ image:
   tag: latest
   pullPolicy: Always
 
+targetGroupArn: "arn:aws:elasticloadbalancing:ap-northeast-2:632941626317:targetgroup/order-2026020523301243820000000d/791e3402ebf9a555"
+
 # 서비스 메시 설정
 linkerd:
   enabled: false  # 기본값은 비활성화
@@ -20,6 +22,12 @@ containerPort: 8084
 # 공통 환경변수
 env:
   SERVER_PORT: "8084"
+  SERVER_SERVLET_CONTEXT_PATH: "/order"
+  SPRING_JWT_SECRET:
+    valueFrom:
+      secretKeyRef:
+        name: db-secret
+        key: JWT_SECRET
   DB_DRIVER_CLASS_NAME: "org.postgresql.Driver"
   SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
   SPRING_JPA_SHOW_SQL: "false"
@@ -30,6 +38,8 @@ env:
   SPRING_KAFKA_BOOTSTRAP_SERVERS: ""
   SPRING_DATA_REDIS_HOST: ""
   SPRING_DATA_REDIS_PORT: "6379"
+  SPRING_DATA_REDIS_SSL: "true"
+  # SPRING_DATA_REDIS_PASSWORD: "1234"
   MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: ""
 
 # 리소스 제한 (기본값)

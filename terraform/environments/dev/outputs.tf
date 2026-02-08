@@ -3,8 +3,9 @@ output "alb_address" {
 }
 
 # VPC 정보
-output "vpc_id" {
-  value = module.vpc.vpc_id
+output "target_group_arns" {
+  description = "Map of Target Group ARNs"
+  value       = module.alb.target_group_arns
 }
 
 # RDS 정보
