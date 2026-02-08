@@ -51,7 +51,7 @@ rollout:
     path: /payment/actuator/health  # context path 포함
     # startupProbe 사용 - 앱이 뜨자마자 즉시 다음 단계로
     startupProbe:
-      failureThreshold: 30  # 30번 실패까지 허용 (30 * 10초 = 최대 5분)
+      failureThreshold: 60  # 60번 실패까지 허용 (60 * 10초 = 최대 10분)
       periodSeconds: 10     # 10초마다 체크
     initialDelaySeconds: 0  # startupProbe 사용 시 불필요
     periodSeconds: 10
