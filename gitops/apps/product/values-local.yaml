@@ -1,7 +1,7 @@
 # Product Service - Local k3d 환경 오버라이드
 image:
   repository: 632941626317.dkr.ecr.ap-northeast-2.amazonaws.com/unbox-dev-product-repo
-  tag: dev-2044477
+  tag: local-2044477
 
 env:
   SPRING_JWT_SECRET: "c2VjcmV0S2V5Rm9yTG9jYWxEZXZlbG9wbWVudFRoaXNJc1ZlcnlJbXBvcnRhbnQ="
