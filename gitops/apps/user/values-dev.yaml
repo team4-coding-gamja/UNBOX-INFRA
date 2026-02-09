@@ -85,8 +85,10 @@ rollout:
   healthCheck:
     enabled: true
     path: "/user/actuator/health"
-    initialDelaySeconds: 30
     periodSeconds: 10
+    startupProbe:
+      failureThreshold: 60
+      periodSeconds: 10
   
   blueGreen:
     autoPromotionEnabled: false

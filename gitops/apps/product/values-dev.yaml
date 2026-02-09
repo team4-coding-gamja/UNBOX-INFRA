@@ -77,8 +77,10 @@ rollout:
   healthCheck:
     enabled: true
     path: "/product/actuator/health"
-    initialDelaySeconds: 30
     periodSeconds: 10
+    startupProbe:
+      failureThreshold: 60
+      periodSeconds: 10
   
   canary:
     steps:
