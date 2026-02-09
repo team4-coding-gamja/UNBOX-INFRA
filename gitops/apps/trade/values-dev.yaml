@@ -85,13 +85,13 @@ rollout:
   canary:
     steps:
     - setWeight: 10
-    - pause: {duration: 60s}  # Analysis 체크 시간
+    - pause: {duration: 30s}  # Analysis 체크 시간
     - setWeight: 25
-    - pause: {duration: 60s}
+    - pause: {duration: 30s}
     - setWeight: 50
-    - pause: {duration: 60s}
+    - pause: {duration: 30s}
     - setWeight: 75
-    - pause: {duration: 60s}
+    - pause: {duration: 30s}
     maxSurge: "25%"
     maxUnavailable: 0
   
