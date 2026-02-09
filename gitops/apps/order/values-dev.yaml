@@ -1,26 +1,37 @@
-# Order Service - Dev 환경 오버라이드
-replicaCount: 2
+# Order Service - Dev Environment
+appName: order-service
+replicaCount: 1
 
 image:
   repository: 632941626317.dkr.ecr.ap-northeast-2.amazonaws.com/unbox-dev-order-repo
-  tag: dev-2044477
+  tag: dev-1f23f3c7490d4e4f5ddc0ecd846ba156c3a6309e
+  pullPolicy: Always
 
-# Dev 환경에서는 Linkerd 활성화
+targetGroupArn: "arn:aws:elasticloadbalancing:ap-northeast-2:632941626317:targetgroup/order-2026020523301243820000000d/791e3402ebf9a555"
+
 linkerd:
-  enabled: true
+  enabled: false
 
-# Dev 환경에서 Rollout 활성화
-rollout:
-  enabled: true
-  blueGreen:
-    autoPromotionEnabled: true   # Dev에서는 자동 전환
-    autoPromotionSeconds: 180    # 3분 후 자동 전환
-    scaleDownDelaySeconds: 60    # 1분 후 이전 버전 삭제
+service:
+  port: 80
+  targetPort: 8084
+
+containerPort: 8084
 
 env:
-  SPRING_JWT_SECRET: "c2VjcmV0S2V5Rm9yTG9jYWxEZXZlbG9wbWVudFRoaXNJc1ZlcnlJbXBvcnRhbnQ="
-  # Dev RDS
-  SPRING_DATASOURCE_URL: "jdbc:postgresql://unbox-dev-common-db.crmw2cqokxc4.ap-northeast-2.rds.amazonaws.com:5432/dev_db"
+  SERVER_PORT: "8084"
+  SERVER_SERVLET_CONTEXT_PATH: "/order"
+  
+  SPRING_JWT_SECRET:
+    valueFrom:
+      secretKeyRef:
+        name: db-secret
+        key: JWT_SECRET
+  
+  DB_DRIVER_CLASS_NAME: "org.postgresql.Driver"
+  SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
+  SPRING_JPA_SHOW_SQL: "false"
+  SPRING_DATASOURCE_URL: "jdbc:postgresql://REPLACE_WITH_RDS_ENDPOINT:5432/dev_db"
   SPRING_DATASOURCE_USERNAME: "unbox_admin"
   SPRING_DATASOURCE_PASSWORD:
     valueFrom:
@@ -28,11 +39,36 @@ env:
         name: db-secret
         key: DB_PASSWORD
   
-  # Dev Kafka
-  SPRING_KAFKA_BOOTSTRAP_SERVERS: "kafka.unbox-infra.svc.cluster.local:9092"
+  SPRING_DATA_REDIS_HOST: "REPLACE_WITH_REDIS_ENDPOINT"
+  SPRING_DATA_REDIS_PORT: "6379"
+  SPRING_DATA_REDIS_SSL: "true"
+  SPRING_DATA_REDIS_PASSWORD:
+    valueFrom:
+      secretKeyRef:
+        name: db-secret
+        key: REDIS_PASSWORD
   
-  # Dev Redis (ElastiCache)
-  SPRING_DATA_REDIS_HOST: "master.unbox-dev-redis.r0vran.apn2.cache.amazonaws.com"
+  SPRING_KAFKA_BOOTSTRAP_SERVERS: "REPLACE_WITH_MSK_ENDPOINT:9098"
+  MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: ""
+
+resources:
+  requests:
+    memory: "512Mi"
+    cpu: "100m"
+  limits:
+    memory: "1Gi"
+
+rollout:
+  enabled: true
+  strategy: "blueGreen"
   
-  # Dev Zipkin
-  MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: "http://zipkin.unbox-infra.svc.cluster.local:9411/api/v2/spans"
+  healthCheck:
+    enabled: true
+    path: "/order/actuator/health"
+    initialDelaySeconds: 30
+    periodSeconds: 10
+  
+  blueGreen:
+    autoPromotionEnabled: false
+    autoPromotionSeconds: 600
+    scaleDownDelaySeconds: 300

@@ -1,26 +1,39 @@
-# User Service - Dev 환경 오버라이드
-replicaCount: 2
+# User Service - Dev Environment
+appName: user-service
+replicaCount: 1
 
 image:
   repository: 632941626317.dkr.ecr.ap-northeast-2.amazonaws.com/unbox-dev-user-repo
-  tag: dev-2044477
+  tag: dev-1f23f3c7490d4e4f5ddc0ecd846ba156c3a6309e
+  pullPolicy: Always
 
-# Dev 환경에서는 Linkerd 활성화
+targetGroupArn: "arn:aws:elasticloadbalancing:ap-northeast-2:632941626317:targetgroup/user-2026020523301243910000000e/255d23a26f2c60e4"
+
 linkerd:
-  enabled: true
+  enabled: false
 
-# Dev 환경에서 Rollout 활성화
-rollout:
-  enabled: true
-  blueGreen:
-    autoPromotionEnabled: true   # Dev에서는 자동 전환
-    autoPromotionSeconds: 180    # 3분 후 자동 전환
-    scaleDownDelaySeconds: 60    # 1분 후 이전 버전 삭제
+service:
+  port: 80
+  targetPort: 8081
+
+containerPort: 8081
 
 env:
-  SPRING_JWT_SECRET: "c2VjcmV0S2V5Rm9yTG9jYWxEZXZlbG9wbWVudFRoaXNJc1ZlcnlJbXBvcnRhbnQ="
-  # Dev RDS
-  SPRING_DATASOURCE_URL: "jdbc:postgresql://unbox-dev-common-db.crmw2cqokxc4.ap-northeast-2.rds.amazonaws.com:5432/dev_db"
+  SERVER_PORT: "8081"
+  SERVER_SERVLET_CONTEXT_PATH: "/user"
+  
+  # JWT Secret (SSM에서 가져옴)
+  SPRING_JWT_SECRET:
+    valueFrom:
+      secretKeyRef:
+        name: db-secret
+        key: JWT_SECRET
+  
+  # Database 설정 (Dev는 공용 DB 사용)
+  DB_DRIVER_CLASS_NAME: "org.postgresql.Driver"
+  SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
+  SPRING_JPA_SHOW_SQL: "false"
+  SPRING_DATASOURCE_URL: "jdbc:postgresql://REPLACE_WITH_RDS_ENDPOINT:5432/dev_db"
   SPRING_DATASOURCE_USERNAME: "unbox_admin"
   SPRING_DATASOURCE_PASSWORD:
     valueFrom:
@@ -28,11 +41,42 @@ env:
         name: db-secret
         key: DB_PASSWORD
   
-  # Dev Kafka
-  SPRING_KAFKA_BOOTSTRAP_SERVERS: "kafka.unbox-infra.svc.cluster.local:9092"
+  # Redis 설정
+  SPRING_DATA_REDIS_HOST: "REPLACE_WITH_REDIS_ENDPOINT"
+  SPRING_DATA_REDIS_PORT: "6379"
+  SPRING_DATA_REDIS_SSL: "true"
+  SPRING_DATA_REDIS_PASSWORD:
+    valueFrom:
+      secretKeyRef:
+        name: db-secret
+        key: REDIS_PASSWORD
   
-  # Dev Redis (ElastiCache)
-  SPRING_DATA_REDIS_HOST: "master.unbox-dev-redis.r0vran.apn2.cache.amazonaws.com"
+  # Kafka 설정
+  SPRING_KAFKA_BOOTSTRAP_SERVERS: "REPLACE_WITH_MSK_ENDPOINT:9098"
   
-  # Dev Zipkin
-  MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: "http://zipkin.unbox-infra.svc.cluster.local:9411/api/v2/spans"
+  # Zipkin (옵션)
+  MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: ""
+
+# 리소스 제한
+resources:
+  requests:
+    memory: "512Mi"
+    cpu: "100m"
+  limits:
+    memory: "1Gi"
+
+# Argo Rollouts 설정
+rollout:
+  enabled: true
+  strategy: "blueGreen"
+  
+  healthCheck:
+    enabled: true
+    path: "/user/actuator/health"
+    initialDelaySeconds: 30
+    periodSeconds: 10
+  
+  blueGreen:
+    autoPromotionEnabled: false
+    autoPromotionSeconds: 600
+    scaleDownDelaySeconds: 300
