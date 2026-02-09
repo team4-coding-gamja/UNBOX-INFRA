@@ -5,8 +5,6 @@
 repositories:
   - name: bitnami
     url: https://charts.bitnami.com/bitnami
-  - name: openzipkin
-    url: https://openzipkin.github.io/zipkin
   - name: linkerd
     url: https://helm.linkerd.io/stable
   - name: external-secrets
@@ -53,6 +51,15 @@ releases:
               crtPEM: {{ readFile "issuer.crt" | quote }}
               keyPEM: {{ readFile "issuer.key" | quote }}
             crtExpiry: "2027-02-05T00:00:00Z"
+
+  # Linkerd Viz (Prometheus + Grafana Dashboard)
+  - name: linkerd-viz
+    chart: linkerd/linkerd-viz
+    namespace: linkerd-viz
+    createNamespace: true
+    needs:
+      - linkerd/linkerd-control-plane
+
 
   # Kafka
   - name: kafka

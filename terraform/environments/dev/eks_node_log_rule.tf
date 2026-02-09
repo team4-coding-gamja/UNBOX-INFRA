@@ -41,3 +41,13 @@ resource "aws_security_group_rule" "cluster_ingress_from_node_https" {
   source_security_group_id = module.security_group.eks_node_sg_id
   description              = "Allow Worker Nodes to access Cluster API Server"
 }
+
+resource "aws_security_group_rule" "node_ingress_from_cluster_8443" {
+  type                     = "ingress"
+  from_port                = 8443
+  to_port                  = 8443
+  protocol                 = "tcp"
+  security_group_id        = module.security_group.eks_node_sg_id
+  source_security_group_id = module.eks.cluster_security_group_id
+  description              = "Allow Control Plane to access Linkerd Proxy Injector Webhook"
+}
