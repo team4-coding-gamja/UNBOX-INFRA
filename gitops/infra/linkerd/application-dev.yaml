@@ -1,0 +1,48 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: linkerd-control-plane-dev
+  namespace: argocd
+  labels:
+    type: infrastructure
+    component: service-mesh
+    env: dev
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: default
+  source:
+    repoURL: https://helm.linkerd.io/stable
+    chart: linkerd-control-plane
+    targetRevision: 1.16.11
+    helm:
+      releaseName: linkerd-control-plane
+      values: |
+        enableHA: false
+        controllerReplicas: 1
+        
+        proxyInjector:
+          replicaCount: 1
+        spValidator:
+          replicaCount: 1
+        
+        prometheus:
+          enabled: true
+        
+        policyValidator:
+          enabled: false
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: linkerd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

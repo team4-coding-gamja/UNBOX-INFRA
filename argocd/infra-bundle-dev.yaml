@@ -29,6 +29,6 @@ spec:
       - CreateNamespace=true
   info:
     - name: 'Description'
-      value: 'Dev Infrastructure components (Kafka only - RDS/Redis are managed by Terraform)'
+      value: 'Dev Infrastructure components (Kafka, ESO, Linkerd, Prometheus - RDS/Redis are managed by Terraform)'
     - name: 'Deployment Order'
-      value: 'Wave 4: Kafka'
+      value: 'Wave 0: Linkerd CRDs → Wave 1: Linkerd Control Plane → Wave 2: ESO → Wave 4: Kafka → Wave 6: Prometheus'
