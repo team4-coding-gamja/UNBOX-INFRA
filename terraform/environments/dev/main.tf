@@ -103,6 +103,7 @@ module "redis" {
   redis_sg_id                = module.security_group.redis_sg_id
   kms_key_arn                = module.common.kms_key_arn
   transit_encryption_enabled = var.env == "prod" ? true : false
+  auth_token                 = module.common.redis_password_raw
 }
 
 
@@ -128,10 +129,10 @@ module "eks" {
   vpc_id     = module.vpc.vpc_id
   subnet_ids = module.vpc.private_app_subnet_ids # App 서브넷에 노드 배치
 
-  # Dev 환경: 2 Nodes, No Fargate
-  node_desired_size = 2
-  node_min_size     = 2
-  node_max_size     = 2
+  # Dev 환경: 3 Nodes (Monitoring Stack 추가로 인한 증설)
+  node_desired_size = 3
+  node_min_size     = 3
+  node_max_size     = 3
   instance_types    = ["t3.large"]
   enable_fargate    = false
 
@@ -140,6 +141,15 @@ module "eks" {
   fargate_profile_role_arn = module.common.eks_fargate_role_arn
   kms_key_arn              = module.common.kms_key_arn
   node_security_group_id   = module.security_group.eks_node_sg_id
+
+  # AWS Auth (Manage Access)
+  aws_auth_users = [
+    for key, user in var.users : {
+      userarn  = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/${user.user_name}"
+      username = user.user_name
+      groups   = ["system:masters"] # Full Admin Access
+    }
+  ]
 }
 
 # [Fix] EKS Cluster -> RDS Security Group Rule (Avoid Cyclic Dependency)

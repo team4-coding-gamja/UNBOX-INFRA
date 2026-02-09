@@ -94,3 +94,23 @@ variable "kms_key_arn" {
   description = "EKS Node EBS Volume KMS Key ARN"
   type        = string
 }
+
+variable "aws_auth_users" {
+  description = "Additional IAM users to add to the aws-auth configmap."
+  type = list(object({
+    userarn  = string
+    username = string
+    groups   = list(string)
+  }))
+  default = []
+}
+
+variable "aws_auth_roles" {
+  description = "Additional IAM roles to add to the aws-auth configmap."
+  type = list(object({
+    rolearn  = string
+    username = string
+    groups   = list(string)
+  }))
+  default = []
+}

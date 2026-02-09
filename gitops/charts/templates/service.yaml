@@ -4,6 +4,20 @@ metadata:
   name: {{ .Values.appName }}
   labels:
     app: {{ .Values.appName }}
+  annotations:
+    # [핵심] Linkerd 서킷 브레이커 (Failure Accrual) 설정
+    
+    # 모드: "consecutive" (연속 실패 시 발동)
+    config.linkerd.io/failure-accrual-mode: "consecutive"
+    
+    # 조건: 5번 연속으로 에러(5xx)가 나면 "고장" 판정 -> 재시도는 아님
+    config.linkerd.io/failure-accrual-max-failures: "5"
+    
+    # 처벌: 고장 판정나면 최소 30초 동안 이 파드에는 요청을 안 보냄 (제외시킴)
+    config.linkerd.io/failure-accrual-min-backoff: "30s"
+    
+    # 처벌 최대: 계속 고장나면 최대 60초까지 제외 시간 늘림
+    config.linkerd.io/failure-accrual-max-backoff: "60s"
 spec:
   type: ClusterIP
   ports:
