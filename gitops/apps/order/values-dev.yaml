@@ -77,7 +77,15 @@ rollout:
   healthCheck:
     enabled: true
     path: "/order/actuator/health"
-    initialDelaySeconds: 30
+    
+  startupProbe:
+    failureThreshold: 60  # 60번 실패까지 허용 (최대 10분)
+    periodSeconds: 10
+    
+  livenessProbe:
+    periodSeconds: 10
+    
+  readinessProbe:
     periodSeconds: 10
   
   blueGreen:

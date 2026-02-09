@@ -89,7 +89,15 @@ rollout:
   healthCheck:
     enabled: true
     path: "/payment/actuator/health"
-    initialDelaySeconds: 30
+    
+  startupProbe:
+    failureThreshold: 60
+    periodSeconds: 10
+    
+  livenessProbe:
+    periodSeconds: 10
+    
+  readinessProbe:
     periodSeconds: 10
   
   blueGreen:
