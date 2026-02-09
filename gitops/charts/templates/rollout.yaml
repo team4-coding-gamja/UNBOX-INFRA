@@ -28,13 +28,12 @@ spec:
         - containerPort: {{ .Values.containerPort }}
         env:
         {{- range $key, $value := .Values.env }}
-        {{- if kindIs "map" $value }}
         - name: {{ $key }}
+          {{- if kindIs "map" $value }}
           {{- toYaml $value | nindent 10 }}
-        {{- else }}
-        - name: {{ $key }}
+          {{- else }}
           value: {{ $value | quote }}
-        {{- end }}
+          {{- end }}
         {{- end }}
         {{- if .Values.rollout.healthCheck.enabled }}
         {{- if .Values.rollout.healthCheck.startupProbe }}
