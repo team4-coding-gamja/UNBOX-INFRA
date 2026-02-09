@@ -77,16 +77,10 @@ rollout:
   healthCheck:
     enabled: true
     path: "/trade/actuator/health"
-    
-  startupProbe:
-    failureThreshold: 60
     periodSeconds: 10
-    
-  livenessProbe:
-    periodSeconds: 10
-    
-  readinessProbe:
-    periodSeconds: 10
+    startupProbe:
+      failureThreshold: 60
+      periodSeconds: 10
   
   canary:
     steps:
