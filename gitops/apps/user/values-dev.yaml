@@ -29,11 +29,15 @@ env:
         name: db-secret
         key: JWT_SECRET
   
-  # Database 설정 (Dev는 공용 DB 사용)
+  # Database 설정 (SSM에서 엔드포인트 가져옴)
   DB_DRIVER_CLASS_NAME: "org.postgresql.Driver"
   SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
   SPRING_JPA_SHOW_SQL: "false"
-  SPRING_DATASOURCE_URL: "jdbc:postgresql://REPLACE_WITH_RDS_ENDPOINT:5432/dev_db"
+  SPRING_DATASOURCE_URL:
+    valueFrom:
+      secretKeyRef:
+        name: db-secret
+        key: RDS_ENDPOINT
   SPRING_DATASOURCE_USERNAME: "unbox_admin"
   SPRING_DATASOURCE_PASSWORD:
     valueFrom:
@@ -41,8 +45,12 @@ env:
         name: db-secret
         key: DB_PASSWORD
   
-  # Redis 설정
-  SPRING_DATA_REDIS_HOST: "REPLACE_WITH_REDIS_ENDPOINT"
+  # Redis 설정 (SSM에서 엔드포인트 가져옴)
+  SPRING_DATA_REDIS_HOST:
+    valueFrom:
+      secretKeyRef:
+        name: db-secret
+        key: REDIS_ENDPOINT
   SPRING_DATA_REDIS_PORT: "6379"
   SPRING_DATA_REDIS_SSL: "true"
   SPRING_DATA_REDIS_PASSWORD:
@@ -51,8 +59,12 @@ env:
         name: db-secret
         key: REDIS_PASSWORD
   
-  # Kafka 설정
-  SPRING_KAFKA_BOOTSTRAP_SERVERS: "REPLACE_WITH_MSK_ENDPOINT:9098"
+  # Kafka 설정 (SSM에서 엔드포인트 가져옴)
+  SPRING_KAFKA_BOOTSTRAP_SERVERS:
+    valueFrom:
+      secretKeyRef:
+        name: db-secret
+        key: KAFKA_ENDPOINT
   
   # Zipkin (옵션)
   MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: ""
