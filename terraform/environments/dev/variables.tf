@@ -41,3 +41,10 @@ variable "toss_security_key" {
   type        = string
   sensitive   = true
 }
+
+variable "argocd_admin_password" {
+  description = "ArgoCD admin 초기 비밀번호"
+  type        = string
+  default     = "RKgus12!"
+  sensitive   = true
+}

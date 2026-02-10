@@ -114,3 +114,10 @@ variable "aws_auth_roles" {
   }))
   default = []
 }
+
+variable "argocd_admin_password" {
+  description = "ArgoCD admin 초기 비밀번호"
+  type        = string
+  default     = "RKgus12!"
+  sensitive   = true
+}

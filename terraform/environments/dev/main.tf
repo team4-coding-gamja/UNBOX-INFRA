@@ -142,6 +142,9 @@ module "eks" {
   kms_key_arn              = module.common.kms_key_arn
   node_security_group_id   = module.security_group.eks_node_sg_id
 
+  # ArgoCD 설정
+  argocd_admin_password = var.argocd_admin_password
+
   # AWS Auth (Manage Access)
   aws_auth_users = [
     for key, user in var.users : {
