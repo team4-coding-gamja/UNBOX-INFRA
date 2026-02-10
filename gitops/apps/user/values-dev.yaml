@@ -4,7 +4,7 @@ replicaCount: 1
 
 image:
   repository: 632941626317.dkr.ecr.ap-northeast-2.amazonaws.com/unbox-dev-user-repo
-  tag: dev-1f23f3c7490d4e4f5ddc0ecd846ba156c3a6309e
+  tag: latest
   pullPolicy: Always
 
 # Ingress 활성화
