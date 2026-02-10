@@ -39,4 +39,5 @@ spec:
     kind: CustomResourceDefinition
     jsonPointers:
     - /status
-    - /metadata/annotations
+    - /metadata/annotations/meta.helm.sh~1release-name
+    - /metadata/annotations/meta.helm.sh~1release-namespace
