@@ -17,7 +17,7 @@ spec:
     path: gitops/infra
     directory:
       recurse: true
-      include: "*/application-dev.yaml"
+      include: "*application-dev.yaml"  # crds-application-dev.yaml과 application-dev.yaml 모두 포함
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd
