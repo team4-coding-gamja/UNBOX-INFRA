@@ -18,7 +18,7 @@ metadata:
     
     # 기존 ALB 재사용 (모든 서비스가 하나의 ALB 공유)
     alb.ingress.kubernetes.io/group.name: {{ .Values.ingress.groupName | default "unbox-dev" }}
-    alb.ingress.kubernetes.io/load-balancer-name: {{ .Values.ingress.loadBalancerName | default "unbox-dev-alb" }}
+    # loadBalancerName 제거 - 자동 생성하게 함
     
     # Listener 설정
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'

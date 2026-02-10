@@ -12,7 +12,6 @@ ingress:
   enabled: true
   path: /trade
   groupName: unbox-dev
-  loadBalancerName: unbox-dev-alb
 
 linkerd:
   enabled: true  # Linkerd Service Mesh 활성화

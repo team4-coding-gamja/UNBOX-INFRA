@@ -12,7 +12,6 @@ ingress:
   enabled: true
   path: /product
   groupName: unbox-dev
-  loadBalancerName: unbox-dev-alb
 
 linkerd:
   enabled: true  # Linkerd 활성화 (헤더 기반 라우팅용)
