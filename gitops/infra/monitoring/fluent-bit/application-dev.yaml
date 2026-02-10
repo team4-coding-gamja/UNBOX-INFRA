@@ -1,0 +1,33 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: fluent-bit-dev
+  namespace: argocd
+  labels:
+    component: monitoring
+    env: dev
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  project: default
+  sources:
+    - repoURL: https://fluent.github.io/helm-charts
+      chart: fluent-bit
+      targetRevision: 0.47.7
+      helm:
+        releaseName: fluent-bit
+        valueFiles:
+          - $values/gitops/infra/monitoring/fluent-bit/values.yaml
+    - repoURL: https://github.com/team4-coding-gamja/UNBOX-INFRA.git
+      targetRevision: feat/ArgoCD-dev
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+  revisionHistoryLimit: 3

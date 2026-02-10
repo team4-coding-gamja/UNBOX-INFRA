@@ -1,0 +1,64 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: linkerd-control-plane-dev
+  namespace: argocd
+  labels:
+    type: infrastructure
+    component: service-mesh
+    env: dev
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: default
+  source:
+    repoURL: https://helm.linkerd.io/stable
+    chart: linkerd-control-plane
+    targetRevision: 1.16.11
+    helm:
+      releaseName: linkerd-control-plane
+      values: |
+        enableHA: false
+        controllerReplicas: 1
+        
+        # Root CA (10년 유효, Cert-Manager 생성)
+        # Terraform apply 시 Cert-Manager가 자동 생성하고 Linkerd가 참조
+        identityTrustAnchorsPEM: |
+          -----BEGIN CERTIFICATE-----
+          MIIBjDCCATGgAwIBAgIRAOUCEfNfQRCAErVLsW6SXzYwCgYIKoZIzj0EAwIwJTEj
+          MCEGA1UEAxMacm9vdC5saW5rZXJkLmNsdXN0ZXIubG9jYWwwHhcNMjYwMjEwMDQw
+          MzU2WhcNMzYwMjA4MDQwMzU2WjAlMSMwIQYDVQQDExpyb290LmxpbmtlcmQuY2x1
+          c3Rlci5sb2NhbDBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABD+wrD+oPa56hQPS
+          zLu6o4tSwWsS4BJh5eWF27XTqbtrZpG6+Oxk6fL2rsc4zM9tzymvGvwHy60x8UD3
+          T2n56CujQjBAMA4GA1UdDwEB/wQEAwICpDAPBgNVHRMBAf8EBTADAQH/MB0GA1Ud
+          DgQWBBTSlaoD9lvDSA//3oHS9g027bG8eTAKBggqhkjOPQQDAgNJADBGAiEA98Ri
+          JzIvI9nYJGCj50+b8+HytqQzsk1pZG3k2WIEZCsCIQDb/YmUk/QKVblTfJ0iinV5
+          /6OlAxDSqIlZYHwoGF2r1w==
+          -----END CERTIFICATE-----
+        
+        # Identity Issuer (1년 유효, Cert-Manager가 자동 갱신)
+        # linkerd-identity-issuer Secret을 자동으로 사용
+        identity:
+          issuer:
+            scheme: kubernetes.io/tls
+        
+        proxyInjector:
+          replicaCount: 1
+        
+        prometheus:
+          enabled: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: linkerd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
