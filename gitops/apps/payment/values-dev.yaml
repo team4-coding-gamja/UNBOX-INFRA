@@ -98,6 +98,6 @@ rollout:
       periodSeconds: 10
   
   blueGreen:
-    autoPromotionEnabled: false
-    autoPromotionSeconds: 600
-    scaleDownDelaySeconds: 300
+    autoPromotionEnabled: true
+    autoPromotionSeconds: 30
+    scaleDownDelaySeconds: 30
