@@ -1,0 +1,60 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: linkerd-crds
+  namespace: argocd
+  labels:
+    type: infrastructure
+    component: service-mesh
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"  # 가장 먼저 배포
+spec:
+  project: default
+  source:
+    repoURL: https://helm.linkerd.io/stable
+    chart: linkerd-crds
+    targetRevision: 1.8.0
+    helm:
+      releaseName: linkerd-crds
+      skipCrds: false
+      values: |
+        # Gateway API CRD 설치 비활성화 (Traefik이 이미 설치함)
+        enableHttpRoutes: false
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: linkerd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+      - RespectIgnoreDifferences=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+  
+  # Gateway API CRD 무시 (Linkerd가 관리하지 않음)
+  ignoreDifferences:
+    - group: apiextensions.k8s.io
+      kind: CustomResourceDefinition
+      name: httproutes.gateway.networking.k8s.io
+    - group: apiextensions.k8s.io
+      kind: CustomResourceDefinition
+      name: gateways.gateway.networking.k8s.io
+    - group: apiextensions.k8s.io
+      kind: CustomResourceDefinition
+      name: grpcroutes.gateway.networking.k8s.io
+    - group: apiextensions.k8s.io
+      kind: CustomResourceDefinition
+      name: referencegrants.gateway.networking.k8s.io
+    # serviceprofiles CRD의 모든 시스템 필드 무시
+    - group: apiextensions.k8s.io
+      kind: CustomResourceDefinition
+      name: serviceprofiles.linkerd.io
+      jsonPointers:
+        - /status

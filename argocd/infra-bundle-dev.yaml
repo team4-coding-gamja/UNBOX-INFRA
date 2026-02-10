@@ -1,0 +1,36 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: unbox-infrastructure-dev
+  namespace: argocd
+  labels:
+    type: infrastructure
+    bundle: infra
+    env: dev
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"  # 애플리케이션보다 먼저 배포
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/team4-coding-gamja/UNBOX-INFRA.git
+    targetRevision: feat/ArgoCD-dev
+    path: gitops/infra
+    directory:
+      recurse: true
+      include: "*application-dev.yaml"  # crds-application-dev.yaml과 application-dev.yaml 모두 포함
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+  info:
+    - name: 'Description'
+      value: 'Dev Infrastructure components (Kafka, ESO, Linkerd - RDS/Redis/Monitoring are managed separately)'
+    - name: 'Deployment Order'
+      value: 'Wave 0: Linkerd CRDs → Wave 1: Linkerd Control Plane → Wave 2: ESO → Wave 4: Kafka'
+    - name: 'Note'
+      value: 'Monitoring stack (Prometheus, Grafana, Loki, Tempo) is managed by Helm directly until migration to ArgoCD'

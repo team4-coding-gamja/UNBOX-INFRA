@@ -1,0 +1,34 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: linkerd-crds
+  namespace: argocd
+  labels:
+    type: infrastructure
+    component: service-mesh-crds
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"  # 가장 먼저 배포
+spec:
+  project: default
+  source:
+    repoURL: https://helm.linkerd.io/stable
+    chart: linkerd-crds
+    targetRevision: 1.8.0
+    helm:
+      releaseName: linkerd-crds
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: linkerd
+  syncPolicy:
+    automated:
+      prune: false  # CRD는 자동 삭제 방지
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - Replace=true  # CRD 업데이트 시 Replace 사용
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

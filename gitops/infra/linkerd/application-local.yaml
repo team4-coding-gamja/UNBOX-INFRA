@@ -1,0 +1,76 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: linkerd-control-plane
+  namespace: argocd
+  labels:
+    type: infrastructure
+    component: service-mesh
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: default
+  source:
+    repoURL: https://helm.linkerd.io/stable
+    chart: linkerd-control-plane
+    targetRevision: 1.16.11
+    helm:
+      releaseName: linkerd-control-plane
+      values: |
+        # 고가용성(HA) 모드 끄기
+        enableHA: false
+        
+        # 컨트롤러 파드 개수 제한
+        controllerReplicas: 1
+        
+        # 구성 요소별 레플리카 1개로 고정
+        proxyInjector:
+          replicaCount: 1
+        spValidator:
+          replicaCount: 1
+        
+        # 프로메테우스 내장
+        prometheus:
+          enabled: true
+        
+        # 정책 설정 (기본 허용)
+        policyValidator:
+          enabled: false
+        
+        # TLS 인증서 설정
+        # CA 인증서는 values에 직접 입력 (Linkerd 요구사항)
+        identityTrustAnchorsPEM: |
+          -----BEGIN CERTIFICATE-----
+          MIIBpDCCAUqgAwIBAgITFI8Z+1E5dRVCSJz1HloWgud+XDAKBggqhkjOPQQDAjAo
+          MSYwJAYDVQQDDB1saW5rZXJkLWlkZW50aXR5LXRydXN0LWFuY2hvcjAeFw0yNjAy
+          MDcwNzU3MzVaFw0yNzAyMDcwNzU3MzVaMCgxJjAkBgNVBAMMHWxpbmtlcmQtaWRl
+          bnRpdHktdHJ1c3QtYW5jaG9yMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAECynT
+          tYThf/j6kY4ux28ZWHxFZAvucgFvzkQlJN/+OlgWxDkDRoIOmoMdbeWFKkP2d59H
+          9gQcdJ5IUDkvWvm7dqNTMFEwHQYDVR0OBBYEFA7kUfH4G+gi41xRuzyJLX84a4tf
+          MB8GA1UdIwQYMBaAFA7kUfH4G+gi41xRuzyJLX84a4tfMA8GA1UdEwEB/wQFMAMB
+          Af8wCgYIKoZIzj0EAwIDSAAwRQIgRgi16YC/cthqVqG+VEG+mrSSSTMwXN8/ES74
+          PN/wxusCIQCstvkPW8CmfpxojmqV+DBE0YJR/NcJWbtUGmSSZ9ztzQ==
+          -----END CERTIFICATE-----
+        
+        # Issuer 인증서는 Kubernetes Secret 참조
+        # Secret 'linkerd-identity-issuer' 자동 사용
+        identity:
+          issuer:
+            scheme: kubernetes.io/tls
+  
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: linkerd
+  
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
