@@ -55,3 +55,7 @@ rollout:
     autoPromotionEnabled: false
     autoPromotionSeconds: 600
     scaleDownDelaySeconds: 300
+  
+  # Feature Flag 설정
+  featureFlag:
+    enabled: false  # User는 Feature Flag 사용 안 함

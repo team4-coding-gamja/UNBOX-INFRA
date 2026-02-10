@@ -77,3 +77,7 @@ rollout:
     autoPromotionEnabled: false  # 수동 승인 필요
     autoPromotionSeconds: 600    # 10분 후 자동 전환
     scaleDownDelaySeconds: 300   # 5분 후 이전 버전 삭제
+
+  # Feature Flag 설정
+  featureFlag:
+    enabled: false

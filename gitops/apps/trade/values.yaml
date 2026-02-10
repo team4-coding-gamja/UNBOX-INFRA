@@ -93,3 +93,7 @@ rollout:
     startingStep: 1  # 두 번째 단계부터 분석 시작
     queryRange: "5m"  # 5분 범위 메트릭
     prometheusAddress: "http://prometheus.unbox-infra.svc.cluster.local:9090"
+
+  # Feature Flag 설정
+  featureFlag:
+    enabled: false  # Trade는 Feature Flag 사용 안 함

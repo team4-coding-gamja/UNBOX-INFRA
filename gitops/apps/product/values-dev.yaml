@@ -80,6 +80,10 @@ rollout:
   analysis:
     enabled: false
   
+  # Feature Flag 활성화 (헤더 기반 강제 라우팅)
+  featureFlag:
+    enabled: true
+  
   healthCheck:
     enabled: true
     path: "/product/actuator/health"
