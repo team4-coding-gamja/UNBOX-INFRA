@@ -37,8 +37,8 @@ unbox-infrastructure/
 
 ### Subnet Tier Structure
 - Public Subnet: ALB, NAT Gateway  
-- Private Subnet: Application Servers (ECS)  
-- Data Subnet: Databases (RDS, MSK, Redis)
+- Private Subnet: Application Servers (EkS)  
+- Data Subnet: Databases (RDS, Redis)
 
 ### Availability Zones
 - ap-northeast-2a  
