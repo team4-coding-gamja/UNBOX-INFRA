@@ -17,20 +17,36 @@ spec:
     targetRevision: 1.16.11
     helm:
       releaseName: linkerd-control-plane
+      parameters:
+      - name: "identityTrustAnchorsPEM"
+        value: ""  # Cert-Manager가 생성한 Secret 사용
+      - name: "identity.issuer.scheme"
+        value: "kubernetes.io/tls"
       values: |
         enableHA: false
         controllerReplicas: 1
         
+        # Cert-Manager가 생성한 인증서 사용
+        identity:
+          externalCA: true
+          issuer:
+            scheme: kubernetes.io/tls
+        
         proxyInjector:
           replicaCount: 1
-        spValidator:
-          replicaCount: 1
+          externalSecret: true
+          caBundle: ""
+        
+        profileValidator:
+          externalSecret: true
+          caBundle: ""
+        
+        policyValidator:
+          externalSecret: true
+          caBundle: ""
         
         prometheus:
           enabled: true
-        
-        policyValidator:
-          enabled: false
   destination:
     server: https://kubernetes.default.svc
     namespace: linkerd

@@ -1,0 +1,63 @@
+---
+# Self-signed Issuer (Root CA)
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: linkerd-trust-anchor
+  namespace: linkerd
+spec:
+  selfSigned: {}
+---
+# Root CA Certificate
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: linkerd-trust-anchor
+  namespace: linkerd
+spec:
+  isCA: true
+  commonName: root.linkerd.cluster.local
+  secretName: linkerd-trust-anchor
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    name: linkerd-trust-anchor
+    kind: Issuer
+  duration: 87600h  # 10 years
+  renewBefore: 8760h  # 1 year
+---
+# CA Issuer (uses Root CA)
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: linkerd-identity-issuer
+  namespace: linkerd
+spec:
+  ca:
+    secretName: linkerd-trust-anchor
+---
+# Identity Issuer Certificate
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: linkerd-identity-issuer
+  namespace: linkerd
+spec:
+  commonName: identity.linkerd.cluster.local
+  dnsNames:
+  - identity.linkerd.cluster.local
+  secretName: linkerd-identity-issuer
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    name: linkerd-identity-issuer
+    kind: Issuer
+  duration: 8760h  # 1 year
+  renewBefore: 720h  # 30 days
+  usages:
+  - cert sign
+  - crl sign
+  - server auth
+  - client auth

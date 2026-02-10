@@ -1,0 +1,32 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cert-manager-config-dev
+  namespace: argocd
+  labels:
+    type: infrastructure
+    component: certificate-management
+    env: dev
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"  # Linkerd CRDs와 동시에
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/team4-coding-gamja/UNBOX-INFRA.git
+    targetRevision: feat/ArgoCD-dev
+    path: gitops/infra/cert-manager
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: linkerd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

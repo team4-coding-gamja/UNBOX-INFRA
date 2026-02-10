@@ -1,0 +1,5 @@
+apiVersion: v2
+name: cert-manager-config
+description: Cert-Manager configuration for Linkerd certificates
+type: application
+version: 1.0.0
