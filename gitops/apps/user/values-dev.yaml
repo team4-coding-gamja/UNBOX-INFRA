@@ -68,9 +68,9 @@ env:
         name: db-secret
         key: KAFKA_ENDPOINT
   
-  # Tracing 비활성화
-  MANAGEMENT_TRACING_ENABLED: "false"
-  MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: ""
+  # Tracing 활성화 (Tempo)
+  MANAGEMENT_TRACING_ENABLED: "true"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://tempo.monitoring.svc.cluster.local:4318/"
 
 # 리소스 제한
 resources:
