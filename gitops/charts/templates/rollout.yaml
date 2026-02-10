@@ -81,6 +81,12 @@ spec:
   {{- else if eq .Values.rollout.strategy "canary" }}
   strategy:
     canary:
+      {{- if .Values.rollout.canary.canaryService }}
+      canaryService: {{ .Values.rollout.canary.canaryService }}
+      {{- end }}
+      {{- if .Values.rollout.canary.stableService }}
+      stableService: {{ .Values.rollout.canary.stableService }}
+      {{- end }}
       {{- if .Values.rollout.canary.steps }}
       steps:
       {{- toYaml .Values.rollout.canary.steps | nindent 6 }}
@@ -91,14 +97,7 @@ spec:
       {{- if .Values.rollout.canary.maxUnavailable }}
       maxUnavailable: {{ .Values.rollout.canary.maxUnavailable }}
       {{- end }}
-      {{- if .Values.rollout.featureFlag.enabled }}
-      # Feature Flag: 특정 헤더를 가진 요청만 Canary로 라우팅
-      trafficRouting:
-        managedRoutes:
-        - name: header-route
-      canaryService: {{ .Values.appName }}-canary
-      stableService: {{ .Values.appName }}
-      {{- else if .Values.rollout.canary.trafficRouting }}
+      {{- if .Values.rollout.canary.trafficRouting }}
       trafficRouting:
         {{- toYaml .Values.rollout.canary.trafficRouting | nindent 8 }}
       {{- end }}

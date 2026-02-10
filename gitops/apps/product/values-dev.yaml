@@ -10,7 +10,7 @@ image:
 targetGroupArn: "arn:aws:elasticloadbalancing:ap-northeast-2:632941626317:targetgroup/produ-2026020523301179290000000c/df6eaa3268424603"
 
 linkerd:
-  enabled: false
+  enabled: true  # Linkerd 활성화 (헤더 기반 라우팅용)
 
 service:
   port: 80
@@ -83,7 +83,18 @@ rollout:
       periodSeconds: 10
   
   canary:
+    # Canary와 Stable 서비스 지정 (Linkerd 트래픽 라우팅용)
+    canaryService: product-service-canary
+    stableService: product-service
+    
+    # Canary 단계 (일반 사용자용)
     steps:
+    - setHeaderRoute:  # 헤더 기반 라우팅 설정
+        name: header-route
+        match:
+        - headerName: X-Canary-Version
+          headerValue:
+            exact: "enabled"
     - setWeight: 10
     - pause: {duration: 30s}
     - setWeight: 25
@@ -94,8 +105,10 @@ rollout:
     - pause: {duration: 30s}
     maxSurge: "25%"
     maxUnavailable: 0
-  
-  featureFlag:
-    enabled: true  # Feature Flag 활성화
-    headerName: "X-Canary-Version"  # 헤더 이름
-    headerValue: "enabled"  # 헤더 값
+    
+    # Linkerd 트래픽 라우팅 설정
+    trafficRouting:
+      managedRoutes:
+      - name: header-route  # setHeaderRoute와 이름 매칭
+      smi: {}  # Linkerd는 SMI (Service Mesh Interface) 사용
+    

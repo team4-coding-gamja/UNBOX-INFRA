@@ -10,7 +10,7 @@ image:
 targetGroupArn: "arn:aws:elasticloadbalancing:ap-northeast-2:632941626317:targetgroup/order-2026020523301243820000000d/791e3402ebf9a555"
 
 linkerd:
-  enabled: false
+  enabled: true  # Linkerd Service Mesh 활성화
 
 service:
   port: 80
