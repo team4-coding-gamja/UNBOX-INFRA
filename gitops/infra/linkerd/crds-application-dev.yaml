@@ -33,3 +33,10 @@ spec:
         duration: 5s
         factor: 2
         maxDuration: 3m
+  # CRD status 필드 무시
+  ignoreDifferences:
+  - group: apiextensions.k8s.io
+    kind: CustomResourceDefinition
+    jsonPointers:
+    - /status
+    - /metadata/annotations

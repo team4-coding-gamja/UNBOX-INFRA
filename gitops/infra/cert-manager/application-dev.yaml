@@ -30,3 +30,11 @@ spec:
         duration: 5s
         factor: 2
         maxDuration: 3m
+  # Cert-Manager가 자동으로 추가하는 필드 무시
+  ignoreDifferences:
+  - group: cert-manager.io
+    kind: Certificate
+    jsonPointers:
+    - /spec/duration
+    - /spec/renewBefore
+    - /status
