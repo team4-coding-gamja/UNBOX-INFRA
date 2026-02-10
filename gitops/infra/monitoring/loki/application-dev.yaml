@@ -6,16 +6,21 @@ metadata:
   labels:
     component: monitoring
     env: dev
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
 spec:
   project: default
-  source:
-    repoURL: https://grafana.github.io/helm-charts
-    chart: loki
-    targetRevision: 6.6.6
-    helm:
-      releaseName: loki
-      valueFiles:
-        - values.yaml
+  sources:
+    - repoURL: https://grafana.github.io/helm-charts
+      chart: loki
+      targetRevision: 6.6.6
+      helm:
+        releaseName: loki
+        valueFiles:
+          - $values/gitops/infra/monitoring/loki/values.yaml
+    - repoURL: https://github.com/team4-coding-gamja/UNBOX-INFRA.git
+      targetRevision: feat/ArgoCD-dev
+      ref: values
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring

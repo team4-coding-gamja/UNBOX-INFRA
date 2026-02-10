@@ -6,16 +6,21 @@ metadata:
   labels:
     component: monitoring
     env: dev
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
 spec:
   project: default
-  source:
-    repoURL: https://prometheus-community.github.io/helm-charts
-    chart: kube-prometheus-stack
-    targetRevision: 61.3.1
-    helm:
-      releaseName: kube-prometheus-stack
-      valueFiles:
-        - values.yaml
+  sources:
+    - repoURL: https://prometheus-community.github.io/helm-charts
+      chart: kube-prometheus-stack
+      targetRevision: 61.3.1
+      helm:
+        releaseName: kube-prometheus-stack
+        valueFiles:
+          - $values/gitops/infra/monitoring/kube-prometheus-stack/values.yaml
+    - repoURL: https://github.com/team4-coding-gamja/UNBOX-INFRA.git
+      targetRevision: feat/ArgoCD-dev
+      ref: values
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring
