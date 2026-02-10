@@ -29,3 +29,15 @@ variable "kms_key_arn" {
   description = "KMS ARN from bootstrap"
   type        = string
 }
+
+variable "toss_secret_key" {
+  description = "Toss Payments Secret Key"
+  type        = string
+  sensitive   = true
+}
+
+variable "toss_security_key" {
+  description = "Toss Payments Security Key"
+  type        = string
+  sensitive   = true
+}

@@ -109,7 +109,7 @@ resource "aws_eks_node_group" "main" {
   #    -> Node Group에서 instance_types를 제거하고, LT에 instance_type = "t3.large" 하나만 박아야 함.
   #    -> var.instance_types[0]을 사용하도록 수정하겠습니다.
 
-  # instance_types = var.instance_types  <-- 제거
+  instance_types = var.instance_types
 
   ami_type = "AL2023_x86_64_STANDARD"
 
@@ -162,4 +162,28 @@ resource "aws_eks_addon" "coredns" {
 
   # CoreDNS requires compute nodes to be available
   depends_on = [aws_eks_node_group.main, aws_eks_fargate_profile.main]
+}
+
+# 5. aws-auth ConfigMap (Manage Access)
+locals {
+  # Default Node Role (Required for Worker Nodes to join Cluster)
+  node_role_map = {
+    rolearn  = var.node_role_arn
+    username = "system:node:{{EC2PrivateDNSName}}"
+    groups   = ["system:bootstrappers", "system:nodes"]
+  }
+}
+
+resource "kubernetes_config_map" "aws_auth" {
+  metadata {
+    name      = "aws-auth"
+    namespace = "kube-system"
+  }
+
+  data = {
+    mapRoles = yamlencode(concat([local.node_role_map], var.aws_auth_roles))
+    mapUsers = yamlencode(var.aws_auth_users)
+  }
+
+  depends_on = [aws_eks_cluster.main]
 }

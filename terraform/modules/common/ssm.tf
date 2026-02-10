@@ -60,3 +60,18 @@ resource "random_password" "rds_password" {
   special          = true
   override_special = "!#$%&*()-_=+[]{}<>:?"
 }
+resource "random_password" "redis_password" {
+  length           = 16
+  special          = true
+  override_special = "!#$%&*()-_=+[]{}<>:?"
+}
+
+resource "aws_ssm_parameter" "redis_password" {
+  name        = "/${var.project_name}/${var.env}/redis/PASSWORD"
+  description = "Password for Redis"
+  type        = "SecureString"
+  value       = random_password.redis_password.result
+  key_id      = var.kms_key_arn
+
+  lifecycle { ignore_changes = [value] }
+}

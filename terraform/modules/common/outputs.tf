@@ -45,7 +45,7 @@ output "redis_password_arn" {
 }
 
 output "redis_password_raw" {
-  value     = var.env == "prod" ? data.aws_secretsmanager_secret_version.redis_password[0].secret_string : null
+  value     = random_password.redis_password.result
   sensitive = true
 }
 

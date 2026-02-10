@@ -6,7 +6,7 @@ resource "helm_release" "external_secrets" {
   chart            = "external-secrets"
   namespace        = "external-secrets"
   create_namespace = true
-  version          = "0.9.13" # Pin a stable version
+  version          = "1.3.2" # Pin a stable version
 
   # 중요: Service Account에 IAM Role ARN 어노테이션 추가
   set {
