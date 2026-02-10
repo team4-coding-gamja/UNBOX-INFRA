@@ -105,12 +105,9 @@ variable "aws_auth_users" {
   default = []
 }
 
-variable "aws_auth_roles" {
-  description = "Additional IAM roles to add to the aws-auth configmap."
-  type = list(object({
-    rolearn  = string
-    username = string
-    groups   = list(string)
-  }))
-  default = []
+variable "argocd_admin_password" {
+  description = "ArgoCD admin 초기 비밀번호"
+  type        = string
+  default     = "unbox1234!"
+  sensitive   = true
 }
