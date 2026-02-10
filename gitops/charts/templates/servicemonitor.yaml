@@ -1,0 +1,22 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ .Values.appName }}
+  labels:
+    app: {{ .Values.appName }}
+    release: kube-prometheus-stack # 프로메테우스 오퍼레이터가 찾을 수 있도록 라벨 추가
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Values.appName }}
+  selector:
+    matchLabels:
+      app: {{ .Values.appName }}
+  endpoints:
+    - port: http
+      path: {{ .Values.contextPath | default "" }}/actuator/prometheus # 스프링부트 액추에이터 경로
+      interval: 15s
+      relabelings:
+        - sourceLabels: [__meta_kubernetes_service_label_app]
+          targetLabel: job
+          replacement: unbox-${1} # job 이름 앞에 unbox- 붙이기

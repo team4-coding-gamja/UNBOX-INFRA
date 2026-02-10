@@ -4,7 +4,7 @@ resource "aws_ssm_parameter" "rds_endpoints" {
   name        = "/${var.project_name}/${var.env}/rds/${each.key}/endpoint"
   description = "Endpoint for RDS instance ${each.key}"
   type        = "String"
-  value       = module.rds.db_endpoints["common"]
+  value       = "jdbc:postgresql://${module.rds.db_endpoints["common"]}/unbox_db"
 
   tags = {
     Environment = var.env

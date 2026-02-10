@@ -1,12 +1,13 @@
 # 1. 앱 기본 정보
 appName: payment-service
+contextPath: /payment
 replicaCount: 1
 image:
   repository: 632941626317.dkr.ecr.ap-northeast-2.amazonaws.com/unbox-dev-payment-repo
   tag: latest
   pullPolicy: Always
 
-targetGroupArn: "arn:aws:elasticloadbalancing:ap-northeast-2:632941626317:targetgroup/payme-2026020523301244430000000f/f4fbd46cddfdfc53"
+targetGroupArn: "arn:aws:elasticloadbalancing:ap-northeast-2:632941626317:targetgroup/payme-20260209233604543800000008/e83e46c279fbc968"
 
 # 2. 로컬이니까 Linkerd 끄기 (테스트할 때만 true)
 linkerd:
@@ -45,9 +46,14 @@ env:
   SPRING_DATA_REDIS_HOST: "master.unbox-dev-redis.r0vran.apn2.cache.amazonaws.com"
   SPRING_DATA_REDIS_PORT: "6379"
   SPRING_DATA_REDIS_SSL: "true"
-  # SPRING_DATA_REDIS_PASSWORD: "1234"
+  SPRING_DATA_REDIS_PASSWORD:
+    valueFrom:
+      secretKeyRef:
+        name: db-secret
+        key: REDIS_PASSWORD
   
   # Zipkin 연결
   MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: "http://zipkin.unbox-infra.svc.cluster.local:9411/api/v2/spans"
+  TEMPO_OTLP_ENDPOINT: "http://tempo.monitoring.svc.cluster.local:4318/v1/traces"
   TOSS_SECRET_KEY: "test_sk_vZnjEJeQVxJj574wXDnP8PmOoBN0"
   TOSS_SECURITY_KEY: "1bca83b538ebfacd601d91c295f2cc6e24dfde5b0705550473ac1a74fed0dd09"

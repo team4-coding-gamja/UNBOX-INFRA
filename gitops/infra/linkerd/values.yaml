@@ -15,7 +15,7 @@ spValidator:
 # 만약 별도의 프로메테우스를 쓴다면 false, Linkerd용으로 따로 띄우려면 true
 # 보통 Viz(대시보드) 볼 거면 켜두는 게 속 편합니다.
 prometheus:
-  enabled: true
+  enabled: false
 
 # 5. 정책 설정 (기본 허용)
 policyValidator:

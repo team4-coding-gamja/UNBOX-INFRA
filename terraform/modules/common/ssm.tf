@@ -1,11 +1,24 @@
 # 1. 공통 시크릿 (JWT Secret 등)
-resource "aws_ssm_parameter" "common_secrets" {
-  for_each = toset(["JWT_SECRET", "API_ENCRYPTION_KEY"])
+resource "random_password" "jwt_secret_value" {
+  length           = 53
+  special          = true
+  override_special = "!#$%&*()-_=+[]{}<>:?"
+}
 
-  name   = "/${var.project_name}/${var.env}/common/${each.value}"
-  type   = "SecureString"
-  value  = random_password.rds_password.result
-  key_id = var.kms_key_arn
+resource "aws_ssm_parameter" "jwt_secret" {
+  name      = "/${var.project_name}/${var.env}/common/JWT_SECRET"
+  type      = "SecureString"
+  value     = random_password.jwt_secret_value.result
+  key_id    = var.kms_key_arn
+  overwrite = true
+}
+
+resource "aws_ssm_parameter" "api_encryption_key" {
+  name      = "/${var.project_name}/${var.env}/common/API_ENCRYPTION_KEY"
+  type      = "SecureString"
+  value     = random_password.rds_password.result
+  key_id    = var.kms_key_arn
+  overwrite = true
 
   lifecycle { ignore_changes = [value] }
 }

@@ -1,0 +1,84 @@
+# k8s/infra/monitoring/fluent-bit/values.yaml
+
+config:
+  service: |
+    [SERVICE]
+        Flush        1
+        Daemon       Off
+        Log_Level    info
+        Parsers_File parsers.conf
+        HTTP_Server  On
+        HTTP_Listen  0.0.0.0
+        HTTP_Port    2020
+
+  inputs: |
+    [INPUT]
+        Name             tail
+        Path             /var/log/containers/*.log
+        Parser           docker
+        Tag              kube.*
+        Refresh_Interval 5
+        Mem_Buf_Limit    5MB
+        Skip_Long_Lines  On
+  luaScripts:
+    job_label.lua: |
+      function set_custom_job(tag, timestamp, record)
+          local app_name = ""
+          local namespace = ""
+          local pod = ""
+          local container = ""
+          
+          if record["kubernetes"] then
+              if record["kubernetes"]["namespace_name"] then
+                  namespace = record["kubernetes"]["namespace_name"]
+              end
+              if record["kubernetes"]["pod_name"] then
+                  pod = record["kubernetes"]["pod_name"]
+              end
+              if record["kubernetes"]["container_name"] then
+                  container = record["kubernetes"]["container_name"]
+              end
+              if record["kubernetes"]["labels"] and record["kubernetes"]["labels"]["app"] then
+                  app_name = record["kubernetes"]["labels"]["app"]
+              end
+          end
+
+          if app_name == "" then
+             app_name = "unknown"
+          end
+
+          record["custom_job"] = "unbox-" .. app_name
+          record["custom_app"] = app_name
+          record["custom_namespace"] = namespace
+          record["custom_pod"] = pod
+          record["custom_container"] = container
+          
+          return 1, timestamp, record
+      end
+
+  filters: |
+    [FILTER]
+        Name                kubernetes
+        Match               kube.*
+        Kube_URL            https://kubernetes.default.svc:443
+        Kube_CA_File        /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        Kube_Token_File     /var/run/secrets/kubernetes.io/serviceaccount/token
+        Kube_Tag_Prefix     kube.var.log.containers.
+        Merge_Log           On
+        Keep_Log            Off
+        K8S-Logging.Parser  On
+        K8S-Logging.Exclude Off
+
+    [FILTER]
+        Name                lua
+        Match               kube.*
+        script              /fluent-bit/scripts/job_label.lua
+        call                set_custom_job
+
+  outputs: |
+    [OUTPUT]
+        Name        loki
+        Match       *
+        Host        loki.monitoring.svc.cluster.local
+        Port        3100
+        Labels      job=$custom_job, namespace=$custom_namespace, pod=$custom_pod, container=$custom_container, app=$custom_app

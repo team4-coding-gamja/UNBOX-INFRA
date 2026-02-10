@@ -1,0 +1,50 @@
+# Prometheus Configuration for Unbox Microservices
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # User Service
+  - job_name: 'unbox-user'
+    metrics_path: '/user/actuator/prometheus'
+    static_configs:
+      - targets: ['unbox-user:8080']
+        labels:
+          service: 'user'
+
+  # Product Service
+  - job_name: 'unbox-product'
+    metrics_path: '/product/actuator/prometheus'
+    static_configs:
+      - targets: ['unbox-product:8080']
+        labels:
+          service: 'product'
+
+  # Order Service
+  - job_name: 'unbox-order'
+    metrics_path: '/order/actuator/prometheus'
+    static_configs:
+      - targets: ['unbox-order:8080']
+        labels:
+          service: 'order'
+
+  # Trade Service
+  - job_name: 'unbox-trade'
+    metrics_path: '/trade/actuator/prometheus'
+    static_configs:
+      - targets: ['unbox-trade:8080']
+        labels:
+          service: 'trade'
+
+  # Payment Service
+  - job_name: 'unbox-payment'
+    metrics_path: '/payment/actuator/prometheus'
+    static_configs:
+      - targets: ['unbox-payment:8080']
+        labels:
+          service: 'payment'
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
