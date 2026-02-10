@@ -29,6 +29,8 @@ spec:
       - CreateNamespace=true
   info:
     - name: 'Description'
-      value: 'Dev Infrastructure components (Kafka, ESO, Linkerd, Prometheus - RDS/Redis are managed by Terraform)'
+      value: 'Dev Infrastructure components (Kafka, ESO, Linkerd - RDS/Redis/Monitoring are managed separately)'
     - name: 'Deployment Order'
-      value: 'Wave 0: Linkerd CRDs → Wave 1: Linkerd Control Plane → Wave 2: ESO → Wave 4: Kafka → Wave 6: Prometheus'
+      value: 'Wave 0: Linkerd CRDs → Wave 1: Linkerd Control Plane → Wave 2: ESO → Wave 4: Kafka'
+    - name: 'Note'
+      value: 'Monitoring stack (Prometheus, Grafana, Loki, Tempo) is managed by Helm directly until migration to ArgoCD'
