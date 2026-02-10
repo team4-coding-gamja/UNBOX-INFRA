@@ -31,17 +31,4 @@ spec:
     name: http
   selector:
     app: {{ .Values.appName }}
----
-# TrafficSplit (Linkerd SMI)
-apiVersion: split.smi-spec.io/v1alpha2
-kind: TrafficSplit
-metadata:
-  name: {{ .Values.appName }}-trafficsplit
-spec:
-  service: {{ .Values.appName }}
-  backends:
-  - service: {{ .Values.appName }}-stable
-    weight: 1000
-  - service: {{ .Values.appName }}-canary
-    weight: 0
 {{- end }}

@@ -97,10 +97,9 @@ rollout:
     canaryService: product-service-canary
     stableService: product-service-stable
     
-    # TrafficRouting 설정 (Linkerd SMI 사용)
+    # TrafficRouting 설정 (Linkerd SMI 사용 - Rollout이 TrafficSplit 자동 생성)
     trafficRouting:
       smi:
-        trafficSplitName: product-service-trafficsplit
         rootService: product-service
     
     # Canary 단계 (Feature Flag는 애플리케이션 레벨에서 처리)
