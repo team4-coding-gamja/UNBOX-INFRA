@@ -85,20 +85,17 @@ rollout:
   canary:
     steps:
     - setWeight: 10
-    - pause: {duration: 120s}
+    - pause: {duration: 30s}
     - setWeight: 25
-    - pause: {duration: 120s}
+    - pause: {duration: 30s}
     - setWeight: 50
-    - pause: {duration: 120s}
+    - pause: {duration: 30s}
     - setWeight: 75
-    - pause: {duration: 120s}
+    - pause: {duration: 30s}
     maxSurge: "25%"
     maxUnavailable: 0
-    trafficRouting:
-      managedRoutes:
-      - name: header-route
   
   featureFlag:
-    enabled: false
-    headerName: "X-Feature-Flag"
-    headerValue: "canary"
+    enabled: true  # Feature Flag 활성화
+    headerName: "X-Canary-Version"  # 헤더 이름
+    headerValue: "enabled"  # 헤더 값
