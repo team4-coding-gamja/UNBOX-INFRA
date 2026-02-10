@@ -10,7 +10,7 @@ metadata:
     # 모드: "consecutive" (연속 실패 시 발동)
     config.linkerd.io/failure-accrual-mode: "consecutive"
     
-    # 조건: 5번 연속으로 에러(5xx)가 나면 "고장" 판정 -> 재시도는 아님
+    # 조건: 5번 연속으로 에러(5xx)가 나면 "고장" 판정
     config.linkerd.io/failure-accrual-max-failures: "5"
     
     # 처벌: 고장 판정나면 최소 30초 동안 이 파드에는 요청을 안 보냄 (제외시킴)
@@ -21,7 +21,8 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-    - port: 80           # 내부 통신은 무조건 80번 포트
+    - name: http
+      port: 80           # 내부 통신은 무조건 80번 포트
       targetPort: {{ .Values.containerPort | default 8080 }}   # 스프링부트는 8080
   selector:
     app: {{ .Values.appName }}

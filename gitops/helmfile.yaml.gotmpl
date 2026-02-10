@@ -29,7 +29,7 @@ releases:
   # ClusterSecretStore 및 ExternalSecret 배포 (로컬 차트나 raw yaml 사용 가능)
   - name: common-secrets
     namespace: unbox-app
-    chart: ./k8s/infra/external-secrets # 이 경로에 아까 작성한 CSS와 ES 파일이 있어야 함
+    chart: ./infra/external-secrets # 이 경로에 아까 작성한 CSS와 ES 파일이 있어야 함
     needs:
       - external-secrets/external-secrets
 
@@ -66,23 +66,7 @@ releases:
     namespace: unbox-infra
     createNamespace: true
     # 중요: 인터넷 주소 대신 로컬 경로를 적습니다.
-    chart: ./k8s/infra/kafka
-
-  # PostgreSQL
-  - name: postgres
-    namespace: unbox-db
-    createNamespace: true
-    chart: bitnami/postgresql
-    values:
-      - ./k8s/database/postgresql/values.yaml
-
-  # Redis
-  - name: redis
-    namespace: unbox-db
-    createNamespace: true
-    chart: bitnami/redis
-    values:
-      - ./k8s/database/redis/values.yaml
+    chart: ./infra/kafka
 
   ###################################################
   # [Step 2] 애플리케이션 (My Microservices)
@@ -93,53 +77,48 @@ releases:
   - name: user-svc
     namespace: unbox-app
     createNamespace: true
-    chart: ./k8s/charts
+    chart: ./charts
     values:
-      - ./k8s/apps/user/values.yaml
+      - ./apps/user/values.yaml
     needs:
-      - unbox-db/postgres
       - unbox-infra/kafka
 
   # 2. Product Service
   - name: product-svc
     namespace: unbox-app
     createNamespace: true
-    chart: ./k8s/charts
+    chart: ./charts
     values:
-      - ./k8s/apps/product/values.yaml
+      - ./apps/product/values.yaml
     needs:
-      - unbox-db/postgres
       - unbox-infra/kafka
 
   # 3. Order Service
   - name: order-svc
     namespace: unbox-app
     createNamespace: true
-    chart: ./k8s/charts
+    chart: ./charts
     values:
-      - ./k8s/apps/order/values.yaml
+      - ./apps/order/values.yaml
     needs:
-      - unbox-db/postgres
       - unbox-infra/kafka
 
   # 4. Trade Service
   - name: trade-svc
     namespace: unbox-app
     createNamespace: true
-    chart: ./k8s/charts
+    chart: ./charts
     values:
-      - ./k8s/apps/trade/values.yaml
+      - ./apps/trade/values.yaml
     needs:
-      - unbox-db/postgres
       - unbox-infra/kafka
 
   # 5. Payment Service
   - name: payment-svc
     namespace: unbox-app
     createNamespace: true
-    chart: ./k8s/charts
+    chart: ./charts
     values:
-      - ./k8s/apps/payment/values.yaml
+      - ./apps/payment/values.yaml
     needs:
-      - unbox-db/postgres
       - unbox-infra/kafka

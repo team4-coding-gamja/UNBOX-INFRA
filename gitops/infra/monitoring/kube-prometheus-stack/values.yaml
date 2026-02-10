@@ -1,0 +1,22 @@
+# k8s/infra/monitoring/kube-prometheus-stack/values.yaml
+
+prometheus:
+  enabled: true
+  prometheusSpec:
+    serviceMonitorSelectorNilUsesHelmValues: false
+    serviceMonitorSelector: {}
+    serviceMonitorNamespaceSelector: {}
+
+alertmanager:
+  enabled: true
+
+grafana:
+  enabled: true
+  adminPassword: "prom-operator"
+  sidecar:
+    datasources:
+      enabled: true
+      defaultDatasourceEnabled: true
+  # Persistence can be enabled for Dev if needed, skipping for lightness now
+  persistence:
+    enabled: false

@@ -1,12 +1,13 @@
 # 1. 앱 기본 정보
 appName: product-service
+contextPath: /product
 replicaCount: 1
 image:
   repository: 632941626317.dkr.ecr.ap-northeast-2.amazonaws.com/unbox-dev-product-repo  # 로컬 도커 이미지 이름
   tag: latest                   # 태그
   pullPolicy: Always
 
-targetGroupArn: "arn:aws:elasticloadbalancing:ap-northeast-2:632941626317:targetgroup/produ-2026020523301179290000000c/df6eaa3268424603"
+targetGroupArn: "arn:aws:elasticloadbalancing:ap-northeast-2:632941626317:targetgroup/produ-20260209233604226200000005/d9c2efbcd0f42c73"
 
 # 2. 로컬이니까 Linkerd 끄기 (테스트할 때만 true)
 linkerd:
@@ -45,7 +46,12 @@ env:
   SPRING_DATA_REDIS_HOST: "master.unbox-dev-redis.r0vran.apn2.cache.amazonaws.com"
   SPRING_DATA_REDIS_PORT: "6379"
   SPRING_DATA_REDIS_SSL: "true"
-  # SPRING_DATA_REDIS_PASSWORD: "1234"
+  SPRING_DATA_REDIS_PASSWORD:
+    valueFrom:
+      secretKeyRef:
+        name: db-secret
+        key: REDIS_PASSWORD
   
   # Zipkin 연결
   MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: "http://zipkin.unbox-infra.svc.cluster.local:9411/api/v2/spans"
+  TEMPO_OTLP_ENDPOINT: "http://tempo.monitoring.svc.cluster.local:4318/v1/traces"

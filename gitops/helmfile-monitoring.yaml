@@ -1,0 +1,46 @@
+# helmfile-monitoring.yaml
+
+repositories:
+  - name: prometheus-community
+    url: https://prometheus-community.github.io/helm-charts
+  - name: grafana
+    url: https://grafana.github.io/helm-charts
+  - name: fluent
+    url: https://fluent.github.io/helm-charts
+
+releases:
+  # 1. Prometheus + Grafana
+  - name: kube-prometheus-stack
+    namespace: monitoring
+    createNamespace: true
+    chart: prometheus-community/kube-prometheus-stack
+    version: 61.3.1 # Pin version for stability
+    values:
+      - ./infra/monitoring/kube-prometheus-stack/values.yaml
+    
+  # 2. Loki (Logs)
+  - name: loki
+    namespace: monitoring
+    createNamespace: true
+    chart: grafana/loki
+    version: 6.6.6
+    values:
+      - ./infra/monitoring/loki/values.yaml
+    
+  # 3. Tempo (Tracing)
+  - name: tempo
+    namespace: monitoring
+    createNamespace: true
+    chart: grafana/tempo
+    version: 1.10.3
+    values:
+      - ./infra/monitoring/tempo/values.yaml
+    
+  # 4. Fluent-bit (Log Collector)
+  - name: fluent-bit
+    namespace: monitoring
+    createNamespace: true
+    chart: fluent/fluent-bit
+    version: 0.47.7
+    values:
+      - ./infra/monitoring/fluent-bit/values.yaml
