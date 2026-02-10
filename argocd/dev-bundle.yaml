@@ -1,11 +1,14 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: unbox-dev-services
+  name: unbox-applications-dev
   namespace: argocd
   labels:
+    type: application
+    bundle: apps
     env: dev
-    bundle: services
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"  # 인프라 이후 배포
 spec:
   project: default
   source:
@@ -24,3 +27,10 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+  info:
+    - name: 'Description'
+      value: 'Dev Application services (User, Product, Order, Trade, Payment)'
+    - name: 'Deployment Order'
+      value: 'Wave 10: User → Wave 11: Product/Order/Payment → Wave 12: Trade'
+    - name: 'Features'
+      value: 'Product: Canary+FeatureFlag, Trade: Canary+Analysis+AutoRollback'
