@@ -95,16 +95,16 @@ rollout:
   canary:
     # Canary와 Stable 서비스 지정 (Linkerd 트래픽 라우팅용)
     canaryService: product-service-canary
-    stableService: product-service
+    stableService: product-service-stable
     
-    # Canary 단계 (일반 사용자용)
+    # TrafficRouting 설정 (Linkerd SMI 사용)
+    trafficRouting:
+      smi:
+        trafficSplitName: product-service-trafficsplit
+        rootService: product-service
+    
+    # Canary 단계 (Feature Flag는 애플리케이션 레벨에서 처리)
     steps:
-    - setHeaderRoute:  # 헤더 기반 라우팅 설정
-        name: header-route
-        match:
-        - headerName: X-Canary-Version
-          headerValue:
-            exact: "enabled"
     - setWeight: 10
     - pause: {duration: 30s}
     - setWeight: 25
@@ -115,10 +115,4 @@ rollout:
     - pause: {duration: 30s}
     maxSurge: "25%"
     maxUnavailable: 0
-    
-    # Linkerd 트래픽 라우팅 설정
-    trafficRouting:
-      managedRoutes:
-      - name: header-route  # setHeaderRoute와 이름 매칭
-      smi: {}  # Linkerd는 SMI (Service Mesh Interface) 사용
     

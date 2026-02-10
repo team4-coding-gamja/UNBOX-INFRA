@@ -1,0 +1,47 @@
+{{- if and .Values.rollout.enabled (eq .Values.rollout.strategy "canary") .Values.rollout.featureFlag.enabled }}
+---
+# Canary Service (새 버전)
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.appName }}-canary
+  labels:
+    app: {{ .Values.appName }}
+spec:
+  ports:
+  - port: {{ .Values.service.port }}
+    targetPort: {{ .Values.service.targetPort }}
+    protocol: TCP
+    name: http
+  selector:
+    app: {{ .Values.appName }}
+---
+# Stable Service (기존 버전)
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.appName }}-stable
+  labels:
+    app: {{ .Values.appName }}
+spec:
+  ports:
+  - port: {{ .Values.service.port }}
+    targetPort: {{ .Values.service.targetPort }}
+    protocol: TCP
+    name: http
+  selector:
+    app: {{ .Values.appName }}
+---
+# TrafficSplit (Linkerd SMI)
+apiVersion: split.smi-spec.io/v1alpha2
+kind: TrafficSplit
+metadata:
+  name: {{ .Values.appName }}-trafficsplit
+spec:
+  service: {{ .Values.appName }}
+  backends:
+  - service: {{ .Values.appName }}-stable
+    weight: 1000
+  - service: {{ .Values.appName }}-canary
+    weight: 0
+{{- end }}

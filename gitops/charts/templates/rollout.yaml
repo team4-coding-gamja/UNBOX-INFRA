@@ -106,6 +106,10 @@ spec:
         templates:
         - templateName: {{ .Values.appName }}-success-rate
         startingStep: {{ .Values.rollout.analysis.startingStep }}
+        args:
+        - name: canary-hash
+          valueFrom:
+            podTemplateHashValue: Latest
       {{- end }}
   {{- end }}
 {{- end }}
