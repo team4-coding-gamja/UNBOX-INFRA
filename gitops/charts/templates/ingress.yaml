@@ -1,0 +1,40 @@
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Values.appName }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.appName }}
+  annotations:
+    # AWS Load Balancer Controller 설정
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/healthcheck-path: {{ .Values.rollout.healthCheck.path | default "/actuator/health" }}
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: "15"
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: "5"
+    alb.ingress.kubernetes.io/healthy-threshold-count: "2"
+    alb.ingress.kubernetes.io/unhealthy-threshold-count: "2"
+    
+    # 기존 ALB 재사용 (모든 서비스가 하나의 ALB 공유)
+    alb.ingress.kubernetes.io/group.name: {{ .Values.ingress.groupName | default "unbox-dev" }}
+    alb.ingress.kubernetes.io/load-balancer-name: {{ .Values.ingress.loadBalancerName | default "unbox-dev-alb" }}
+    
+    # Listener 설정
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
+    
+    # 추가 태그
+    alb.ingress.kubernetes.io/tags: Environment=dev,ManagedBy=kubernetes
+spec:
+  ingressClassName: alb
+  rules:
+  - http:
+      paths:
+      - path: {{ .Values.ingress.path }}
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .Values.appName }}
+            port:
+              number: {{ .Values.service.port }}
+{{- end }}

@@ -7,7 +7,12 @@ image:
   tag: dev-1f23f3c7490d4e4f5ddc0ecd846ba156c3a6309e
   pullPolicy: Always
 
-targetGroupArn: "arn:aws:elasticloadbalancing:ap-northeast-2:632941626317:targetgroup/produ-2026020523301179290000000c/df6eaa3268424603"
+# Ingress로 자동 생성 (TargetGroupBinding 대신)
+ingress:
+  enabled: true
+  path: /product
+  groupName: unbox-dev
+  loadBalancerName: unbox-dev-alb
 
 linkerd:
   enabled: true  # Linkerd 활성화 (헤더 기반 라우팅용)

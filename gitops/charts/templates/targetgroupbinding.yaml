@@ -1,3 +1,4 @@
+{{- if and .Values.targetGroupArn (ne .Values.targetGroupArn "") }}
 apiVersion: elbv2.k8s.aws/v1beta1
 kind: TargetGroupBinding
 metadata:
@@ -9,3 +10,6 @@ spec:
     name: {{ .Values.appName }} # Service Name must match
     port: {{ .Values.service.port }}
   targetGroupARN: {{ .Values.targetGroupArn }}
+  targetType: ip
+{{- end }}
+

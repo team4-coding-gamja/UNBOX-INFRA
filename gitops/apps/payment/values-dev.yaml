@@ -7,7 +7,12 @@ image:
   tag: dev-1f23f3c7490d4e4f5ddc0ecd846ba156c3a6309e
   pullPolicy: Always
 
-targetGroupArn: "arn:aws:elasticloadbalancing:ap-northeast-2:632941626317:targetgroup/payme-2026020523301244430000000f/f4fbd46cddfdfc53"
+# Ingress로 자동 생성
+ingress:
+  enabled: true
+  path: /payment
+  groupName: unbox-dev
+  loadBalancerName: unbox-dev-alb
 
 linkerd:
   enabled: true  # Linkerd Service Mesh 활성화
