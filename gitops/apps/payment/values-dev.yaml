@@ -63,7 +63,8 @@ env:
       secretKeyRef:
         name: db-secret
         key: KAFKA_ENDPOINT
-  MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: "http://zipkin.unbox-infra.svc.cluster.local:9411/api/v2/spans"
+  MANAGEMENT_TRACING_ENABLED: "false"
+  MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: ""
   
   # Toss Payments (SSM에서 가져옴)
   TOSS_SECRET_KEY:

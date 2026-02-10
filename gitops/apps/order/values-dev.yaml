@@ -63,6 +63,7 @@ env:
       secretKeyRef:
         name: db-secret
         key: KAFKA_ENDPOINT
+  MANAGEMENT_TRACING_ENABLED: "false"
   MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: ""
 
 resources:
