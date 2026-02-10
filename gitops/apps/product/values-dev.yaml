@@ -7,11 +7,9 @@ image:
   tag: dev-1f23f3c7490d4e4f5ddc0ecd846ba156c3a6309e
   pullPolicy: Always
 
-# Ingress로 자동 생성 (TargetGroupBinding 대신)
+# Ingress 활성화
 ingress:
   enabled: true
-  path: /product
-  groupName: unbox-dev
 
 linkerd:
   enabled: true  # Linkerd 활성화 (헤더 기반 라우팅용)

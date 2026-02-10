@@ -7,7 +7,11 @@ image:
   tag: latest
   pullPolicy: Always
 
-targetGroupArn: ""  # 환경별로 오버라이드
+# Ingress 설정
+ingress:
+  enabled: false
+  path: /user
+  groupName: unbox-dev
 
 linkerd:
   enabled: false

@@ -7,7 +7,12 @@ image:
   tag: latest
   pullPolicy: Always
 
-targetGroupArn: "arn:aws:elasticloadbalancing:ap-northeast-2:632941626317:targetgroup/order-2026020523301243820000000d/791e3402ebf9a555"
+# Ingress 설정
+ingress:
+  enabled: false
+  path: /order
+  groupName: unbox-dev
+
 
 # 서비스 메시 설정
 linkerd:

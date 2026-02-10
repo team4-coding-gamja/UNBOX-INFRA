@@ -7,11 +7,9 @@ image:
   tag: dev-1f23f3c7490d4e4f5ddc0ecd846ba156c3a6309e
   pullPolicy: Always
 
-# Ingress로 자동 생성
+# Ingress 활성화
 ingress:
   enabled: true
-  path: /payment
-  groupName: unbox-dev
 
 linkerd:
   enabled: true  # Linkerd Service Mesh 활성화
