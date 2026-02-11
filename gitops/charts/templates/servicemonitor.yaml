@@ -20,3 +20,6 @@ spec:
         - sourceLabels: [__meta_kubernetes_service_label_app]
           targetLabel: job
           replacement: unbox-${1} # job 이름 앞에 unbox- 붙이기
+        - sourceLabels: [__meta_kubernetes_pod_label_rollouts_pod_template_hash]
+          targetLabel: rollouts_pod_template_hash
+          action: replace # Argo Rollouts 파드 해시 레이블 추가
