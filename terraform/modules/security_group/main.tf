@@ -31,6 +31,12 @@ resource "aws_security_group" "msk" {
   vpc_id = var.vpc_id
 }
 
+resource "aws_security_group" "eks_node" {
+  name   = "${var.project_name}-${var.env}-eks-node-sg"
+  vpc_id = var.vpc_id
+  tags   = { Name = "${var.project_name}-${var.env}-eks-node-sg" }
+}
+
 resource "aws_security_group" "nat" {
   count  = var.env != "prod" ? 1 : 0
   name   = "${var.project_name}-${var.env}-nat-sg"
@@ -202,4 +208,36 @@ resource "aws_security_group_rule" "app_egress_all" {
   protocol          = "-1"          # 모든 프로토콜 (TCP, UDP, ICMP 등)
   cidr_blocks       = ["0.0.0.0/0"] # 모든 목적지 허용
   security_group_id = aws_security_group.service_app[each.key].id
+}
+
+# --- EKS Node Security Group Rules ---
+
+# EKS Node Inbound (From ALB)
+resource "aws_security_group_rule" "eks_node_ingress_from_alb" {
+  type                     = "ingress"
+  from_port                = 0
+  to_port                  = 65535
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.eks_node.id
+  source_security_group_id = aws_security_group.alb.id
+}
+
+# EKS Node Inbound (Self - for pod-to-pod communication)
+resource "aws_security_group_rule" "eks_node_ingress_self" {
+  type              = "ingress"
+  from_port         = 0
+  to_port           = 0
+  protocol          = "-1"
+  self              = true
+  security_group_id = aws_security_group.eks_node.id
+}
+
+# EKS Node Outbound (All traffic)
+resource "aws_security_group_rule" "eks_node_egress_all" {
+  type              = "egress"
+  from_port         = 0
+  to_port           = 0
+  protocol          = "-1"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_security_group.eks_node.id
 }
