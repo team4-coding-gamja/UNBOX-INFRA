@@ -20,41 +20,6 @@ config:
         Refresh_Interval 5
         Mem_Buf_Limit    5MB
         Skip_Long_Lines  On
-  luaScripts:
-    job_label.lua: |
-      function set_custom_job(tag, timestamp, record)
-          local app_name = ""
-          local namespace = ""
-          local pod = ""
-          local container = ""
-          
-          if record["kubernetes"] then
-              if record["kubernetes"]["namespace_name"] then
-                  namespace = record["kubernetes"]["namespace_name"]
-              end
-              if record["kubernetes"]["pod_name"] then
-                  pod = record["kubernetes"]["pod_name"]
-              end
-              if record["kubernetes"]["container_name"] then
-                  container = record["kubernetes"]["container_name"]
-              end
-              if record["kubernetes"]["labels"] and record["kubernetes"]["labels"]["app"] then
-                  app_name = record["kubernetes"]["labels"]["app"]
-              end
-          end
-
-          if app_name == "" then
-             app_name = "unknown"
-          end
-
-          record["custom_job"] = "unbox-" .. app_name
-          record["custom_app"] = app_name
-          record["custom_namespace"] = namespace
-          record["custom_pod"] = pod
-          record["custom_container"] = container
-          
-          return 1, timestamp, record
-      end
 
   filters: |
     [FILTER]
@@ -82,3 +47,14 @@ config:
         Host        loki.monitoring.svc.cluster.local
         Port        3100
         Labels      job=$custom_job, namespace=$custom_namespace, pod=$custom_pod, container=$custom_container, app=$custom_app
+
+# Lua 스크립트를 위한 추가 볼륨 마운트
+extraVolumes:
+  - name: lua-scripts
+    configMap:
+      name: fluent-bit-lua-scripts
+
+extraVolumeMounts:
+  - name: lua-scripts
+    mountPath: /fluent-bit/scripts
+    readOnly: true
