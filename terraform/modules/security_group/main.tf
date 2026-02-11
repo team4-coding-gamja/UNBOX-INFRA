@@ -212,11 +212,11 @@ resource "aws_security_group_rule" "app_egress_all" {
 
 # --- EKS Node Security Group Rules ---
 
-# EKS Node Inbound (From ALB)
+# EKS Node Inbound (From ALB - NodePort 범위만 허용)
 resource "aws_security_group_rule" "eks_node_ingress_from_alb" {
   type                     = "ingress"
-  from_port                = 0
-  to_port                  = 65535
+  from_port                = 30000
+  to_port                  = 32767
   protocol                 = "tcp"
   security_group_id        = aws_security_group.eks_node.id
   source_security_group_id = aws_security_group.alb.id

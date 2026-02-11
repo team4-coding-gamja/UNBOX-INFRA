@@ -18,6 +18,8 @@ spec:
       {{- if .Values.linkerd.enabled }}
       annotations:
         linkerd.io/inject: enabled
+        # SMTP 포트 587을 Linkerd 프록시에서 우회 (타임아웃 방지)
+        config.linkerd.io/skip-outbound-ports: "587"
       {{- end }}
     spec:
       containers:
