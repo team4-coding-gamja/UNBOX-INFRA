@@ -19,3 +19,5 @@ env:
   PAYMENT_SERVICE_URL: "http://payment-service.unbox-app"
   TRADE_SERVICE_URL: "http://trade-service.unbox-app"
   
+  # 공통 모니터링 환경변수 (모든 앱에 적용)
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://tempo.monitoring.svc.cluster.local:4318"
