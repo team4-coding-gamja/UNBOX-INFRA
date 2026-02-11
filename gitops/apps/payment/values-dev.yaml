@@ -1,35 +1,27 @@
 # Payment Service - Dev Environment
 appName: payment-service
 replicaCount: 1
-
 image:
   repository: 632941626317.dkr.ecr.ap-northeast-2.amazonaws.com/unbox-dev-payment-repo
-  tag: latest
+  tag: dev-a2468bd0604d595435688c436148305e5c9d9fe4
   pullPolicy: Always
-
 # Ingress 활성화
 ingress:
   enabled: true
-
 linkerd:
-  enabled: true  # Linkerd Service Mesh 활성화
-
+  enabled: true # Linkerd Service Mesh 활성화
 service:
   port: 80
   targetPort: 8085
-
 containerPort: 8085
-
 env:
   SERVER_PORT: "8085"
   SERVER_SERVLET_CONTEXT_PATH: "/payment"
-  
   SPRING_JWT_SECRET:
     valueFrom:
       secretKeyRef:
         name: db-secret
         key: JWT_SECRET
-  
   DB_DRIVER_CLASS_NAME: "org.postgresql.Driver"
   SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
   SPRING_JPA_SHOW_SQL: "false"
@@ -44,7 +36,6 @@ env:
       secretKeyRef:
         name: db-secret
         key: DB_PASSWORD
-  
   SPRING_DATA_REDIS_HOST:
     valueFrom:
       secretKeyRef:
@@ -57,17 +48,15 @@ env:
       secretKeyRef:
         name: db-secret
         key: REDIS_PASSWORD
-  
   SPRING_KAFKA_BOOTSTRAP_SERVERS:
     valueFrom:
       secretKeyRef:
         name: db-secret
         key: KAFKA_ENDPOINT
-  
   # Tracing 활성화 (Tempo) - 주석처리
   # MANAGEMENT_TRACING_ENABLED: "true"
   # OTEL_EXPORTER_OTLP_ENDPOINT: "http://tempo.monitoring.svc.cluster.local:4318/"
-  
+
   # Toss Payments (SSM에서 가져옴)
   TOSS_SECRET_KEY:
     valueFrom:
@@ -79,18 +68,15 @@ env:
       secretKeyRef:
         name: db-secret
         key: TOSS_SECURITY_KEY
-
 resources:
   requests:
     memory: "512Mi"
     cpu: "100m"
   limits:
     memory: "1Gi"
-
 rollout:
   enabled: true
   strategy: "blueGreen"
-  
   healthCheck:
     enabled: true
     path: "/payment/actuator/health"
@@ -98,7 +84,6 @@ rollout:
     startupProbe:
       failureThreshold: 60
       periodSeconds: 10
-  
   blueGreen:
     autoPromotionEnabled: true
     autoPromotionSeconds: 30

@@ -1,35 +1,27 @@
 # Trade Service - Dev Environment
 appName: trade-service
 replicaCount: 1
-
 image:
   repository: 632941626317.dkr.ecr.ap-northeast-2.amazonaws.com/unbox-dev-trade-repo
-  tag: latest
+  tag: dev-a2468bd0604d595435688c436148305e5c9d9fe4
   pullPolicy: Always
-
 # Ingress 활성화
 ingress:
   enabled: true
-
 linkerd:
-  enabled: true  # Linkerd Service Mesh 활성화
-
+  enabled: true # Linkerd Service Mesh 활성화
 service:
   port: 80
   targetPort: 8083
-
 containerPort: 8083
-
 env:
   SERVER_PORT: "8083"
   SERVER_SERVLET_CONTEXT_PATH: "/trade"
-  
   SPRING_JWT_SECRET:
     valueFrom:
       secretKeyRef:
         name: db-secret
         key: JWT_SECRET
-  
   DB_DRIVER_CLASS_NAME: "org.postgresql.Driver"
   SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
   SPRING_JPA_SHOW_SQL: "false"
@@ -44,7 +36,6 @@ env:
       secretKeyRef:
         name: db-secret
         key: DB_PASSWORD
-  
   SPRING_DATA_REDIS_HOST:
     valueFrom:
       secretKeyRef:
@@ -57,28 +48,23 @@ env:
       secretKeyRef:
         name: db-secret
         key: REDIS_PASSWORD
-  
   SPRING_KAFKA_BOOTSTRAP_SERVERS:
     valueFrom:
       secretKeyRef:
         name: db-secret
         key: KAFKA_ENDPOINT
-  
-  # Tracing 활성화 (Tempo) - 주석처리
-  # MANAGEMENT_TRACING_ENABLED: "true"
-  # OTEL_EXPORTER_OTLP_ENDPOINT: "http://tempo.monitoring.svc.cluster.local:4318/"
-
+        # Tracing 활성화 (Tempo) - 주석처리
+        # MANAGEMENT_TRACING_ENABLED: "true"
+        # OTEL_EXPORTER_OTLP_ENDPOINT: "http://tempo.monitoring.svc.cluster.local:4318/"
 resources:
   requests:
     memory: "512Mi"
     cpu: "100m"
   limits:
     memory: "1Gi"
-
 rollout:
   enabled: true
   strategy: "canary"
-  
   healthCheck:
     enabled: true
     path: "/trade/actuator/health"
@@ -86,22 +72,20 @@ rollout:
     startupProbe:
       failureThreshold: 60
       periodSeconds: 10
-  
   canary:
     steps:
-    - setWeight: 10
-    - pause: {duration: 30s}  # Analysis 체크 시간
-    - setWeight: 25
-    - pause: {duration: 30s}
-    - setWeight: 50
-    - pause: {duration: 30s}
-    - setWeight: 75
-    - pause: {duration: 30s}
+      - setWeight: 10
+      - pause: {duration: 30s} # Analysis 체크 시간
+      - setWeight: 25
+      - pause: {duration: 30s}
+      - setWeight: 50
+      - pause: {duration: 30s}
+      - setWeight: 75
+      - pause: {duration: 30s}
     maxSurge: "25%"
     maxUnavailable: 0
-  
   analysis:
-    enabled: true  # Analysis 활성화
+    enabled: true # Analysis 활성화
     interval: "30s"
     successRate: 95
     errorRate: 5
