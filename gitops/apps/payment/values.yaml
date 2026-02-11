@@ -1,5 +1,6 @@
 # Payment Service - 공통 기본값
 appName: payment-service
+contextPath: /payment
 replicaCount: 1
 contextPath: /payment
 
@@ -45,13 +46,23 @@ env:
   SPRING_DATA_REDIS_HOST: ""
   SPRING_DATA_REDIS_PORT: "6379"
   SPRING_DATA_REDIS_SSL: "true"
-  # SPRING_DATA_REDIS_PASSWORD: "1234"
+  SPRING_DATA_REDIS_PASSWORD:
+    valueFrom:
+      secretKeyRef:
+        name: db-secret
+        key: REDIS_PASSWORD
   
   # Zipkin 연결
   MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: "http://zipkin.unbox-infra.svc.cluster.local:9411/api/v2/spans"
+  TEMPO_OTLP_ENDPOINT: "http://tempo.monitoring.svc.cluster.local:4318/v1/traces"
   TOSS_SECRET_KEY: "test_sk_vZnjEJeQVxJj574wXDnP8PmOoBN0"
   TOSS_SECURITY_KEY: "1bca83b538ebfacd601d91c295f2cc6e24dfde5b0705550473ac1a74fed0dd09"
-
+  TEMPO_OTLP_ENDPOINT: "http://tempo.monitoring.svc.cluster.local:4318/v1/traces"
+  USER_SERVICE_URL: "http://user-service.unbox-app"
+  PRODUCT_SERVICE_URL: "http://product-service.unbox-app"
+  ORDER_SERVICE_URL: "http://order-service.unbox-app"
+  PAYMENT_SERVICE_URL: "http://payment-service.unbox-app"
+  TRADE_SERVICE_URL: "http://trade-service.unbox-app"
 # 리소스 제한 (기본값)
 resources:
   requests:

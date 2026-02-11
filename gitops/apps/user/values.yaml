@@ -43,7 +43,12 @@ env:
   SPRING_MAIL_PROPERTIES_MAIL_SMTP_CONNECTIONTIMEOUT: "5000"
   SPRING_MAIL_PROPERTIES_MAIL_SMTP_TIMEOUT: "5000"
   SPRING_MAIL_PROPERTIES_MAIL_SMTP_WRITETIMEOUT: "5000"
-
+  TEMPO_OTLP_ENDPOINT: "http://tempo.monitoring.svc.cluster.local:4318/v1/traces"
+  USER_SERVICE_URL: "http://user-service.unbox-app"
+  PRODUCT_SERVICE_URL: "http://product-service.unbox-app"
+  ORDER_SERVICE_URL: "http://order-service.unbox-app"
+  PAYMENT_SERVICE_URL: "http://payment-service.unbox-app"
+  TRADE_SERVICE_URL: "http://trade-service.unbox-app"
 # 리소스 제한 (기본값)
 resources:
   requests:
