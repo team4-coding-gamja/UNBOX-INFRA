@@ -46,6 +46,11 @@ spec:
           httpGet:
             path: {{ .Values.rollout.healthCheck.path }}
             port: {{ .Values.containerPort }}
+            {{- if .Values.linkerd.enabled }}
+            httpHeaders:
+            - name: l5d-dst-override
+              value: {{ .Values.appName }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.containerPort }}
+            {{- end }}
           failureThreshold: {{ .Values.rollout.healthCheck.startupProbe.failureThreshold | default 30 }}
           periodSeconds: {{ .Values.rollout.healthCheck.startupProbe.periodSeconds | default 10 }}
           {{- if .Values.rollout.healthCheck.startupProbe.timeoutSeconds }}
@@ -56,6 +61,11 @@ spec:
           httpGet:
             path: {{ .Values.rollout.healthCheck.path }}
             port: {{ .Values.containerPort }}
+            {{- if .Values.linkerd.enabled }}
+            httpHeaders:
+            - name: l5d-dst-override
+              value: {{ .Values.appName }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.containerPort }}
+            {{- end }}
           {{- if .Values.rollout.healthCheck.startupProbe }}
           initialDelaySeconds: 0
           {{- else }}
@@ -69,6 +79,11 @@ spec:
           httpGet:
             path: {{ .Values.rollout.healthCheck.path }}
             port: {{ .Values.containerPort }}
+            {{- if .Values.linkerd.enabled }}
+            httpHeaders:
+            - name: l5d-dst-override
+              value: {{ .Values.appName }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.containerPort }}
+            {{- end }}
           {{- if .Values.rollout.healthCheck.startupProbe }}
           initialDelaySeconds: 0
           {{- else }}
