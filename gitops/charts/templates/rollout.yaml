@@ -78,10 +78,6 @@ spec:
           {{- if .Values.rollout.healthCheck.timeoutSeconds }}
           timeoutSeconds: {{ .Values.rollout.healthCheck.timeoutSeconds }}
           {{- end }}
-          {{- else }}
-          initialDelaySeconds: {{ .Values.rollout.healthCheck.initialDelaySeconds }}
-          {{- end }}
-          periodSeconds: {{ .Values.rollout.healthCheck.periodSeconds }}
         {{- end }}
         resources:
           {{- toYaml .Values.resources | nindent 10 }}
