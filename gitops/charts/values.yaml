@@ -26,11 +26,10 @@ resources:
     cpu: "1000m"
 
 # 환경변수 리스트 (각 서비스별 values 파일에서 오버라이드)
-env: {}
-# env: 
-#   USER_SERVICE_URL: "http://user-service.unbox-app"
-#   PRODUCT_SERVICE_URL: "http://product-service.unbox-app"
-#   ORDER_SERVICE_URL: "http://order-service.unbox-app"
-#   PAYMENT_SERVICE_URL: "http://payment-service.unbox-app"
-#   TRADE_SERVICE_URL: "http://trade-service.unbox-app"
+env: 
+  USER_SERVICE_URL: "http://user-service.unbox-app"
+  PRODUCT_SERVICE_URL: "http://product-service.unbox-app"
+  ORDER_SERVICE_URL: "http://order-service.unbox-app"
+  PAYMENT_SERVICE_URL: "http://payment-service.unbox-app"
+  TRADE_SERVICE_URL: "http://trade-service.unbox-app"
   
