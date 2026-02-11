@@ -9,10 +9,10 @@ resource "helm_release" "argocd" {
   create_namespace = true
   version          = "5.51.0"
 
-  # ArgoCD Server 설정
+  # ArgoCD Server 설정 - ClusterIP로 변경 (Ingress 사용)
   set {
     name  = "server.service.type"
-    value = "LoadBalancer"
+    value = "ClusterIP"
   }
 
   # 초기 비밀번호 설정 (선택사항)
@@ -25,6 +25,40 @@ resource "helm_release" "argocd" {
   set {
     name  = "server.extraArgs[0]"
     value = "--insecure"
+  }
+
+  # Ingress 활성화
+  set {
+    name  = "server.ingress.enabled"
+    value = "true"
+  }
+
+  # Ingress Class - AWS Load Balancer Controller
+  set {
+    name  = "server.ingress.ingressClassName"
+    value = "alb"
+  }
+
+  # Ingress Annotations - ALB 설정
+  set {
+    name  = "server.ingress.annotations.alb\\.ingress\\.kubernetes\\.io/scheme"
+    value = "internet-facing"
+  }
+
+  set {
+    name  = "server.ingress.annotations.alb\\.ingress\\.kubernetes\\.io/target-type"
+    value = "ip"
+  }
+
+  set {
+    name  = "server.ingress.annotations.alb\\.ingress\\.kubernetes\\.io/listen-ports"
+    value = "[{\\\"HTTP\\\": 80}]"
+  }
+
+  # Ingress Host (선택사항)
+  set {
+    name  = "server.ingress.hosts[0]"
+    value = "argocd.${var.env}.unbox.com"
   }
 
   depends_on = [
