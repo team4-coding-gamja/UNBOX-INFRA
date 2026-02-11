@@ -76,8 +76,9 @@ rollout:
     path: "/user/actuator/health"
     periodSeconds: 10
     startupProbe:
-      failureThreshold: 60
+      failureThreshold: 120  # 120 * 10초 = 1200초(20분) - SMTP 타임아웃 대응
       periodSeconds: 10
+      timeoutSeconds: 5      # 각 probe 요청의 타임아웃
   blueGreen:
     autoPromotionEnabled: true
     autoPromotionSeconds: 30

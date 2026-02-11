@@ -48,6 +48,9 @@ spec:
             port: {{ .Values.containerPort }}
           failureThreshold: {{ .Values.rollout.healthCheck.startupProbe.failureThreshold | default 30 }}
           periodSeconds: {{ .Values.rollout.healthCheck.startupProbe.periodSeconds | default 10 }}
+          {{- if .Values.rollout.healthCheck.startupProbe.timeoutSeconds }}
+          timeoutSeconds: {{ .Values.rollout.healthCheck.startupProbe.timeoutSeconds }}
+          {{- end }}
         {{- end }}
         livenessProbe:
           httpGet:
