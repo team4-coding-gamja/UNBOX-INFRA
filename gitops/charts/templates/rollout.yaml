@@ -62,12 +62,22 @@ spec:
           initialDelaySeconds: {{ .Values.rollout.healthCheck.initialDelaySeconds }}
           {{- end }}
           periodSeconds: {{ .Values.rollout.healthCheck.periodSeconds }}
+          {{- if .Values.rollout.healthCheck.timeoutSeconds }}
+          timeoutSeconds: {{ .Values.rollout.healthCheck.timeoutSeconds }}
+          {{- end }}
         readinessProbe:
           httpGet:
             path: {{ .Values.rollout.healthCheck.path }}
             port: {{ .Values.containerPort }}
           {{- if .Values.rollout.healthCheck.startupProbe }}
           initialDelaySeconds: 0
+          {{- else }}
+          initialDelaySeconds: {{ .Values.rollout.healthCheck.initialDelaySeconds }}
+          {{- end }}
+          periodSeconds: {{ .Values.rollout.healthCheck.periodSeconds }}
+          {{- if .Values.rollout.healthCheck.timeoutSeconds }}
+          timeoutSeconds: {{ .Values.rollout.healthCheck.timeoutSeconds }}
+          {{- end }}
           {{- else }}
           initialDelaySeconds: {{ .Values.rollout.healthCheck.initialDelaySeconds }}
           {{- end }}

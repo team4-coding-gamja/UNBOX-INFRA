@@ -75,6 +75,7 @@ rollout:
     enabled: true
     path: "/user/actuator/health"
     periodSeconds: 10
+    timeoutSeconds: 5      # 모든 probe의 기본 타임아웃
     startupProbe:
       failureThreshold: 120  # 120 * 10초 = 1200초(20분) - SMTP 타임아웃 대응
       periodSeconds: 10
