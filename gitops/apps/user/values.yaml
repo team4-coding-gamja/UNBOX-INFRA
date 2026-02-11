@@ -1,6 +1,7 @@
 # User Service - 공통 기본값
 appName: user-service
 replicaCount: 1
+contextPath: /user
 
 image:
   repository: ""  # 환경별로 오버라이드

@@ -15,12 +15,15 @@ spec:
     metadata:
       labels:
         app: {{ .Values.appName }}
-      {{- if .Values.linkerd.enabled }}
       annotations:
+        {{- if .Values.linkerd.enabled }}
         linkerd.io/inject: enabled
         # SMTP 포트 587을 Linkerd 프록시에서 우회 (타임아웃 방지)
         config.linkerd.io/skip-outbound-ports: "587"
-      {{- end }}
+        {{- end }}
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "{{ .Values.containerPort | default 8080 }}"
+        prometheus.io/path: "{{ .Values.contextPath | default "" }}/actuator/prometheus"
     spec:
       containers:
       - name: {{ .Values.appName }}

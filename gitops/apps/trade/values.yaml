@@ -1,6 +1,7 @@
 # Trade Service - 공통 기본값
 appName: trade-service
 replicaCount: 1
+contextPath: /trade
 
 image:
   repository: ""  # 환경별로 오버라이드

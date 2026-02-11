@@ -1,6 +1,7 @@
 # Payment Service - 공통 기본값
 appName: payment-service
 replicaCount: 1
+contextPath: /payment
 
 image:
   repository: ""  # 환경별로 오버라이드

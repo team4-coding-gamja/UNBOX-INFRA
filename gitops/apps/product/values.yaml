@@ -1,6 +1,7 @@
 # Product Service - 공통 기본값
 appName: product-service
 replicaCount: 1
+contextPath: /product
 
 image:
   repository: ""  # 환경별로 오버라이드
