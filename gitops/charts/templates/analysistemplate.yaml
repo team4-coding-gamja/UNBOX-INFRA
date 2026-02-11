@@ -20,7 +20,7 @@ spec:
         query: |
           sum(rate(
             http_server_requests_seconds_count{
-              app="{{ .Values.appName }}",
+              job="unbox-{{ .Values.appName }}",
               rollouts_pod_template_hash="{{`{{args.canary-hash}}`}}",
               status=~"2.."
             }[{{ .Values.rollout.analysis.queryRange }}]
@@ -28,7 +28,7 @@ spec:
           / 
           sum(rate(
             http_server_requests_seconds_count{
-              app="{{ .Values.appName }}",
+              job="unbox-{{ .Values.appName }}",
               rollouts_pod_template_hash="{{`{{args.canary-hash}}`}}"
             }[{{ .Values.rollout.analysis.queryRange }}]
           )) * 100
@@ -44,7 +44,7 @@ spec:
         query: |
           sum(rate(
             http_server_requests_seconds_count{
-              app="{{ .Values.appName }}",
+              job="unbox-{{ .Values.appName }}",
               rollouts_pod_template_hash="{{`{{args.canary-hash}}`}}",
               status=~"5.."
             }[{{ .Values.rollout.analysis.queryRange }}]
@@ -52,7 +52,7 @@ spec:
           / 
           sum(rate(
             http_server_requests_seconds_count{
-              app="{{ .Values.appName }}",
+              job="unbox-{{ .Values.appName }}",
               rollouts_pod_template_hash="{{`{{args.canary-hash}}`}}"
             }[{{ .Values.rollout.analysis.queryRange }}]
           )) * 100
@@ -68,14 +68,14 @@ spec:
         query: |
           sum(rate(
             http_server_requests_seconds_sum{
-              app="{{ .Values.appName }}",
+              job="unbox-{{ .Values.appName }}",
               rollouts_pod_template_hash="{{`{{args.canary-hash}}`}}"
             }[{{ .Values.rollout.analysis.queryRange }}]
           )) 
           / 
           sum(rate(
             http_server_requests_seconds_count{
-              app="{{ .Values.appName }}",
+              job="unbox-{{ .Values.appName }}",
               rollouts_pod_template_hash="{{`{{args.canary-hash}}`}}"
             }[{{ .Values.rollout.analysis.queryRange }}]
           )) * 1000
