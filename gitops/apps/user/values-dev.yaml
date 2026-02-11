@@ -3,7 +3,7 @@ appName: user-service
 replicaCount: 1
 image:
   repository: 632941626317.dkr.ecr.ap-northeast-2.amazonaws.com/unbox-dev-user-repo
-  tag: dev-a2468bd0604d595435688c436148305e5c9d9fe4
+  tag: dev-0455bd7b91956aa1d2f0e2b9a7a4b0b148dec679
   pullPolicy: Always
 # Ingress 활성화
 ingress:
@@ -75,11 +75,11 @@ rollout:
     enabled: true
     path: "/user/actuator/health"
     periodSeconds: 10
-    timeoutSeconds: 5      # 모든 probe의 기본 타임아웃
+    timeoutSeconds: 5 # 모든 probe의 기본 타임아웃
     startupProbe:
-      failureThreshold: 120  # 120 * 10초 = 1200초(20분) - SMTP 타임아웃 대응
+      failureThreshold: 120 # 120 * 10초 = 1200초(20분) - SMTP 타임아웃 대응
       periodSeconds: 10
-      timeoutSeconds: 5      # 각 probe 요청의 타임아웃
+      timeoutSeconds: 5 # 각 probe 요청의 타임아웃
   blueGreen:
     autoPromotionEnabled: true
     autoPromotionSeconds: 30

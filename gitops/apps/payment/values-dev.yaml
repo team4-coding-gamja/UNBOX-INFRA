@@ -3,7 +3,7 @@ appName: payment-service
 replicaCount: 1
 image:
   repository: 632941626317.dkr.ecr.ap-northeast-2.amazonaws.com/unbox-dev-payment-repo
-  tag: dev-a2468bd0604d595435688c436148305e5c9d9fe4
+  tag: dev-0455bd7b91956aa1d2f0e2b9a7a4b0b148dec679
   pullPolicy: Always
 # Ingress 활성화
 ingress:
@@ -56,7 +56,6 @@ env:
   # Tracing 활성화 (Tempo)
   MANAGEMENT_TRACING_ENABLED: "true"
   TEMPO_OTLP_ENDPOINT: "http://tempo.monitoring.svc.cluster.local:4318/"
-
   # Toss Payments (SSM에서 가져옴)
   TOSS_SECRET_KEY:
     valueFrom:
