@@ -61,9 +61,8 @@ resource "random_password" "rds_password" {
   override_special = "!#$%&*()-_=+[]{}<>:?"
 }
 resource "random_password" "redis_password" {
-  length           = 16
-  special          = true
-  override_special = "!#$%&*()-_=+[]{}<>:?"
+  length  = 16
+  special = false
 }
 
 resource "aws_ssm_parameter" "redis_password" {
