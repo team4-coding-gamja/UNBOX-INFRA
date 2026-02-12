@@ -23,7 +23,7 @@ spec:
         
         # Root CA (10년 유효, Cert-Manager 생성)
         # Terraform apply 시 Cert-Manager가 자동 생성하고 Linkerd가 참조
-          identityTrustAnchorsPEM: |
+        identityTrustAnchorsPEM: |
             -----BEGIN CERTIFICATE-----
             MIIBijCCATGgAwIBAgIRALPOYyCRCtUBIq3kcGRnJVQwCgYIKoZIzj0EAwIwJTEj
             MCEGA1UEAxMacm9vdC5saW5rZXJkLmNsdXN0ZXIubG9jYWwwHhcNMjYwMjEyMDI0
