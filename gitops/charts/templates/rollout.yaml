@@ -20,6 +20,7 @@ spec:
         linkerd.io/inject: enabled
         # SMTP 포트 587을 Linkerd 프록시에서 우회 (타임아웃 방지)
         config.linkerd.io/skip-outbound-ports: "587"
+        config.linkerd.io/skip-inbound-ports: "{{ .Values.containerPort }}"
         {{- end }}
         prometheus.io/scrape: "true"
         prometheus.io/port: "{{ .Values.containerPort | default 8080 }}"
