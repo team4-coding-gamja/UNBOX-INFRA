@@ -12,13 +12,11 @@ spec:
     repoURL: https://github.com/team4-coding-gamja/UNBOX-INFRA.git
     targetRevision: feat/ArgoCD-dev
     path: gitops/charts
-    plugin:
-      name: parameter-store-injector-v1.0
-      env:
-        - name: SERVICE_NAME
-          value: order
-        - name: VALUES_FILES
-          value: "values.yaml,../apps/order/values.yaml,../apps/order/values-dev.yaml"
+    helm:
+      valueFiles:
+        - values.yaml
+        - ../apps/order/values.yaml
+        - ../apps/order/values-dev.yaml
 
   destination:
     server: https://kubernetes.default.svc
