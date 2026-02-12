@@ -18,6 +18,7 @@ containerPort: 8084
 env:
   SERVER_PORT: "8084"
   SERVER_SERVLET_CONTEXT_PATH: "/order"
+  SERVER_TOMCAT_ACCESSLOG_ENABLED: "true"
   SPRING_JWT_SECRET:
     valueFrom:
       secretKeyRef:
