@@ -15,12 +15,6 @@ resource "helm_release" "argocd" {
     value = "ClusterIP"
   }
 
-  # 초기 비밀번호 설정 (선택사항)
-  set {
-    name  = "configs.secret.argocdServerAdminPassword"
-    value = bcrypt(var.argocd_admin_password)
-  }
-
   # Insecure mode (HTTPS 없이 사용, 개발 환경용)
   set {
     name  = "server.extraArgs[0]"
@@ -59,22 +53,6 @@ resource "helm_release" "argocd" {
   set {
     name  = "server.ingress.hosts[0]"
     value = "argocd.${var.env}.unbox.com"
-  }
-
-  # Repo Server ServiceAccount IRSA 설정
-  set {
-    name  = "repoServer.serviceAccount.create"
-    value = "true"
-  }
-
-  set {
-    name  = "repoServer.serviceAccount.name"
-    value = "argocd-repo-server"
-  }
-
-  set {
-    name  = "repoServer.serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
-    value = aws_iam_role.argocd.arn
   }
 
   depends_on = [
