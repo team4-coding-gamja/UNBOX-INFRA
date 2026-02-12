@@ -17,6 +17,7 @@ spec:
         - values.yaml
         - ../apps/order/values.yaml
         - ../apps/order/values-dev.yaml
+
   destination:
     server: https://kubernetes.default.svc
     namespace: unbox-app

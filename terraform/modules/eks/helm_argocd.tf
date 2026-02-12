@@ -15,12 +15,6 @@ resource "helm_release" "argocd" {
     value = "ClusterIP"
   }
 
-  # 초기 비밀번호 설정 (선택사항)
-  set {
-    name  = "configs.secret.argocdServerAdminPassword"
-    value = bcrypt(var.argocd_admin_password)
-  }
-
   # Insecure mode (HTTPS 없이 사용, 개발 환경용)
   set {
     name  = "server.extraArgs[0]"
