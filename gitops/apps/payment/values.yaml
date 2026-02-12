@@ -54,7 +54,6 @@ env:
   
   # Zipkin 연결
   MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: "http://zipkin.unbox-infra.svc.cluster.local:9411/api/v2/spans"
-  TEMPO_OTLP_ENDPOINT: "http://tempo.monitoring.svc.cluster.local:4318/v1/traces"
   TOSS_SECRET_KEY: "test_sk_vZnjEJeQVxJj574wXDnP8PmOoBN0"
   TOSS_SECURITY_KEY: "1bca83b538ebfacd601d91c295f2cc6e24dfde5b0705550473ac1a74fed0dd09"
   TEMPO_OTLP_ENDPOINT: "http://tempo.monitoring.svc.cluster.local:4318/v1/traces"
