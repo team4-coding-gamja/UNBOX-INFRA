@@ -61,6 +61,22 @@ resource "helm_release" "argocd" {
     value = "argocd.${var.env}.unbox.com"
   }
 
+  # Repo Server ServiceAccount IRSA 설정
+  set {
+    name  = "repoServer.serviceAccount.create"
+    value = "true"
+  }
+
+  set {
+    name  = "repoServer.serviceAccount.name"
+    value = "argocd-repo-server"
+  }
+
+  set {
+    name  = "repoServer.serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
+    value = aws_iam_role.argocd.arn
+  }
+
   depends_on = [
     aws_eks_node_group.main
   ]

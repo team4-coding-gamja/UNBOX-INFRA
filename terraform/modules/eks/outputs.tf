@@ -21,3 +21,8 @@ output "cluster_certificate_authority_data" {
 output "cluster_name" {
   value = aws_eks_cluster.main.name
 }
+
+output "argocd_role_arn" {
+  description = "ArgoCD IAM Role ARN for IRSA"
+  value       = aws_iam_role.argocd.arn
+}
