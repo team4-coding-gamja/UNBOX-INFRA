@@ -12,26 +12,10 @@ spec:
   project: default
   source:
     repoURL: https://prometheus-community.github.io/helm-charts
-    chart: kube-prometheus-stack
-    targetRevision: 61.3.1
+    chart: prometheus-operator-crds
+    targetRevision: 14.0.0
     helm:
-      releaseName: kube-prometheus-stack-crds
-      skipCrds: false
-      # CRD만 설치하도록 values 설정
-      values: |
-        # 모든 컴포넌트 비활성화 (CRD만 설치)
-        prometheus:
-          enabled: false
-        alertmanager:
-          enabled: false
-        grafana:
-          enabled: false
-        kubeStateMetrics:
-          enabled: false
-        nodeExporter:
-          enabled: false
-        prometheusOperator:
-          enabled: false
+      releaseName: prometheus-operator-crds
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring
