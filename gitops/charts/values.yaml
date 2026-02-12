@@ -25,6 +25,14 @@ resources:
     memory: "1024Mi"
     cpu: "1000m"
 
+# Ingress 설정
+ingress:
+  enabled: false
+  path: "/"
+  groupName: "unbox-dev"
+  certificateArn: ""  # 각 환경별 values 파일에서 설정
+  securityGroup: "unbox-dev-alb-sg"
+
 # 환경변수 리스트 (각 서비스별 values 파일에서 오버라이드)
 env: {}
   

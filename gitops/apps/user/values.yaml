@@ -13,6 +13,8 @@ ingress:
   enabled: false
   path: /user
   groupName: unbox-dev
+  certificateArn: ""  # 환경별로 오버라이드
+  securityGroup: "unbox-dev-alb-sg"
 
 linkerd:
   enabled: false

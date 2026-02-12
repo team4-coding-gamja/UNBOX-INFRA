@@ -8,6 +8,7 @@ image:
 # Ingress 활성화
 ingress:
   enabled: true
+  certificateArn: "arn:aws:acm:ap-northeast-2:632941626317:certificate/3d9d9317-e029-4d0e-8dca-725eda494e6b"
 linkerd:
   enabled: true # Linkerd 활성화 (헤더 기반 라우팅용)
 service:

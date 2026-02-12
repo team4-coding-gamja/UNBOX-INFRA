@@ -9,9 +9,6 @@ spec:
   selector:
     matchLabels:
       app: {{ .Values.appName }}
-  selector:
-    matchLabels:
-      app: {{ .Values.appName }}
   endpoints:
     - port: http
       path: {{ .Values.contextPath | default "" }}/actuator/prometheus # 스프링부트 액추에이터 경로
