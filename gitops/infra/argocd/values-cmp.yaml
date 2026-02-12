@@ -1,0 +1,44 @@
+# ArgoCD Config Management Plugin for Parameter Store injection
+repoServer:
+  # CMP 사이드카 추가
+  extraContainers:
+    - name: helm-with-parameter-store
+      # 커스텀 빌드한 이미지 (Helm + AWS CLI + ArgoCD CMP)
+      image: 632941626317.dkr.ecr.ap-northeast-2.amazonaws.com/argocd-cmp-helm-aws:latest
+      command: [sh, -c]
+      args:
+        - |
+          # CMP 서버 실행
+          /usr/local/bin/argocd-cmp-server
+      env:
+        - name: AWS_REGION
+          value: ap-northeast-2
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      volumeMounts:
+        - mountPath: /var/run/argocd
+          name: var-files
+        - mountPath: /home/argocd/cmp-server/plugins
+          name: plugins
+        - mountPath: /home/argocd/cmp-server/config/plugin.yaml
+          subPath: plugin.yaml
+          name: cmp-plugin
+        - mountPath: /tmp
+          name: cmp-tmp
+  
+  # ConfigMap 및 Volume 추가
+  volumes:
+    - name: cmp-plugin
+      configMap:
+        name: cmp-plugin
+    - name: cmp-tmp
+      emptyDir: {}
+  
+  # ServiceAccount에 AWS 권한 추가 (IRSA)
+  # Note: IAM Role은 Terraform에서 생성됨 (terraform/modules/eks/iam_argocd.tf)
+  serviceAccount:
+    create: true
+    name: argocd-repo-server
+    annotations:
+      eks.amazonaws.com/role-arn: "arn:aws:iam::632941626317:role/unbox-dev-argocd-role"
