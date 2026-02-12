@@ -56,11 +56,11 @@ env:
 # 리소스 제한 (기본값)
 resources:
   requests:
-    memory: "256Mi"
-    cpu: "100m"
-  limits:
     memory: "512Mi"
-    cpu: "250m"
+    cpu: "500m"
+  limits:
+    memory: "1024Mi"
+    cpu: "1000m"
 
 # Argo Rollouts 설정
 rollout:

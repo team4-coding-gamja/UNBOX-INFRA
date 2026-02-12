@@ -1,0 +1,43 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    alb.ingress.kubernetes.io/group.name: unbox-dev
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: "15"
+    alb.ingress.kubernetes.io/healthcheck-path: /user/actuator/health
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: "5"
+    alb.ingress.kubernetes.io/healthy-threshold-count: "2"
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/security-groups: unbox-dev-alb-sg
+    alb.ingress.kubernetes.io/tags: Environment=dev,ManagedBy=kubernetes
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/unhealthy-threshold-count: "2"
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"alb.ingress.kubernetes.io/group.name":"unbox-dev","alb.ingress.kubernetes.io/healthcheck-interval-seconds":"15","alb.ingress.kubernetes.io/healthcheck-path":"/user/actuator/health","alb.ingress.kubernetes.io/healthcheck-timeout-seconds":"5","alb.ingress.kubernetes.io/healthy-threshold-count":"2","alb.ingress.kubernetes.io/scheme":"internet-facing","alb.ingress.kubernetes.io/security-groups":"unbox-dev-alb-sg","alb.ingress.kubernetes.io/tags":"Environment=dev,ManagedBy=kubernetes","alb.ingress.kubernetes.io/target-type":"ip","alb.ingress.kubernetes.io/unhealthy-threshold-count":"2"},"labels":{"app":"user-service","argocd.argoproj.io/instance":"user-service-dev"},"name":"user-service","namespace":"unbox-app"},"spec":{"ingressClassName":"alb","rules":[{"http":{"paths":[{"backend":{"service":{"name":"user-service","port":{"number":80}}},"path":"/user","pathType":"Prefix"}]}}]}}
+  creationTimestamp: "2026-02-12T02:54:47Z"
+  finalizers:
+  - group.ingress.k8s.aws/unbox-dev
+  generation: 1
+  labels:
+    app: user-service
+    argocd.argoproj.io/instance: user-service-dev
+  name: user-service
+  namespace: unbox-app
+  resourceVersion: "135070"
+  uid: 7e90e01f-1f83-4dd3-a15b-2854c2e84123
+spec:
+  ingressClassName: alb
+  rules:
+  - http:
+      paths:
+      - backend:
+          service:
+            name: user-service
+            port:
+              number: 80
+        path: /user
+        pathType: Prefix
+status:
+  loadBalancer:
+    ingress:
+    - hostname: k8s-unboxdev-0ae79aaea7-1099138500.ap-northeast-2.elb.amazonaws.com

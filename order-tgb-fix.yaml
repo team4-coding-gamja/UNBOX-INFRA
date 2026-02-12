@@ -1,0 +1,10 @@
+apiVersion: elbv2.k8s.aws/v1beta1
+kind: TargetGroupBinding
+metadata:
+  name: order-service-tgb-fix
+  namespace: unbox-app
+spec:
+  serviceRef:
+    name: order-service
+    port: 80
+  targetGroupARN: arn:aws:elasticloadbalancing:ap-northeast-2:632941626317:targetgroup/order-2026021201224042400000000d/32946800b76a39fb

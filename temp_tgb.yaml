@@ -1,0 +1,22 @@
+apiVersion: elbv2.k8s.aws/v1beta1
+kind: TargetGroupBinding
+metadata:
+  creationTimestamp: "2026-02-12T04:17:56Z"
+  finalizers:
+  - elbv2.k8s.aws/resources
+  generation: 1
+  labels:
+    ingress.k8s.aws/stack: unbox-dev
+  name: k8s-unboxapp-orderser-c050c5f9ac
+  namespace: unbox-app
+  resourceVersion: "52663"
+  uid: 5c8370a2-1ab5-47e2-850c-96f0ca42bb70
+spec:
+  ipAddressType: ipv4
+  serviceRef:
+    name: order-service
+    port: 80
+  targetGroupARN: arn:aws:elasticloadbalancing:ap-northeast-2:632941626317:targetgroup/k8s-unboxapp-orderser-da99c16753/662776252031474c
+  targetType: ip
+status:
+  observedGeneration: 1

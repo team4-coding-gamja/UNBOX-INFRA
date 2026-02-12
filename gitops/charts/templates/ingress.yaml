@@ -38,7 +38,8 @@ metadata:
 spec:
   ingressClassName: alb
   rules:
-  - http:
+  - host: {{ .Values.ingress.host | default "dev.un-box.click" | quote }}
+    http:
       paths:
       - path: {{ .Values.ingress.path }}
         pathType: Prefix

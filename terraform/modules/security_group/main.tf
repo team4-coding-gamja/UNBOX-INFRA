@@ -218,8 +218,53 @@ resource "aws_security_group_rule" "eks_node_ingress_from_alb" {
   source_security_group_id = aws_security_group.alb.id
 }
 
+# EKS Node Inbound (From ALB - Pod Ports for IP Mode)
+resource "aws_security_group_rule" "eks_node_ingress_from_alb_pods" {
+  type                     = "ingress"
+  from_port                = 8080
+  to_port                  = 8090
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.eks_node.id
+  source_security_group_id = aws_security_group.alb.id
+}
+
 # EKS Node Inbound (Self - for pod-to-pod communication)
 
 
 # EKS Node Outbound (All traffic)
 
+
+resource "aws_security_group" "eks_node" {
+  name   = "${var.project_name}-${var.env}-eks-node-sg"
+  vpc_id = var.vpc_id
+  tags   = { Name = "${var.project_name}-${var.env}-eks-node-sg" }
+}
+
+resource "aws_security_group_rule" "eks_node_egress_all" {
+  type              = "egress"
+  from_port         = 0
+  to_port           = 0
+  protocol          = "-1"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_security_group.eks_node.id
+}
+resource "aws_security_group_rule" "node_ingress_from_alb" {
+  for_each                 = var.service_config
+  type                     = "ingress"
+  from_port                = each.value
+  to_port                  = each.value
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.eks_node.id
+  source_security_group_id = aws_security_group.alb.id
+  description              = "Allow ALB to access Pods on Node (Port ${each.value})"
+}
+
+resource "aws_security_group_rule" "eks_node_ingress_self" {
+  type                     = "ingress"
+  from_port                = 0
+  to_port                  = 0
+  protocol                 = "-1"
+  security_group_id        = aws_security_group.eks_node.id
+  source_security_group_id = aws_security_group.eks_node.id
+  description              = "Allow Node-to-Node communication (DNS, Pod-to-Pod)"
+}

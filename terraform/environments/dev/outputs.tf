@@ -1,12 +1,12 @@
 output "alb_address" {
-  value = module.alb.alb_dns_name
+  value = data.aws_lb.ingress.dns_name
 }
 
 # VPC 정보
-output "target_group_arns" {
-  description = "Map of Target Group ARNs"
-  value       = module.alb.target_group_arns
-}
+# output "target_group_arns" {
+#   description = "Map of Target Group ARNs"
+#   value       = module.alb.target_group_arns
+# }
 
 # RDS 정보
 output "rds_endpoints" {

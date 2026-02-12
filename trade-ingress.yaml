@@ -1,0 +1,46 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-northeast-2:632941626317:certificate/3d9d9317-e029-4d0e-8dca-725eda494e6b
+    alb.ingress.kubernetes.io/group.name: unbox-dev
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: "15"
+    alb.ingress.kubernetes.io/healthcheck-path: /trade/actuator/health
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: "5"
+    alb.ingress.kubernetes.io/healthy-threshold-count: "2"
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/security-groups: unbox-dev-alb-sg
+    alb.ingress.kubernetes.io/ssl-redirect: "443"
+    alb.ingress.kubernetes.io/tags: Environment=dev,ManagedBy=kubernetes
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/unhealthy-threshold-count: "2"
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"alb.ingress.kubernetes.io/certificate-arn":"arn:aws:acm:ap-northeast-2:632941626317:certificate/3d9d9317-e029-4d0e-8dca-725eda494e6b","alb.ingress.kubernetes.io/group.name":"unbox-dev","alb.ingress.kubernetes.io/healthcheck-interval-seconds":"15","alb.ingress.kubernetes.io/healthcheck-path":"/trade/actuator/health","alb.ingress.kubernetes.io/healthcheck-timeout-seconds":"5","alb.ingress.kubernetes.io/healthy-threshold-count":"2","alb.ingress.kubernetes.io/listen-ports":"[{\"HTTP\": 80}, {\"HTTPS\": 443}]","alb.ingress.kubernetes.io/scheme":"internet-facing","alb.ingress.kubernetes.io/security-groups":"unbox-dev-alb-sg","alb.ingress.kubernetes.io/ssl-redirect":"443","alb.ingress.kubernetes.io/tags":"Environment=dev,ManagedBy=kubernetes","alb.ingress.kubernetes.io/target-type":"ip","alb.ingress.kubernetes.io/unhealthy-threshold-count":"2"},"labels":{"app":"trade-service","argocd.argoproj.io/instance":"trade-service-dev"},"name":"trade-service","namespace":"unbox-app"},"spec":{"ingressClassName":"alb","rules":[{"http":{"paths":[{"backend":{"service":{"name":"trade-service","port":{"number":80}}},"path":"/trade","pathType":"Prefix"}]}}]}}
+  creationTimestamp: "2026-02-12T02:54:48Z"
+  finalizers:
+  - group.ingress.k8s.aws/unbox-dev
+  generation: 1
+  labels:
+    app: trade-service
+    argocd.argoproj.io/instance: trade-service-dev
+  name: trade-service
+  namespace: unbox-app
+  resourceVersion: "72312"
+  uid: b6c03241-fc33-4352-861c-a1b5cf23d099
+spec:
+  ingressClassName: alb
+  rules:
+  - http:
+      paths:
+      - backend:
+          service:
+            name: trade-service
+            port:
+              number: 80
+        path: /trade
+        pathType: Prefix
+status:
+  loadBalancer:
+    ingress:
+    - hostname: k8s-unboxdev-0ae79aaea7-1099138500.ap-northeast-2.elb.amazonaws.com

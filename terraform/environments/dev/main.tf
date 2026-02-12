@@ -37,15 +37,15 @@ module "security_group" {
 }
 
 module "common" {
-  source                 = "../../modules/common"
-  env                    = var.env
-  project_name           = var.project_name
-  service_config         = local.service_config
-  vpc_id                 = module.vpc.vpc_id
-  cloudtrail_bucket_id   = module.s3.cloudtrail_bucket_id
-  users                  = var.users
-  kms_key_arn            = data.aws_kms_alias.infra_key.target_key_arn
-  alb_arn                = module.alb.alb_arn
+  source               = "../../modules/common"
+  env                  = var.env
+  project_name         = var.project_name
+  service_config       = local.service_config
+  vpc_id               = module.vpc.vpc_id
+  cloudtrail_bucket_id = module.s3.cloudtrail_bucket_id
+  users                = var.users
+  kms_key_arn          = data.aws_kms_alias.infra_key.target_key_arn
+  # alb_arn                = module.alb.alb_arn
   private_app_subnet_ids = module.vpc.private_app_subnet_ids # Lambda 배포용
   app_sg_ids             = module.security_group.app_sg_ids  # Lambda SG용
 }
@@ -57,17 +57,24 @@ module "s3" {
   kms_key_arn  = module.common.kms_key_arn
 }
 
-module "alb" {
-  source            = "../../modules/alb"
-  env               = var.env
-  project_name      = var.project_name
-  vpc_id            = module.vpc.vpc_id
-  public_subnet_ids = module.vpc.public_subnet_ids
-  alb_sg_id         = module.security_group.alb_sg_id # 아까 만든 보안 그룹 ID
-  service_config    = local.service_config
-  certificate_arn   = module.route53.certificate_arn
-  enable_https      = true
-  logs_bucket_id    = module.s3.logs_bucket_id
+# module "alb" {
+#   source            = "../../modules/alb"
+#   env               = var.env
+#   project_name      = var.project_name
+#   vpc_id            = module.vpc.vpc_id
+#   public_subnet_ids = module.vpc.public_subnet_ids
+#   alb_sg_id         = module.security_group.alb_sg_id # 아까 만든 보안 그룹 ID
+#   service_config    = local.service_config
+#   certificate_arn   = module.route53.certificate_arn
+#   enable_https      = true
+#   logs_bucket_id    = module.s3.logs_bucket_id
+# }
+
+# Ingress가 생성한 ALB 찾기
+data "aws_lb" "ingress" {
+  tags = {
+    "ingress.k8s.aws/stack" = "${var.project_name}-${var.env}"
+  }
 }
 
 data "aws_ssm_parameter" "db_password" {
@@ -115,8 +122,21 @@ module "route53" {
   domain_name      = "dev.un-box.click"
   hosted_zone_name = "un-box.click"
   project_name     = var.project_name
-  alb_dns_name     = module.alb.alb_dns_name
-  alb_zone_id      = module.alb.alb_zone_id
+  alb_dns_name     = data.aws_lb.ingress.dns_name
+  alb_zone_id      = data.aws_lb.ingress.zone_id
+}
+
+# Grafana DNS 레코드 추가 (Ingress 연결)
+resource "aws_route53_record" "grafana" {
+  zone_id = module.route53.zone_id
+  name    = "grafana.dev.un-box.click"
+  type    = "A"
+
+  alias {
+    name                   = data.aws_lb.ingress.dns_name
+    zone_id                = data.aws_lb.ingress.zone_id
+    evaluate_target_health = true
+  }
 }
 
 module "eks" {
