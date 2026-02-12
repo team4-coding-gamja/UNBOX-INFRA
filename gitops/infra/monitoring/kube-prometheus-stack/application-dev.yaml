@@ -7,7 +7,7 @@ metadata:
     component: monitoring
     env: dev
   annotations:
-    argocd.argoproj.io/sync-wave: "0"
+    argocd.argoproj.io/sync-wave: "0"  # CRD 이후 설치
 spec:
   project: default
   sources:
@@ -16,6 +16,7 @@ spec:
       targetRevision: 61.3.1
       helm:
         releaseName: kube-prometheus-stack
+        skipCrds: true  # CRD는 별도 Application에서 관리
         valueFiles:
           - $values/gitops/infra/monitoring/kube-prometheus-stack/values.yaml
     - repoURL: https://github.com/team4-coding-gamja/UNBOX-INFRA.git
