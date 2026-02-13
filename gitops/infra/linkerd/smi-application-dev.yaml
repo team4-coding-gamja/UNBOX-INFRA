@@ -12,9 +12,9 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://helm.linkerd.io/stable
+    repoURL: https://linkerd.github.io/linkerd-smi
     chart: linkerd-smi
-    targetRevision: 0.2.0
+    targetRevision: 1.0.4
     helm:
       releaseName: linkerd-smi
   destination:
