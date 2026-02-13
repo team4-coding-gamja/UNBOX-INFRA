@@ -5,6 +5,9 @@ metadata:
   labels:
     app: {{ .Values.appName }}
   annotations:
+    {{- with .Values.service.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
     # [핵심] Linkerd 서킷 브레이커 (Failure Accrual) 설정
     
     # 모드: "consecutive" (연속 실패 시 발동)

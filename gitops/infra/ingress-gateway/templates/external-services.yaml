@@ -1,0 +1,15 @@
+{{- range .Values.externalServices }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .name }}
+  namespace: {{ $.Release.Namespace }}
+spec:
+  type: ExternalName
+  externalName: {{ .targetService }}.{{ .targetNamespace }}.svc.cluster.local
+  ports:
+  - port: {{ .targetPort }}
+    protocol: TCP
+    targetPort: {{ .targetPort }}
+---
+{{- end }}

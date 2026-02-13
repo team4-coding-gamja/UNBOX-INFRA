@@ -1,0 +1,49 @@
+ingress:
+  className: alb
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: "443"
+    alb.ingress.kubernetes.io/group.name: unbox-dev
+    alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:ap-northeast-2:632941626317:certificate/23cdae56-b916-4d5e-8877-d0c50f93312f"
+    alb.ingress.kubernetes.io/healthcheck-path: "/healthz" # Default, overridden by path specific annotations if supported, but ALB controller applies globally mostly.
+    # Note: Healthcheck path per target group is derived from readiness probe usually.
+
+  hosts:
+    - host: dev.un-box.click
+      paths:
+        - path: /user
+          pathType: Prefix
+          service: user-service
+          port: 80
+        - path: /product
+          pathType: Prefix
+          service: product-service
+          port: 80
+        - path: /order
+          pathType: Prefix
+          service: order-service
+          port: 80
+        - path: /payment
+          pathType: Prefix
+          service: payment-service
+          port: 80
+        - path: /trade
+          pathType: Prefix
+          service: trade-service
+          port: 80
+
+    - host: grafana.dev.un-box.click
+      paths:
+        - path: /
+          pathType: Prefix
+          service: grafana-external
+          port: 80
+
+externalServices:
+  - name: grafana-external
+    namespace: unbox-app # Where this chart is deployed
+    targetNamespace: monitoring
+    targetService: kube-prometheus-stack-grafana
+    targetPort: 80

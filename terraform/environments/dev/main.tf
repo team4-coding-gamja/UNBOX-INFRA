@@ -72,8 +72,9 @@ module "s3" {
 
 # Ingress가 생성한 ALB 찾기
 data "aws_lb" "ingress" {
+  count = var.enable_alb ? 1 : 0
   tags = {
-    "ingress.k8s.aws/stack" = "${var.project_name}-${var.env}"
+    "ingress.k8s.aws/stack" = "unbox-dev"
   }
 }
 
@@ -118,23 +119,25 @@ module "redis" {
 
 
 module "route53" {
+  count            = var.enable_alb ? 1 : 0
   source           = "../../modules/route53"
   domain_name      = "dev.un-box.click"
   hosted_zone_name = "un-box.click"
   project_name     = var.project_name
-  alb_dns_name     = data.aws_lb.ingress.dns_name
-  alb_zone_id      = data.aws_lb.ingress.zone_id
+  alb_dns_name     = data.aws_lb.ingress[0].dns_name
+  alb_zone_id      = data.aws_lb.ingress[0].zone_id
 }
 
 # Grafana DNS 레코드 추가 (Ingress 연결)
 resource "aws_route53_record" "grafana" {
-  zone_id = module.route53.zone_id
+  count   = var.enable_alb ? 1 : 0
+  zone_id = module.route53[0].zone_id
   name    = "grafana.dev.un-box.click"
   type    = "A"
 
   alias {
-    name                   = data.aws_lb.ingress.dns_name
-    zone_id                = data.aws_lb.ingress.zone_id
+    name                   = data.aws_lb.ingress[0].dns_name
+    zone_id                = data.aws_lb.ingress[0].zone_id
     evaluate_target_health = true
   }
 }

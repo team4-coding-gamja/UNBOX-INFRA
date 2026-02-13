@@ -42,9 +42,18 @@ variable "toss_security_key" {
   sensitive   = true
 }
 
+
+
 variable "argocd_admin_password" {
   description = "ArgoCD admin 초기 비밀번호"
   type        = string
   default     = "RKgus12!"
   sensitive   = true
 }
+
+variable "enable_alb" {
+  description = "Enable ALB related resources and lookups"
+  type        = bool
+  default     = false
+}
+

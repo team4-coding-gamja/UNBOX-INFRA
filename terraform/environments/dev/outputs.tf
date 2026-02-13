@@ -1,5 +1,5 @@
 output "alb_address" {
-  value = data.aws_lb.ingress.dns_name
+  value = var.enable_alb ? data.aws_lb.ingress[0].dns_name : "ALB not created yet"
 }
 
 # VPC 정보

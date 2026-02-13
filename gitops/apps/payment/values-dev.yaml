@@ -7,12 +7,14 @@ image:
   pullPolicy: Always
 # Ingress 활성화
 ingress:
-  enabled: true
+  enabled: false
 linkerd:
   enabled: true # Linkerd Service Mesh 활성화
 service:
   port: 80
   targetPort: 8085
+  annotations:
+    alb.ingress.kubernetes.io/healthcheck-path: "/payment/actuator/health"
 containerPort: 8085
 env:
   SERVER_PORT: "8085"

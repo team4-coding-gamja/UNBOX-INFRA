@@ -7,12 +7,14 @@ image:
   pullPolicy: Always
 # Ingress 활성화
 ingress:
-  enabled: true
+  enabled: false
 linkerd:
   enabled: true # Linkerd 활성화 (헤더 기반 라우팅용)
 service:
   port: 80
   targetPort: 8082
+  annotations:
+    alb.ingress.kubernetes.io/healthcheck-path: "/product/actuator/health"
 containerPort: 8082
 env:
   SERVER_PORT: "8082"
