@@ -76,7 +76,11 @@ spec:
           {{- if .Values.rollout.healthCheck.timeoutSeconds }}
           timeoutSeconds: {{ .Values.rollout.healthCheck.timeoutSeconds }}
           {{- end }}
+          {{- if .Values.rollout.healthCheck.livenessProbe }}
           failureThreshold: {{ .Values.rollout.healthCheck.livenessProbe.failureThreshold | default 3 }}
+          {{- else }}
+          failureThreshold: 3
+          {{- end }}
         readinessProbe:
           httpGet:
             path: {{ .Values.rollout.healthCheck.path }}
@@ -95,7 +99,11 @@ spec:
           {{- if .Values.rollout.healthCheck.timeoutSeconds }}
           timeoutSeconds: {{ .Values.rollout.healthCheck.timeoutSeconds }}
           {{- end }}
+          {{- if .Values.rollout.healthCheck.readinessProbe }}
           failureThreshold: {{ .Values.rollout.healthCheck.readinessProbe.failureThreshold | default 3 }}
+          {{- else }}
+          failureThreshold: 3
+          {{- end }}
         {{- end }}
         resources:
           {{- toYaml .Values.resources | nindent 10 }}
