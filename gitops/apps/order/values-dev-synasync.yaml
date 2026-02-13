@@ -3,7 +3,7 @@ appName: order-service
 replicaCount: 1
 image:
   repository: 632941626317.dkr.ecr.ap-northeast-2.amazonaws.com/unbox-dev-order-repo
-  tag: test-synasync-6a8142a7971775314d26160183a589b711424fe7
+  tag: test-synasync-9240ed0fb24ac643679f460c47c232387d1a1e0e
   pullPolicy: Always
 ingress:
   enabled: false
