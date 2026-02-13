@@ -3,7 +3,7 @@ appName: user-service
 replicaCount: 1
 image:
   repository: 632941626317.dkr.ecr.ap-northeast-2.amazonaws.com/unbox-dev-user-repo
-  tag: dev-0455bd7b91956aa1d2f0e2b9a7a4b0b148dec679
+  tag: dev-68aed4fb5bf1cb6631af98b3eb952a160f723fd8
   pullPolicy: Always
 # Ingress 활성화
 ingress:
@@ -69,7 +69,7 @@ resources:
   requests:
     memory: "512Mi"
     cpu: "100m"
-  limits: 
+  limits:
     memory: "1Gi"
 # Argo Rollouts 설정
 rollout:
