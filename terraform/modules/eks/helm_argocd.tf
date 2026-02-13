@@ -79,3 +79,12 @@ resource "helm_release" "argo_rollouts" {
     aws_eks_node_group.main
   ]
 }
+
+# Ingress Gateway Application (자동 배포)
+resource "kubernetes_manifest" "ingress_gateway_app" {
+  manifest = yamldecode(file("${path.module}/../../../gitops/infra/ingress-gateway/application-dev.yaml"))
+
+  depends_on = [
+    helm_release.argocd
+  ]
+}
