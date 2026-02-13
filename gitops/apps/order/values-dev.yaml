@@ -3,7 +3,7 @@ appName: order-service
 replicaCount: 1
 image:
   repository: 632941626317.dkr.ecr.ap-northeast-2.amazonaws.com/unbox-dev-order-repo
-  tag: dev-68aed4fb5bf1cb6631af98b3eb952a160f723fd8
+  tag: dev-ea3b28761d769827bdb3b360eda127a586506b27
   pullPolicy: Always
 # Ingress 활성화
 ingress:
