@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: argo-rollouts-metrics
+  namespace: argo-rollouts
+  labels:
+    app.kubernetes.io/name: argo-rollouts
+    app.kubernetes.io/component: rollouts-controller
+spec:
+  ports:
+  - name: metrics
+    port: 8090
+    protocol: TCP
+    targetPort: 8090
+  selector:
+    app.kubernetes.io/name: argo-rollouts
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: argo-rollouts
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: argo-rollouts
+      app.kubernetes.io/component: rollouts-controller
+  namespaceSelector:
+    matchNames:
+    - argo-rollouts
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics

@@ -1,0 +1,107 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argo-rollouts-notification-configmap
+  namespace: argo-rollouts
+data:
+  service.webhook.discord: |
+    url: $discord-webhook-url
+    headers:
+    - name: Content-Type
+      value: application/json
+  
+  template.rollout-completed: |
+    webhook:
+      discord:
+        method: POST
+        body: |
+          {
+            "embeds": [{
+              "title": "✅ Rollout 배포 완료",
+              "description": "**서비스:** `{{.rollout.metadata.name}}`\n**네임스페이스:** `{{.rollout.metadata.namespace}}`\n**이미지:** `{{.rollout.spec.template.spec.containers[0].image}}`\n**전략:** Canary",
+              "color": 3066993,
+              "fields": [
+                {
+                  "name": "Stable Replicas",
+                  "value": "{{.rollout.status.replicas}}",
+                  "inline": true
+                },
+                {
+                  "name": "Ready Replicas",
+                  "value": "{{.rollout.status.readyReplicas}}",
+                  "inline": true
+                }
+              ],
+              "timestamp": "{{.rollout.status.conditions[0].lastUpdateTime}}"
+            }]
+          }
+  
+  template.rollout-aborted: |
+    webhook:
+      discord:
+        method: POST
+        body: |
+          {
+            "embeds": [{
+              "title": "❌ Rollout 배포 실패 (자동 롤백)",
+              "description": "**서비스:** `{{.rollout.metadata.name}}`\n**네임스페이스:** `{{.rollout.metadata.namespace}}`\n**이미지:** `{{.rollout.spec.template.spec.containers[0].image}}`\n**원인:** AnalysisRun 실패",
+              "color": 15158332,
+              "fields": [
+                {
+                  "name": "Status",
+                  "value": "{{.rollout.status.phase}}",
+                  "inline": true
+                },
+                {
+                  "name": "Message",
+                  "value": "{{.rollout.status.message}}",
+                  "inline": false
+                }
+              ],
+              "timestamp": "{{.rollout.status.conditions[0].lastUpdateTime}}"
+            }]
+          }
+  
+  template.rollout-paused: |
+    webhook:
+      discord:
+        method: POST
+        body: |
+          {
+            "embeds": [{
+              "title": "⏸️ Rollout 일시 중지",
+              "description": "**서비스:** `{{.rollout.metadata.name}}`\n**네임스페이스:** `{{.rollout.metadata.namespace}}`\n**현재 단계:** Canary {{.rollout.status.canary.stableRS}}",
+              "color": 16776960,
+              "timestamp": "{{.rollout.status.conditions[0].lastUpdateTime}}"
+            }]
+          }
+  
+  template.rollout-step-completed: |
+    webhook:
+      discord:
+        method: POST
+        body: |
+          {
+            "embeds": [{
+              "title": "🔄 Rollout Canary 단계 완료",
+              "description": "**서비스:** `{{.rollout.metadata.name}}`\n**현재 단계:** {{.rollout.status.currentStepIndex}}/{{len .rollout.spec.strategy.canary.steps}}\n**Canary 비율:** {{.rollout.status.canary.weights.canary}}%",
+              "color": 3447003,
+              "timestamp": "{{.rollout.status.conditions[0].lastUpdateTime}}"
+            }]
+          }
+  
+  trigger.on-rollout-completed: |
+    - when: rollout.status.phase == 'Healthy'
+      send: [rollout-completed]
+  
+  trigger.on-rollout-aborted: |
+    - when: rollout.status.phase == 'Degraded'
+      send: [rollout-aborted]
+  
+  trigger.on-rollout-paused: |
+    - when: rollout.status.phase == 'Paused'
+      send: [rollout-paused]
+  
+  trigger.on-rollout-step-completed: |
+    - when: rollout.status.currentStepIndex != null
+      send: [rollout-step-completed]

@@ -1,82 +1,45 @@
-{{- if and .Values.rollout.enabled (eq .Values.rollout.strategy "canary") .Values.rollout.analysis.enabled }}
+{{- if .Values.rollout.enabled }}
+{{- if eq .Values.rollout.strategy "canary" }}
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
-  name: {{ .Values.appName }}-success-rate
+  name: {{ .Values.appName }}-analysis
+  namespace: {{ .Release.Namespace }}
 spec:
-  args:
-  - name: canary-hash
-    # Argo Rollouts가 자동으로 Canary Pod의 hash를 전달
-  
   metrics:
-  # HTTP 성공률 체크 (Canary만)
-  - name: success-rate
-    interval: {{ .Values.rollout.analysis.interval }}
-    successCondition: result[0] >= {{ .Values.rollout.analysis.successRate }}
-    failureLimit: {{ .Values.rollout.analysis.failureLimit }}
-    provider:
-      prometheus:
-        address: {{ .Values.rollout.analysis.prometheusAddress }}
-        query: |
-          sum(rate(
-            http_server_requests_seconds_count{
-              job="unbox-{{ .Values.appName }}",
-              rollouts_pod_template_hash="{{`{{args.canary-hash}}`}}",
-              status=~"2.."
-            }[{{ .Values.rollout.analysis.queryRange }}]
-          )) 
-          / 
-          sum(rate(
-            http_server_requests_seconds_count{
-              job="unbox-{{ .Values.appName }}",
-              rollouts_pod_template_hash="{{`{{args.canary-hash}}`}}"
-            }[{{ .Values.rollout.analysis.queryRange }}]
-          )) * 100
-  
-  # 에러율 체크 (Canary만)
+  # 메트릭 1: HTTP 에러율 체크 (5xx 에러)
   - name: error-rate
-    interval: {{ .Values.rollout.analysis.interval }}
-    successCondition: result[0] <= {{ .Values.rollout.analysis.errorRate }}
-    failureLimit: {{ .Values.rollout.analysis.failureLimit }}
+    interval: 10s
+    successCondition: result < 0.05  # 5% 미만
+    failureLimit: 3  # 3번 연속 실패 시 롤백
     provider:
       prometheus:
-        address: {{ .Values.rollout.analysis.prometheusAddress }}
+        address: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090
         query: |
-          sum(rate(
-            http_server_requests_seconds_count{
-              job="unbox-{{ .Values.appName }}",
-              rollouts_pod_template_hash="{{`{{args.canary-hash}}`}}",
-              status=~"5.."
-            }[{{ .Values.rollout.analysis.queryRange }}]
-          )) 
-          / 
-          sum(rate(
-            http_server_requests_seconds_count{
-              job="unbox-{{ .Values.appName }}",
-              rollouts_pod_template_hash="{{`{{args.canary-hash}}`}}"
-            }[{{ .Values.rollout.analysis.queryRange }}]
-          )) * 100
+          sum(rate(container_network_receive_errors_total{namespace="{{ .Release.Namespace }}",pod=~"{{ .Values.appName }}.*"}[1m]))
+          /
+          sum(rate(container_network_receive_packets_total{namespace="{{ .Release.Namespace }}",pod=~"{{ .Values.appName }}.*"}[1m]))
   
-  # 평균 응답 시간 체크 (Canary만)
-  - name: avg-response-time
-    interval: {{ .Values.rollout.analysis.interval }}
-    successCondition: result[0] <= {{ .Values.rollout.analysis.avgResponseTime }}
-    failureLimit: {{ .Values.rollout.analysis.failureLimit }}
+  # 메트릭 2: CPU 사용률 체크
+  - name: cpu-usage
+    interval: 10s
+    successCondition: result < 0.9  # 90% 미만
+    failureLimit: 3
     provider:
       prometheus:
-        address: {{ .Values.rollout.analysis.prometheusAddress }}
+        address: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090
         query: |
-          sum(rate(
-            http_server_requests_seconds_sum{
-              job="unbox-{{ .Values.appName }}",
-              rollouts_pod_template_hash="{{`{{args.canary-hash}}`}}"
-            }[{{ .Values.rollout.analysis.queryRange }}]
-          )) 
-          / 
-          sum(rate(
-            http_server_requests_seconds_count{
-              job="unbox-{{ .Values.appName }}",
-              rollouts_pod_template_hash="{{`{{args.canary-hash}}`}}"
-            }[{{ .Values.rollout.analysis.queryRange }}]
-          )) * 1000
+          sum(rate(container_cpu_usage_seconds_total{namespace="{{ .Release.Namespace }}",pod=~"{{ .Values.appName }}.*",container!="",container!="POD"}[1m]))
+  
+  # 메트릭 3: 메모리 사용률 체크
+  - name: memory-usage
+    interval: 10s
+    successCondition: result < 1073741824  # 1GB 미만
+    failureLimit: 3
+    provider:
+      prometheus:
+        address: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090
+        query: |
+          sum(container_memory_working_set_bytes{namespace="{{ .Release.Namespace }}",pod=~"{{ .Values.appName }}.*",container!="",container!="POD"})
+{{- end }}
 {{- end }}

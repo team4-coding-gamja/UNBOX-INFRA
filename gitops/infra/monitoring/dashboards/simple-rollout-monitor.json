@@ -1,0 +1,40 @@
+{
+  "title": "Simple Rollout Monitor",
+  "panels": [
+    {
+      "title": "Product Service Pods",
+      "targets": [
+        {
+          "expr": "count(kube_pod_info{namespace=\"unbox-app\",pod=~\"product-service.*\",created_by_kind=\"ReplicaSet\"}) by (created_by_name)",
+          "legendFormat": "{{created_by_name}}"
+        }
+      ],
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+    },
+    {
+      "title": "Product Service Pod Status",
+      "targets": [
+        {
+          "expr": "kube_pod_status_phase{namespace=\"unbox-app\",pod=~\"product-service.*\"}",
+          "legendFormat": "{{pod}} - {{phase}}"
+        }
+      ],
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+    },
+    {
+      "title": "HTTP Requests (All Pods)",
+      "targets": [
+        {
+          "expr": "sum(rate(container_network_receive_bytes_total{namespace=\"unbox-app\",pod=~\"product-service.*\"}[1m])) by (pod)",
+          "legendFormat": "{{pod}}"
+        }
+      ],
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 8}
+    }
+  ],
+  "refresh": "5s",
+  "time": {"from": "now-15m", "to": "now"}
+}

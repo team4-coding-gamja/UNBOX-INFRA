@@ -1,0 +1,102 @@
+# Product Service - Dev Sync/Async Test Environment
+appName: product-service
+replicaCount: 1
+image:
+  repository: 632941626317.dkr.ecr.ap-northeast-2.amazonaws.com/unbox-dev-product-repo
+  tag: test-synasync-latest
+  pullPolicy: Always
+# Ingress 활성화
+ingress:
+  enabled: false
+linkerd:
+  enabled: true # Linkerd 활성화 (헤더 기반 라우팅용)
+service:
+  port: 80
+  targetPort: 8082
+  annotations:
+    alb.ingress.kubernetes.io/healthcheck-path: "/product/actuator/health"
+containerPort: 8082
+env:
+  SERVER_PORT: "8082"
+  SERVER_SERVLET_CONTEXT_PATH: "/product"
+  SPRING_JWT_SECRET:
+    valueFrom:
+      secretKeyRef:
+        name: db-secret
+        key: JWT_SECRET
+  DB_DRIVER_CLASS_NAME: "org.postgresql.Driver"
+  SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
+  SPRING_JPA_SHOW_SQL: "false"
+  SPRING_DATASOURCE_URL:
+    valueFrom:
+      secretKeyRef:
+        name: db-secret
+        key: RDS_ENDPOINT
+  SPRING_DATASOURCE_USERNAME: "unbox_admin"
+  SPRING_DATASOURCE_PASSWORD:
+    valueFrom:
+      secretKeyRef:
+        name: db-secret
+        key: DB_PASSWORD
+  SPRING_DATA_REDIS_HOST:
+    valueFrom:
+      secretKeyRef:
+        name: db-secret
+        key: REDIS_ENDPOINT
+  SPRING_DATA_REDIS_PORT: "6379"
+  SPRING_DATA_REDIS_SSL: "true"
+  SPRING_DATA_REDIS_PASSWORD:
+    valueFrom:
+      secretKeyRef:
+        name: db-secret
+        key: REDIS_PASSWORD
+  SPRING_KAFKA_BOOTSTRAP_SERVERS:
+    valueFrom:
+      secretKeyRef:
+        name: db-secret
+        key: KAFKA_ENDPOINT
+  # Tracing 활성화 (Tempo)
+  MANAGEMENT_TRACING_ENABLED: "true"
+  TEMPO_OTLP_ENDPOINT: "http://tempo.monitoring.svc.cluster.local:4318/v1/traces"
+resources:
+  requests:
+    memory: "512Mi"
+    cpu: "100m"
+  limits:
+    memory: "1Gi"
+rollout:
+  enabled: true
+  strategy: "canary"
+  # Analysis 비활성화 (Product는 Feature Flag만 사용)
+  analysis:
+    enabled: false
+  # Feature Flag 활성화 (헤더 기반 강제 라우팅)
+  featureFlag:
+    enabled: true
+  healthCheck:
+    enabled: true
+    path: "/product/actuator/health"
+    periodSeconds: 10
+    startupProbe:
+      failureThreshold: 60
+      periodSeconds: 10
+  canary:
+    # Canary와 Stable 서비스 지정 (Linkerd 트래픽 라우팅용)
+    canaryService: product-service-canary
+    stableService: product-service-stable
+    # TrafficRouting 설정 (Linkerd SMI 사용 - Rollout이 TrafficSplit 자동 생성)
+    trafficRouting:
+      smi:
+        rootService: product-service
+    # Canary 단계 (Feature Flag는 애플리케이션 레벨에서 처리)
+    steps:
+      - setWeight: 10
+      - pause: {duration: 30s}
+      - setWeight: 25
+      - pause: {duration: 30s}
+      - setWeight: 50
+      - pause: {duration: 30s}
+      - setWeight: 75
+      - pause: {duration: 30s}
+    maxSurge: "25%"
+    maxUnavailable: 0

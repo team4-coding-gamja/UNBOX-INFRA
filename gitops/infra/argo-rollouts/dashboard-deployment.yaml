@@ -37,10 +37,10 @@ spec:
       containers:
       - name: dashboard
         image: quay.io/argoproj/kubectl-argo-rollouts:v1.6.0
-        command:
-        - /bin/sh
-        - -c
-        - kubectl-argo-rollouts dashboard --port 3100
+        args:
+        - dashboard
+        - --port
+        - "3100"
         ports:
         - containerPort: 3100
           name: http

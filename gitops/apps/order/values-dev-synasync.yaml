@@ -1,0 +1,79 @@
+# Order Service - Dev Sync/Async Test Environment
+appName: order-service
+replicaCount: 1
+image:
+  repository: 632941626317.dkr.ecr.ap-northeast-2.amazonaws.com/unbox-dev-order-repo
+  tag: test-synasync-latest
+  pullPolicy: Always
+ingress:
+  enabled: false
+linkerd:
+  enabled: true
+service:
+  port: 80
+  targetPort: 8084
+  annotations:
+    alb.ingress.kubernetes.io/healthcheck-path: "/order/actuator/health"
+containerPort: 8084
+env:
+  SERVER_PORT: "8084"
+  SERVER_SERVLET_CONTEXT_PATH: "/order"
+  SERVER_TOMCAT_ACCESSLOG_ENABLED: "true"
+  SPRING_JWT_SECRET:
+    valueFrom:
+      secretKeyRef:
+        name: db-secret
+        key: JWT_SECRET
+  DB_DRIVER_CLASS_NAME: "org.postgresql.Driver"
+  SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
+  SPRING_JPA_SHOW_SQL: "false"
+  SPRING_DATASOURCE_URL:
+    valueFrom:
+      secretKeyRef:
+        name: db-secret
+        key: RDS_ENDPOINT
+  SPRING_DATASOURCE_USERNAME: "unbox_admin"
+  SPRING_DATASOURCE_PASSWORD:
+    valueFrom:
+      secretKeyRef:
+        name: db-secret
+        key: DB_PASSWORD
+  SPRING_DATA_REDIS_HOST:
+    valueFrom:
+      secretKeyRef:
+        name: db-secret
+        key: REDIS_ENDPOINT
+  SPRING_DATA_REDIS_PORT: "6379"
+  SPRING_DATA_REDIS_SSL: "true"
+  SPRING_DATA_REDIS_PASSWORD:
+    valueFrom:
+      secretKeyRef:
+        name: db-secret
+        key: REDIS_PASSWORD
+  SPRING_KAFKA_BOOTSTRAP_SERVERS:
+    valueFrom:
+      secretKeyRef:
+        name: db-secret
+        key: KAFKA_ENDPOINT
+  MANAGEMENT_TRACING_ENABLED: "true"
+  TEMPO_OTLP_ENDPOINT: "http://tempo.monitoring.svc.cluster.local:4318/v1/traces"
+resources:
+  requests:
+    memory: "512Mi"
+    cpu: "100m"
+  limits:
+    memory: "1Gi"
+rollout:
+  enabled: true
+  strategy: "blueGreen"
+  healthCheck:
+    enabled: true
+    path: "/order/actuator/health"
+    periodSeconds: 10
+    startupProbe:
+      failureThreshold: 60
+      periodSeconds: 10
+  blueGreen:
+    autoPromotionEnabled: true
+    autoPromotionSeconds: 30
+    scaleDownDelaySeconds: 30
