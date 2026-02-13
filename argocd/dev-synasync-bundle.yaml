@@ -1,0 +1,36 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: unbox-applications-dev-synasync
+  namespace: argocd
+  labels:
+    type: application
+    bundle: apps
+    env: dev-synasync
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"  # 인프라 이후 배포
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/team4-coding-gamja/UNBOX-INFRA.git
+    targetRevision: feat/ArgoCD-dev-synasync
+    path: gitops/apps
+    directory:
+      recurse: true
+      include: "*/application-dev-synasync.yaml"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+  info:
+    - name: 'Description'
+      value: 'Dev Sync/Async Test Environment (User, Product, Order, Trade, Payment)'
+    - name: 'Namespace'
+      value: 'unbox-app-synasync (isolated from main dev)'
+    - name: 'Purpose'
+      value: 'Testing synchronous/asynchronous communication patterns'
