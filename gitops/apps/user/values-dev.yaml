@@ -62,12 +62,14 @@ env:
   # Tracing 활성화 (Tempo)
   MANAGEMENT_TRACING_ENABLED: "true"
   TEMPO_OTLP_ENDPOINT: "http://tempo.monitoring.svc.cluster.local:4318/v1/traces"
+  # Mail Health Check 비활성화 (Gmail Rate Limit 방지)
+  MANAGEMENT_HEALTH_MAIL_ENABLED: "false"
 # 리소스 제한
 resources:
   requests:
     memory: "512Mi"
     cpu: "100m"
-  limits:
+  limits: 
     memory: "1Gi"
 # Argo Rollouts 설정
 rollout:
