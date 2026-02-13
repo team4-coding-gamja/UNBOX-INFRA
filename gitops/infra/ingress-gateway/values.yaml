@@ -33,17 +33,3 @@ ingress:
           pathType: Prefix
           service: trade-service
           port: 80
-
-    - host: grafana.dev.un-box.click
-      paths:
-        - path: /
-          pathType: Prefix
-          service: grafana-external
-          port: 80
-
-externalServices:
-  - name: grafana-external
-    namespace: unbox-app # Where this chart is deployed
-    targetNamespace: monitoring
-    targetService: kube-prometheus-stack-grafana
-    targetPort: 80
