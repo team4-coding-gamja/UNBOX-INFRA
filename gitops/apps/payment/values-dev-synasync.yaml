@@ -18,6 +18,11 @@ containerPort: 8085
 env:
   SERVER_PORT: "8085"
   SERVER_SERVLET_CONTEXT_PATH: "/payment"
+  USER_SERVICE_URL: "http://user-service.unbox-app-synasync"
+  PRODUCT_SERVICE_URL: "http://product-service.unbox-app-synasync"
+  ORDER_SERVICE_URL: "http://order-service.unbox-app-synasync"
+  PAYMENT_SERVICE_URL: "http://payment-service.unbox-app-synasync"
+  TRADE_SERVICE_URL: "http://trade-service.unbox-app-synasync"
   SPRING_JWT_SECRET:
     valueFrom:
       secretKeyRef:
