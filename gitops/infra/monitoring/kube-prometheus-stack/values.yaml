@@ -20,3 +20,20 @@ grafana:
   # Persistence can be enabled for Dev if needed, skipping for lightness now
   persistence:
     enabled: false
+  
+  # Ingress 활성화 (Shared ALB)
+  ingress:
+    enabled: true
+    ingressClassName: alb
+    annotations:
+      alb.ingress.kubernetes.io/scheme: internet-facing
+      alb.ingress.kubernetes.io/target-type: ip
+      alb.ingress.kubernetes.io/group.name: unbox-dev # 기존 ALB와 통합
+      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+      alb.ingress.kubernetes.io/ssl-redirect: '443'
+      alb.ingress.kubernetes.io/healthcheck-path: /login
+      alb.ingress.kubernetes.io/success-codes: '200'
+    hosts:
+      - grafana.dev.un-box.click
+    path: /
+
