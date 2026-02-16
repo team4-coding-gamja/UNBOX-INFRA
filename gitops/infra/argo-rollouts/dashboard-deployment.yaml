@@ -63,7 +63,7 @@ metadata:
     alb.ingress.kubernetes.io/target-type: ip
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
     alb.ingress.kubernetes.io/ssl-redirect: '443'
-    alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:ap-northeast-2:632941626317:certificate/23cdae56-b916-4d5e-8877-d0c50f93312f"
+    alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:ap-northeast-2:632941626317:certificate/1deeca54-5596-4dcd-8087-f8c18280bdb5"
     alb.ingress.kubernetes.io/security-groups: unbox-dev-alb-sg
     alb.ingress.kubernetes.io/group.name: unbox-dev
 spec:
