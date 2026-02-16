@@ -25,15 +25,15 @@ spec:
         # Terraform apply 시 Cert-Manager가 자동 생성하고 Linkerd가 참조
         identityTrustAnchorsPEM: |
             -----BEGIN CERTIFICATE-----
-            MIIBijCCATCgAwIBAgIQC+5uhqVyvlGzLu3WIfA+KzAKBggqhkjOPQQDAjAlMSMw
-            IQYDVQQDExpyb290LmxpbmtlcmQuY2x1c3Rlci5sb2NhbDAeFw0yNjAyMTMwMDU5
-            MzNaFw0zNjAyMTEwMDU5MzNaMCUxIzAhBgNVBAMTGnJvb3QubGlua2VyZC5jbHVz
-            dGVyLmxvY2FsMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEfhY76IiMfhEf1WY9
-            nsOIRufU1BlDob2mnAjEcqSfVjwPIUk0sYUlcpJwwL23uOCSO6/uDjOY9Ewthd6z
-            gUhWOaNCMEAwDgYDVR0PAQH/BAQDAgKkMA8GA1UdEwEB/wQFMAMBAf8wHQYDVR0O
-            BBYEFDhXEH63YI/2OeSWLbge5FrRG2GDMAoGCCqGSM49BAMCA0gAMEUCIBVLQvgI
-            Pfml2IOzuX7g1UR/craUKmjdczh0n2+euYeyAiEAl1IfIl1KFRKFVZ8jN+YV4LVS
-            GH8mQei8mF2AAft01n8=
+            MIIBijCCATGgAwIBAgIRAODnQ4z4oOgjv3eWED6/XHMwCgYIKoZIzj0EAwIwJTEj
+            MCEGA1UEAxMacm9vdC5saW5rZXJkLmNsdXN0ZXIubG9jYWwwHhcNMjYwMjE2MDgy
+            NTM1WhcNMzYwMjE0MDgyNTM1WjAlMSMwIQYDVQQDExpyb290LmxpbmtlcmQuY2x1
+            c3Rlci5sb2NhbDBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABAXJYz3M+Rlgflnv
+            UnDviDcYtnNnW0SoBAQp+AvvJX1mmJ9GKZdnyWFqUhTn5Od2RFj21Tv3YL8kXciD
+            xY6mGCOjQjBAMA4GA1UdDwEB/wQEAwICpDAPBgNVHRMBAf8EBTADAQH/MB0GA1Ud
+            DgQWBBRZlv1dtl33OA0ATBPzC/au9pjCFTAKBggqhkjOPQQDAgNHADBEAiBpUyIW
+            63yAa0dUANRGzW1G5cB+6QxQd8Gkht/T3SNK0QIgCeIahcNlYeka9qgGdc2UOHQR
+            AdHe2RKceCilM/yN11I=
             -----END CERTIFICATE-----
         
         # Identity Issuer (1년 유효, Cert-Manager가 자동 갱신)
