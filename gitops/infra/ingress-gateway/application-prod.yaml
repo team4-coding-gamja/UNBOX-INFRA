@@ -1,19 +1,23 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: ingress-gateway-dev
+  name: ingress-gateway-prod
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
   source:
-    repoURL: https://github.com/team4-coding-gamja/UNBOX-INFRA.git # Update if needed, assuming user knows repo
-    targetRevision: feat/ArgoCD-dev
+    repoURL: https://github.com/team4-coding-gamja/UNBOX-INFRA.git
+    targetRevision: HEAD # Using HEAD for Prod as standard practice
     path: gitops/infra/ingress-gateway
+    helm:
+      valueFiles:
+        - values.yaml
+        - values-prod.yaml
   destination:
     server: https://kubernetes.default.svc
-    namespace: unbox-app
+    namespace: unbox-app # Ensure namespace exists or use syncOption CreateNamespace
   syncPolicy:
     automated:
       prune: true

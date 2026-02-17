@@ -1,0 +1,30 @@
+# gitops/infra/ingress-gateway/values-prod.yaml
+ingress:
+  annotations:
+    alb.ingress.kubernetes.io/group.name: unbox-prod
+    # Update this ARN after Terraform apply
+    alb.ingress.kubernetes.io/certificate-arn: "TBD_UPDATE_ME_AFTER_TERRAFORM_APPLY"
+
+  hosts:
+    - host: un-box.click
+      paths:
+        - path: /user
+          pathType: Prefix
+          service: user-service
+          port: 80
+        - path: /product
+          pathType: Prefix
+          service: product-service
+          port: 80
+        - path: /order
+          pathType: Prefix
+          service: order-service
+          port: 80
+        - path: /payment
+          pathType: Prefix
+          service: payment-service
+          port: 80
+        - path: /trade
+          pathType: Prefix
+          service: trade-service
+          port: 80
