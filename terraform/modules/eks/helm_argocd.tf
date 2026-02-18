@@ -80,9 +80,42 @@ resource "helm_release" "argo_rollouts" {
   ]
 }
 
-# Ingress Gateway Application (자동 배포)
-resource "kubernetes_manifest" "ingress_gateway_app" {
-  manifest = yamldecode(file("${path.module}/../../../gitops/infra/ingress-gateway/application-dev.yaml"))
+# Ingress Gateway Application 자동 배포 (helm_release 사용 - plan 단계 클러스터 연결 불필요)
+resource "helm_release" "ingress_gateway_app" {
+  name       = "ingress-gateway-app"
+  repository = "https://argoproj.github.io/argo-helm"
+  chart      = "argocd-apps"
+  namespace  = "argocd"
+  version    = "1.4.1"
+
+  values = [
+    yamlencode({
+      applications = [{
+        name      = "ingress-gateway-${var.env}"
+        namespace = "argocd"
+        project   = "default"
+        source = {
+          repoURL        = "https://github.com/team4-coding-gamja/UNBOX-INFRA.git"
+          targetRevision = "HEAD"
+          path           = "gitops/infra/ingress-gateway"
+          helm = {
+            valueFiles = ["values-${var.env}.yaml"]
+          }
+        }
+        destination = {
+          server    = "https://kubernetes.default.svc"
+          namespace = "unbox-app"
+        }
+        syncPolicy = {
+          automated = {
+            prune    = true
+            selfHeal = true
+          }
+          syncOptions = ["CreateNamespace=true"]
+        }
+      }]
+    })
+  ]
 
   depends_on = [
     helm_release.argocd
