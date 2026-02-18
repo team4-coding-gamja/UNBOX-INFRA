@@ -19,7 +19,7 @@ containerPort: 8082
 env:
   SERVER_PORT: "8082"
   SERVER_SERVLET_CONTEXT_PATH: "/product"
-  CANARY_TEST_VERSION: "v3"  # 카나리 테스트용 버전 - 10% 기능 플래그 테스트
+  CANARY_TEST_VERSION: "v4"  # 카나리 테스트용 버전 - 10% 기능 플래그 테스트 재시도
   SPRING_JWT_SECRET:
     valueFrom:
       secretKeyRef:
