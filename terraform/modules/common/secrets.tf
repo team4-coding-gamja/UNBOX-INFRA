@@ -20,11 +20,11 @@ data "aws_secretsmanager_secret_version" "redis_password" {
   secret_id = data.aws_secretsmanager_secret.redis_password[0].id
 }
 
-data "aws_secretsmanager_secret" "jwt_secret" {
-  count = var.env == "prod" ? 1 : 0
-  # 콘솔에 있는 이름 정확히 기재 (예: unbox-prod-jwt-secret)
-  name = "${var.project_name}-${var.env}-jwt-secret"
-}
+# NOTE: Using SSM Parameter Store instead
+# data "aws_secretsmanager_secret" "jwt_secret" {
+#   count = var.env == "prod" ? 1 : 0
+#   name = "${var.project_name}-${var.env}-jwt-secret"
+# }
 
 
 # ---------------------------------------------------------

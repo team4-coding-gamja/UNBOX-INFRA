@@ -70,13 +70,13 @@ module "s3" {
 #   logs_bucket_id    = module.s3.logs_bucket_id
 # }
 
-# Ingress가 생성한 ALB 찾기
-data "aws_lb" "ingress" {
-  count = var.enable_alb ? 1 : 0
-  tags = {
-    "ingress.k8s.aws/stack" = "unbox-dev"
-  }
-}
+# Ingress가 생성한 ALB 찾기 (ALB 생성 후에만 사용 가능)
+# data "aws_lb" "ingress" {
+#   count = var.enable_alb ? 1 : 0
+#   tags = {
+#     "ingress.k8s.aws/stack" = "unbox-dev"
+#   }
+# }
 
 data "aws_ssm_parameter" "db_password" {
   # common 모듈 배포 후에 값이 수동으로 채워져 있어야 합니다.
@@ -118,29 +118,91 @@ module "redis" {
 
 
 
-module "route53" {
-  count            = var.enable_alb ? 1 : 0
-  source           = "../../modules/route53"
-  domain_name      = "dev.un-box.click"
-  hosted_zone_name = "un-box.click"
-  project_name     = var.project_name
-  alb_dns_name     = data.aws_lb.ingress[0].dns_name
-  alb_zone_id      = data.aws_lb.ingress[0].zone_id
+# ACM 인증서 생성 (Ingress Controller가 사용)
+data "aws_route53_zone" "main" {
+  count        = var.enable_alb ? 1 : 0
+  name         = "un-box.click"
+  private_zone = false
 }
 
-# Grafana DNS 레코드 추가 (Ingress 연결)
-resource "aws_route53_record" "grafana" {
-  count   = var.enable_alb ? 1 : 0
-  zone_id = module.route53[0].zone_id
-  name    = "grafana.dev.un-box.click"
-  type    = "A"
+resource "aws_acm_certificate" "dev" {
+  count             = var.enable_alb ? 1 : 0
+  domain_name       = "dev.un-box.click"
+  validation_method = "DNS"
 
-  alias {
-    name                   = data.aws_lb.ingress[0].dns_name
-    zone_id                = data.aws_lb.ingress[0].zone_id
-    evaluate_target_health = true
+  subject_alternative_names = ["*.dev.un-box.click"]
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  tags = {
+    Name = "${var.project_name}-dev-acm-cert"
   }
 }
+
+resource "aws_route53_record" "cert_validation" {
+  for_each = var.enable_alb ? {
+    for dvo in aws_acm_certificate.dev[0].domain_validation_options : dvo.domain_name => {
+      name   = dvo.resource_record_name
+      record = dvo.resource_record_value
+      type   = dvo.resource_record_type
+    }
+  } : {}
+
+  allow_overwrite = true
+  name            = each.value.name
+  records         = [each.value.record]
+  ttl             = 60
+  type            = each.value.type
+  zone_id         = data.aws_route53_zone.main[0].zone_id
+}
+
+resource "aws_acm_certificate_validation" "dev" {
+  count                   = var.enable_alb ? 1 : 0
+  certificate_arn         = aws_acm_certificate.dev[0].arn
+  validation_record_fqdns = [for record in aws_route53_record.cert_validation : record.fqdn]
+}
+
+# ACM 인증서 ARN을 SSM Parameter Store에 저장
+resource "aws_ssm_parameter" "acm_certificate_arn" {
+  count     = var.enable_alb ? 1 : 0
+  name      = "/${var.project_name}/${var.env}/acm/certificate_arn"
+  type      = "String"
+  value     = aws_acm_certificate.dev[0].arn
+  overwrite = true
+
+  tags = {
+    Name = "${var.project_name}-${var.env}-acm-arn"
+  }
+
+  depends_on = [aws_acm_certificate_validation.dev]
+}
+
+# Route53 DNS 레코드는 ALB 생성 후 수동으로 추가
+# module "route53" {
+#   count            = var.enable_alb ? 1 : 0
+#   source           = "../../modules/route53"
+#   domain_name      = "dev.un-box.click"
+#   hosted_zone_name = "un-box.click"
+#   project_name     = var.project_name
+#   alb_dns_name     = data.aws_lb.ingress[0].dns_name
+#   alb_zone_id      = data.aws_lb.ingress[0].zone_id
+# }
+
+# # Grafana DNS 레코드 추가 (Ingress 연결)
+# resource "aws_route53_record" "grafana" {
+#   count   = var.enable_alb ? 1 : 0
+#   zone_id = module.route53[0].zone_id
+#   name    = "grafana.dev.un-box.click"
+#   type    = "A"
+#
+#   alias {
+#     name                   = data.aws_lb.ingress[0].dns_name
+#     zone_id                = data.aws_lb.ingress[0].zone_id
+#     evaluate_target_health = true
+#   }
+# }
 
 module "eks" {
   source = "../../modules/eks"

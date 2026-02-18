@@ -38,3 +38,22 @@ variable "aws_region" {
 variable "account_id" {
   type = string
 }
+variable "enable_karpenter" {
+  description = "Enable Karpenter for autoscaling"
+  type        = bool
+  default     = true
+}
+
+variable "toss_secret_key" {
+  type = string
+}
+
+variable "toss_security_key" {
+  type = string
+}
+
+variable "enable_alb" {
+  description = "Enable ALB and related resources"
+  type        = bool
+  default     = true
+}

@@ -121,3 +121,9 @@ variable "argocd_admin_password" {
   default     = "unbox1234!"
   sensitive   = true
 }
+
+variable "enable_karpenter" {
+  description = "Enable Karpenter for autoscaling"
+  type        = bool
+  default     = false
+}

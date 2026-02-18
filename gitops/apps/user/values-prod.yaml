@@ -1,5 +1,5 @@
 # User Service - Prod 환경 오버라이드
-replicaCount: 3
+replicaCount: 2
 
 image:
   repository: 632941626317.dkr.ecr.ap-northeast-2.amazonaws.com/unbox-prod-user-repo
@@ -17,7 +17,6 @@ rollout:
     autoPromotionSeconds: 600    # 10분 후 자동 전환 (수동 승인 없을 시)
     scaleDownDelaySeconds: 300   # 5분 후 이전 버전 삭제
 
-# 프로덕션 리소스 제한
 resources:
   requests:
     memory: "512Mi"
@@ -25,6 +24,10 @@ resources:
   limits:
     memory: "1Gi"
     cpu: "500m"
+
+# Multi-AZ Pod 분산 설정
+affinity:
+  enabled: true
 
 env:
   SPRING_JWT_SECRET:

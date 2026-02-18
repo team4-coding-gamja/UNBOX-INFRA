@@ -1,5 +1,5 @@
 # Payment Service - Prod 환경 오버라이드
-replicaCount: 3
+replicaCount: 2
 
 image:
   repository: 632941626317.dkr.ecr.ap-northeast-2.amazonaws.com/unbox-prod-payment-repo
@@ -22,6 +22,11 @@ resources:
   requests:
     memory: "512Mi"
     cpu: "250m"
+
+# Multi-AZ Pod 분산 설정
+affinity:
+  enabled: true
+
   limits:
     memory: "1Gi"
     cpu: "500m"

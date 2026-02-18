@@ -10,7 +10,7 @@ locals {
 data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 data "aws_kms_alias" "infra_key" {
-  name = "alias/${var.project_name}/${var.env}/main-key"
+  name = "alias/${var.project_name}/dev/main-key" # Using shared dev KMS key
 }
 
 module "vpc" {
@@ -24,10 +24,11 @@ module "vpc" {
 }
 
 module "security_group" {
-  source       = "../../modules/security_group"
-  env          = var.env
-  project_name = var.project_name
-  vpc_id       = module.vpc.vpc_id
+  source         = "../../modules/security_group"
+  env            = var.env
+  project_name   = var.project_name
+  vpc_id         = module.vpc.vpc_id
+  service_config = local.service_config
 }
 
 module "common" {
@@ -138,6 +139,8 @@ module "eks" {
   node_role_arn            = module.common.eks_node_role_arn
   fargate_profile_role_arn = module.common.eks_fargate_role_arn
   kms_key_arn              = module.common.kms_key_arn
+
+  enable_karpenter = var.enable_karpenter
 }
 
 # [Fix] EKS Cluster -> RDS Security Group Rule (Avoid Cyclic Dependency)
@@ -150,4 +153,68 @@ resource "aws_security_group_rule" "rds_ingress_from_eks_cluster" {
   security_group_id        = module.security_group.rds_sg_ids[each.key]
   source_security_group_id = module.eks.cluster_security_group_id
   description              = "Allow EKS Cluster Nodes to access RDS"
+}
+
+# ========================================
+# ACM Certificate for Ingress Gateway
+# ========================================
+
+data "aws_route53_zone" "main" {
+  count        = var.enable_alb ? 1 : 0
+  name         = "un-box.click"
+  private_zone = false
+}
+
+resource "aws_acm_certificate" "prod" {
+  count             = var.enable_alb ? 1 : 0
+  domain_name       = "un-box.click"
+  validation_method = "DNS"
+
+  subject_alternative_names = ["*.un-box.click"]
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  tags = {
+    Name = "${var.project_name}-prod-acm-cert"
+  }
+}
+
+resource "aws_route53_record" "cert_validation" {
+  for_each = var.enable_alb ? {
+    for dvo in aws_acm_certificate.prod[0].domain_validation_options : dvo.domain_name => {
+      name   = dvo.resource_record_name
+      record = dvo.resource_record_value
+      type   = dvo.resource_record_type
+    }
+  } : {}
+
+  allow_overwrite = true
+  name            = each.value.name
+  records         = [each.value.record]
+  ttl             = 60
+  type            = each.value.type
+  zone_id         = data.aws_route53_zone.main[0].zone_id
+}
+
+resource "aws_acm_certificate_validation" "prod" {
+  count                   = var.enable_alb ? 1 : 0
+  certificate_arn         = aws_acm_certificate.prod[0].arn
+  validation_record_fqdns = [for record in aws_route53_record.cert_validation : record.fqdn]
+}
+
+# ACM ARN을 SSM Parameter Store에 저장
+resource "aws_ssm_parameter" "acm_certificate_arn" {
+  count     = var.enable_alb ? 1 : 0
+  name      = "/${var.project_name}/${var.env}/acm/certificate_arn"
+  type      = "String"
+  value     = aws_acm_certificate.prod[0].arn
+  overwrite = true
+
+  tags = {
+    Name = "${var.project_name}-${var.env}-acm-arn"
+  }
+
+  depends_on = [aws_acm_certificate_validation.prod]
 }
