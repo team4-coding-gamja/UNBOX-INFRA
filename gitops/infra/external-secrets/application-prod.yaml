@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: external-secrets-config-prod
+  namespace: argocd
+  labels:
+    app: external-secrets-config
+    env: prod
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/team4-coding-gamja/UNBOX-INFRA.git
+    targetRevision: HEAD
+    path: gitops/infra/external-secrets
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: unbox-prod
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+  revisionHistoryLimit: 10
