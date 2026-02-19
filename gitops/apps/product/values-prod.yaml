@@ -45,7 +45,7 @@ env:
   SPRING_JWT_SECRET:
     valueFrom:
       secretKeyRef:
-        name: app-secret
+        name: db-secret
         key: JWT_SECRET
   SPRING_JPA_HIBERNATE_DDL_AUTO: "validate"  # 프로덕션에서는 validate만
   
