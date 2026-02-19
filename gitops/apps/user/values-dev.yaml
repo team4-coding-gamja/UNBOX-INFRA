@@ -3,7 +3,7 @@ appName: user-service
 replicaCount: 1
 image:
   repository: 632941626317.dkr.ecr.ap-northeast-2.amazonaws.com/unbox-dev-user-repo
-  tag: dev-6be5d6efb9ad18aa641541f99cdeead1c396e894
+  tag: dev-1d06338785a21ff9f2e541a478df647a5f119fb6
   pullPolicy: Always
 # Ingress 활성화
 ingress:
