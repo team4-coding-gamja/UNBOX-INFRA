@@ -35,7 +35,7 @@ env:
       secretKeyRef:
         name: db-secret
         key: JWT_SECRET
-  SPRING_JPA_HIBERNATE_DDL_AUTO: "validate"  # 프로덕션에서는 validate만
+  SPRING_JPA_HIBERNATE_DDL_AUTO: "update"  # 초기 배포용 update
   
   # Prod RDS
   DB_URL:
