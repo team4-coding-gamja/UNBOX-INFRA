@@ -8,11 +8,11 @@ image:
 
 # Ingress 활성화
 ingress:
-  enabled: false
+  enabled: true
 
 # Linkerd Service Mesh
 linkerd:
-  enabled: false
+  enabled: true
 
 service:
   port: 80

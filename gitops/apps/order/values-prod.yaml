@@ -8,11 +8,11 @@ image:
 
 # Ingress 활성화 (Dev와 동일하게 설정하되 enabled는 false)
 ingress:
-  enabled: false
+  enabled: true
 
 # Linkerd Service Mesh (Prod는 현재 이슈로 인해 비활성화)
 linkerd:
-  enabled: false
+  enabled: true
 
 service:
   port: 80
