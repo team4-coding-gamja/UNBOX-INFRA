@@ -85,6 +85,5 @@ rollout:
       periodSeconds: 10
       timeoutSeconds: 5 # 각 probe 요청의 타임아웃
   blueGreen:
-    autoPromotionEnabled: true
-    autoPromotionSeconds: 30
+    autoPromotionEnabled: false
     scaleDownDelaySeconds: 30
