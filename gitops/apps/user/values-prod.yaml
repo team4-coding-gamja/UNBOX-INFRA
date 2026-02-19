@@ -7,7 +7,7 @@ image:
 
 # 프로덕션에서는 Linkerd 활성화
 linkerd:
-  enabled: true
+  enabled: false
 
 # Prod 환경에서 Rollout 활성화
 rollout:
