@@ -13,8 +13,10 @@ spec:
     targetRevision: HEAD
     path: gitops/infra/external-secrets
     helm:
-      valueFiles:
-        - values-prod.yaml
+      values: |
+        env: prod
+        namespace: unbox-prod
+        dbName: prod_db
   destination:
     server: https://kubernetes.default.svc
     namespace: unbox-prod
