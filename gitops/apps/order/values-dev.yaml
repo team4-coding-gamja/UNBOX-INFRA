@@ -3,7 +3,7 @@ appName: order-service
 replicaCount: 1
 image:
   repository: 632941626317.dkr.ecr.ap-northeast-2.amazonaws.com/unbox-dev-order-repo
-  tag: dev-6369b43d02952521946797efccfa7f4d5fcaee67
+  tag: dev-33d4179e113c195846a0cd2e800dedd9f544f356
   pullPolicy: Always
 # Ingress 활성화
 ingress:
@@ -78,13 +78,13 @@ rollout:
   # Analysis 활성화 - 완전 자동화된 Canary 배포
   analysis:
     enabled: true
-    startingStep: 1  # 첫 번째 카나리 단계부터 분석 시작
-    interval: 30s  # 30초마다 메트릭 체크
-    successRate: 95  # 성공률 95% 이상
-    errorRate: 5  # 에러율 5% 이하
-    avgResponseTime: 1000  # 평균 응답시간 1초 이하
-    failureLimit: 3  # 3번 실패 시 자동 롤백
-    queryRange: 1m  # 1분간의 메트릭 분석
+    startingStep: 1 # 첫 번째 카나리 단계부터 분석 시작
+    interval: 30s # 30초마다 메트릭 체크
+    successRate: 95 # 성공률 95% 이상
+    errorRate: 5 # 에러율 5% 이하
+    avgResponseTime: 1000 # 평균 응답시간 1초 이하
+    failureLimit: 3 # 3번 실패 시 자동 롤백
+    queryRange: 1m # 1분간의 메트릭 분석
     prometheusAddress: http://kube-prometheus-stack-prometheus.monitoring:9090
   canary:
     canaryService: order-service-canary
@@ -95,7 +95,7 @@ rollout:
     # Tier 1 - 안정적 확장: 5% → 25% → 50% → 100%
     steps:
       - setWeight: 5
-      - pause: {duration: 30s}  # 테스트용 단축
+      - pause: {duration: 30s} # 테스트용 단축
       - setWeight: 25
       - pause: {duration: 30s}
       - setWeight: 50
