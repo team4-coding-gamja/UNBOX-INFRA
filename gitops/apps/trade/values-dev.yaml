@@ -75,6 +75,8 @@ rollout:
       failureThreshold: 60
       periodSeconds: 10
   canary:
+    canaryService: trade-service-canary
+    stableService: trade-service-stable
     steps:
       - setWeight: 10
       - pause: {duration: 30s} # Analysis 체크 시간
