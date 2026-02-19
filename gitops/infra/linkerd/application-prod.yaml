@@ -18,18 +18,24 @@ spec:
     helm:
       releaseName: linkerd-control-plane
       values: |
-        enableHA: true  # Prod HA Enabled
+        # [보존] 기존 운영 설정
+        enableHA: true
         controllerReplicas: 3
-        
-        identity:
-          issuer:
-            scheme: kubernetes.io/tls
-        
         proxyInjector:
           replicaCount: 3
-        
         prometheus:
           enabled: true
+
+        # [자동화 핵심] 인증서 설정
+        identity:
+          externalCA: true  # 외부(cert-manager) Secret을 사용하도록 활성화
+          issuer:
+            scheme: kubernetes.io/tls # Secret 마운트 방식 사용
+        
+        # [자동화 핵심] 더 이상 Git에 텍스트를 박지 않음
+        # Linkerd 헬름 차트에서 externalCA가 true일 때, 
+        # 이 값을 비워두면 클러스터 내의 Secret 정보를 우선하게 설계할 수 있습니다.
+        identityTrustAnchorsPEM: "" 
   destination:
     server: https://kubernetes.default.svc
     namespace: linkerd
