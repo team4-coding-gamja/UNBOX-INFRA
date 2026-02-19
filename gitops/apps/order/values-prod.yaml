@@ -56,7 +56,7 @@ env:
         key: ORDER_DB_PASSWORD
 
   # Redis (Prod Endpoint)
-  SPRING_DATA_REDIS_HOST: "master.unbox-prod-redis.endpoint.apn2.cache.amazonaws.com"
+  SPRING_DATA_REDIS_HOST: "master.unbox-prod-redis.r0vran.apn2.cache.amazonaws.com"
   SPRING_DATA_REDIS_PORT: "6379"
   SPRING_DATA_REDIS_SSL: "true"
   SPRING_DATA_REDIS_PASSWORD:
