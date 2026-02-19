@@ -30,6 +30,10 @@ env:
   SPRING_JWT_SECRET:
     valueFrom:
       secretKeyRef:
+        name: db-secret
+        key: JWT_SECRET
+  
+  DB_DRIVER_CLASS_NAME: "org.postgresql.Driver"
   SPRING_JPA_HIBERNATE_DDL_AUTO: "update"  # 초기 배포용 update
   SPRING_JPA_SHOW_SQL: "false"
 
