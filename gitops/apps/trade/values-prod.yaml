@@ -43,9 +43,15 @@ env:
       secretKeyRef:
         name: db-secret
         key: TRADE_RDS_ENDPOINT
-        
+  SPRING_DATASOURCE_USERNAME: "unbox_admin"
   DB_USERNAME: "unbox_admin"
   
+  DB_URL:
+    valueFrom:
+      secretKeyRef:
+        name: db-secret
+        key: TRADE_RDS_ENDPOINT
+
   DB_PASSWORD:
     valueFrom:
       secretKeyRef:
