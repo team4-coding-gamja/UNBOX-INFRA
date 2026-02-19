@@ -1,73 +1,99 @@
-# Trade Service - Prod 환경 오버라이드
+# Trade Service - Prod Environment
+appName: trade-service
 replicaCount: 2
-
 image:
   repository: 632941626317.dkr.ecr.ap-northeast-2.amazonaws.com/unbox-dev-trade-repo
   tag: dev-5793a655772035339182e1010e369ec3b920bfe8
+  pullPolicy: Always
 
-# 프로덕션에서는 Linkerd 활성화
+# Ingress 활성화
+ingress:
+  enabled: false
+
+# Linkerd Service Mesh
 linkerd:
   enabled: false
 
-# Prod 환경에서 Rollout 활성화 (Canary - 점진적 배포)
-rollout:
-  enabled: true
-  canary:
-    steps:
-    - setWeight: 10   # 10% 트래픽
-    - pause: {duration: 120s}  # 2분 대기
-    - setWeight: 25   # 25% 트래픽
-    - pause: {duration: 120s}  # 2분 대기
-    - setWeight: 50   # 50% 트래픽
-    - pause: {duration: 120s}  # 2분 대기
-    - setWeight: 75   # 75% 트래픽
-    - pause: {duration: 120s}  # 2분 대기
-  analysis:
-    enabled: true  # Prod에서 Analysis 활성화
-    successRate: 98  # Prod는 더 엄격한 기준 (98%)
-    errorRate: 2     # 2% 이하 에러율
+service:
+  port: 80
+  targetPort: 8083
+  annotations:
+    alb.ingress.kubernetes.io/healthcheck-path: "/trade/actuator/health"
 
-# 프로덕션 리소스 제한
-resources:
-  requests:
-    memory: "512Mi"
-    cpu: "250m"
-
-# Multi-AZ Pod 분산 설정
-affinity:
-  enabled: true
-
-  limits:
-    memory: "1Gi"
-    cpu: "500m"
+containerPort: 8083
 
 env:
+  SERVER_PORT: "8083"
+  SERVER_SERVLET_CONTEXT_PATH: "/trade"
+
   SPRING_JWT_SECRET:
     valueFrom:
       secretKeyRef:
         name: db-secret
         key: JWT_SECRET
-  SPRING_JPA_HIBERNATE_DDL_AUTO: "update"  # 초기 배포용 update
   
-  # Prod RDS
+  # Prod Application이 요구하는 환경변수명 (DB_URL, DB_USERNAME, DB_PASSWORD)
+  DB_DRIVER_CLASS_NAME: "org.postgresql.Driver"
+  SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
+  SPRING_JPA_SHOW_SQL: "false"
+  
   DB_URL:
     valueFrom:
       secretKeyRef:
         name: db-secret
         key: TRADE_RDS_ENDPOINT
-  DB_DRIVER_CLASS_NAME: "org.postgresql.Driver"        
+        
   DB_USERNAME: "unbox_admin"
+  
   DB_PASSWORD:
     valueFrom:
       secretKeyRef:
         name: db-secret
         key: TRADE_DB_PASSWORD
-  
-  # Prod Kafka
+
+  # Redis (Prod Endpoint)
+  SPRING_DATA_REDIS_HOST: "master.unbox-prod-redis.endpoint.apn2.cache.amazonaws.com"
+  SPRING_DATA_REDIS_PORT: "6379"
+  SPRING_DATA_REDIS_SSL: "true"
+  SPRING_DATA_REDIS_PASSWORD:
+    valueFrom:
+      secretKeyRef:
+        name: db-secret
+        key: REDIS_PASSWORD
+
+  # Kafka (Prod Endpoint)
   SPRING_KAFKA_BOOTSTRAP_SERVERS: "prod-kafka.unbox-infra.svc.cluster.local:9092"
   
-  # Prod Redis
-  SPRING_DATA_REDIS_HOST: "master.unbox-prod-redis.endpoint.apn2.cache.amazonaws.com"
-  
-  # Prod Zipkin
+  # Tracing (Tempo/Zipkin)
+  MANAGEMENT_TRACING_ENABLED: "true"
+  TEMPO_OTLP_ENDPOINT: "http://tempo.monitoring.svc.cluster.local:4318/v1/traces"
   MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: "http://zipkin.unbox-infra.svc.cluster.local:9411/api/v2/spans"
+
+resources:
+  requests:
+    memory: "512Mi"
+    cpu: "250m"
+  limits:
+    memory: "1Gi"
+    cpu: "500m"
+
+# Rollout 설정 (Prod: BlueGreen)
+rollout:
+  enabled: true
+  strategy: "blueGreen"
+  
+  healthCheck:
+    enabled: true
+    path: "/trade/actuator/health"
+    periodSeconds: 10
+    startupProbe:
+      failureThreshold: 60
+      periodSeconds: 10
+      
+  # Prod는 Auto Promotion 비활성화 (수동 승인)
+  blueGreen:
+    autoPromotionEnabled: false
+    autoPromotionSeconds: 600
+    scaleDownDelaySeconds: 300
+    activeService: trade-service
+    previewService: trade-service-preview

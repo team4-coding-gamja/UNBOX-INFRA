@@ -1,63 +1,100 @@
-# Order Service - Prod 환경 오버라이드
+# Order Service - Prod Environment
+appName: order-service
 replicaCount: 2
-
 image:
   repository: 632941626317.dkr.ecr.ap-northeast-2.amazonaws.com/unbox-dev-order-repo
   tag: dev-5793a655772035339182e1010e369ec3b920bfe8
+  pullPolicy: Always
 
-# 프로덕션에서는 Linkerd 활성화
+# Ingress 활성화 (Dev와 동일하게 설정하되 enabled는 false)
+ingress:
+  enabled: false
+
+# Linkerd Service Mesh (Prod는 현재 이슈로 인해 비활성화)
 linkerd:
   enabled: false
 
-# Prod 환경에서 Rollout 활성화
-rollout:
-  enabled: true
-  blueGreen:
-    autoPromotionEnabled: false  # Prod에서는 수동 승인
-    autoPromotionSeconds: 600    # 10분 후 자동 전환 (수동 승인 없을 시)
-    scaleDownDelaySeconds: 300   # 5분 후 이전 버전 삭제
+service:
+  port: 80
+  targetPort: 8084
+  annotations:
+    alb.ingress.kubernetes.io/healthcheck-path: "/order/actuator/health"
 
-# 프로덕션 리소스 제한
-resources:
-  requests:
-    memory: "512Mi"
-    cpu: "250m"
-
-# Multi-AZ Pod 분산 설정
-affinity:
-  enabled: true
-
-  limits:
-    memory: "1Gi"
-    cpu: "500m"
+containerPort: 8084
 
 env:
+  SERVER_PORT: "8084"
+  SERVER_SERVLET_CONTEXT_PATH: "/order"
+  SERVER_TOMCAT_ACCESSLOG_ENABLED: "true"
+  
   SPRING_JWT_SECRET:
     valueFrom:
       secretKeyRef:
         name: db-secret
         key: JWT_SECRET
-  SPRING_JPA_HIBERNATE_DDL_AUTO: "update"  # 초기 배포용 update
   
-  # Prod RDS
+  # Prod Application이 요구하는 환경변수명 (DB_URL, DB_USERNAME, DB_PASSWORD)
+  DB_DRIVER_CLASS_NAME: "org.postgresql.Driver"
+  SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
+  SPRING_JPA_SHOW_SQL: "false"
+  
   DB_URL:
     valueFrom:
       secretKeyRef:
         name: db-secret
         key: ORDER_RDS_ENDPOINT
-  DB_DRIVER_CLASS_NAME: "org.postgresql.Driver"
+        
   DB_USERNAME: "unbox_admin"
+  
   DB_PASSWORD:
     valueFrom:
       secretKeyRef:
         name: db-secret
         key: ORDER_DB_PASSWORD
-  
-  # Prod Kafka
+
+  # Redis (Prod Endpoint)
+  SPRING_DATA_REDIS_HOST: "master.unbox-prod-redis.endpoint.apn2.cache.amazonaws.com"
+  SPRING_DATA_REDIS_PORT: "6379"
+  SPRING_DATA_REDIS_SSL: "true"
+  SPRING_DATA_REDIS_PASSWORD:
+    valueFrom:
+      secretKeyRef:
+        name: db-secret
+        key: REDIS_PASSWORD
+
+  # Kafka (Prod Endpoint)
   SPRING_KAFKA_BOOTSTRAP_SERVERS: "prod-kafka.unbox-infra.svc.cluster.local:9092"
   
-  # Prod Redis
-  SPRING_DATA_REDIS_HOST: "master.unbox-prod-redis.endpoint.apn2.cache.amazonaws.com"
-  
-  # Prod Zipkin
+  # Tracing (Tempo/Zipkin)
+  MANAGEMENT_TRACING_ENABLED: "true"
+  TEMPO_OTLP_ENDPOINT: "http://tempo.monitoring.svc.cluster.local:4318/v1/traces"
   MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: "http://zipkin.unbox-infra.svc.cluster.local:9411/api/v2/spans"
+
+resources:
+  requests:
+    memory: "512Mi"
+    cpu: "250m"
+  limits:
+    memory: "1Gi"
+    cpu: "500m"
+
+# Rollout 설정 (Prod: BlueGreen)
+rollout:
+  enabled: true
+  strategy: "blueGreen"
+  
+  healthCheck:
+    enabled: true
+    path: "/order/actuator/health"
+    periodSeconds: 10
+    startupProbe:
+      failureThreshold: 60
+      periodSeconds: 10
+      
+  # Prod는 Auto Promotion 비활성화 (수동 승인)
+  blueGreen:
+    autoPromotionEnabled: false
+    autoPromotionSeconds: 600
+    scaleDownDelaySeconds: 300
+    activeService: order-service
+    previewService: order-service-preview
