@@ -26,14 +26,12 @@ spec:
         prometheus:
           enabled: true
 
-        # [자동화 핵심] 인증서 설정
         identity:
-          externalCA: true  # 외부(cert-manager) Secret을 사용하도록 활성화
+          externalCA: true
           issuer:
-            scheme: kubernetes.io/tls # Secret 마운트 방식 사용
+            scheme: kubernetes.io/tls
           remoteTrustAnchorName: linkerd-trust-anchor
           
-        identityTrustAnchorsPEM: "" 
   destination:
     server: https://kubernetes.default.svc
     namespace: linkerd
