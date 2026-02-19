@@ -71,7 +71,7 @@ env:
         key: REDIS_PASSWORD
 
   # Kafka (Prod Endpoint)
-  SPRING_KAFKA_BOOTSTRAP_SERVERS: "prod-kafka.unbox-infra.svc.cluster.local:9092"
+  SPRING_KAFKA_BOOTSTRAP_SERVERS: "kafka.unbox-infra.svc.cluster.local:9092"
   
   # Tracing (Tempo/Zipkin)
   MANAGEMENT_TRACING_ENABLED: "true"
