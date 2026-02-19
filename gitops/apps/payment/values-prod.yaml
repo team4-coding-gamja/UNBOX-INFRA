@@ -2,8 +2,8 @@
 replicaCount: 2
 
 image:
-  repository: 632941626317.dkr.ecr.ap-northeast-2.amazonaws.com/unbox-prod-payment-repo
-  tag: prod-2044477
+  repository: 632941626317.dkr.ecr.ap-northeast-2.amazonaws.com/unbox-dev-payment-repo
+  tag: dev-5793a655772035339182e1010e369ec3b920bfe8
 
 # 프로덕션에서는 Linkerd 활성화
 linkerd:
