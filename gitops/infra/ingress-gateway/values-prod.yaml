@@ -3,7 +3,7 @@ ingress:
   annotations:
     alb.ingress.kubernetes.io/group.name: unbox-prod
     # Update this ARN after Terraform apply
-    alb.ingress.kubernetes.io/certificate-arn: "TBD_UPDATE_ME_AFTER_TERRAFORM_APPLY"
+    alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:ap-northeast-2:632941626317:certificate/9401b873-c5c8-4275-9b76-cb45d8f71e7e"
 
   hosts:
     - host: un-box.click
