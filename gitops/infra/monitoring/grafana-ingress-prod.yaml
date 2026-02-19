@@ -9,7 +9,7 @@ metadata:
     alb.ingress.kubernetes.io/group.name: unbox-prod
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
     alb.ingress.kubernetes.io/ssl-redirect: '443'
-    alb.ingress.kubernetes.io/certificate-arn: "TBD_UPDATE_ME_AFTER_TERRAFORM_APPLY"
+    # alb.ingress.kubernetes.io/certificate-arn: "TBD_UPDATE_ME_AFTER_TERRAFORM_APPLY"
     alb.ingress.kubernetes.io/healthcheck-path: /login
     alb.ingress.kubernetes.io/success-codes: '200'
 spec:

@@ -9,6 +9,8 @@ image:
 # Ingress 활성화
 ingress:
   enabled: true
+  host: "un-box.click"
+  groupName: "unbox-prod"
 
 # Linkerd Service Mesh
 linkerd:
