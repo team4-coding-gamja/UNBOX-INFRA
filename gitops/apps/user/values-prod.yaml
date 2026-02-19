@@ -38,7 +38,11 @@ env:
   SPRING_JPA_HIBERNATE_DDL_AUTO: "validate"  # 프로덕션에서는 validate만
   
   # Prod RDS
-  SPRING_DATASOURCE_URL: "jdbc:postgresql://unbox-prod-user-db.crmw2cqokxc4.ap-northeast-2.rds.amazonaws.com:5432/user_db"
+  SPRING_DATASOURCE_URL:
+    valueFrom:
+      secretKeyRef:
+        name: db-secret
+        key: USER_RDS_ENDPOINT
   SPRING_DATASOURCE_USERNAME: "unbox_admin"
   SPRING_DATASOURCE_PASSWORD:
     valueFrom:
