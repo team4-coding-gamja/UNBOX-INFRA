@@ -10,7 +10,7 @@ metadata:
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
     alb.ingress.kubernetes.io/ssl-redirect: '443'
     # SSL 인증서는 Group(ALB)에 이미 설정되어 있으므로 별도 certificate-arn 불필요 (하지만 명시해도 무방)
-    alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:ap-northeast-2:632941626317:certificate/9b127403-cb67-4155-9bb0-6625406295e8" 
+    alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:ap-northeast-2:632941626317:certificate/3b752438-2e8b-4aed-bff0-7666a5173a1c" 
     alb.ingress.kubernetes.io/healthcheck-path: /login
     alb.ingress.kubernetes.io/success-codes: '200'
 spec:
