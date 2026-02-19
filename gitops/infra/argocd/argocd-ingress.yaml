@@ -9,7 +9,7 @@ metadata:
     alb.ingress.kubernetes.io/group.name: unbox-dev
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
     alb.ingress.kubernetes.io/ssl-redirect: '443'
-    alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:ap-northeast-2:632941626317:certificate/23cdae56-b916-4d5e-8877-d0c50f93312f"
+    alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:ap-northeast-2:632941626317:certificate/3b752438-2e8b-4aed-bff0-7666a5173a1c"
     alb.ingress.kubernetes.io/backend-protocol: HTTPS
     alb.ingress.kubernetes.io/healthcheck-path: /healthz
     alb.ingress.kubernetes.io/healthcheck-protocol: HTTPS
