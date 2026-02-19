@@ -43,6 +43,7 @@ env:
       secretKeyRef:
         name: db-secret
         key: USER_RDS_ENDPOINT
+  SPRING_JPA_DATABASE_PLATFORM: "org.hibernate.dialect.PostgreSQLDialect"        
   SPRING_DATASOURCE_USERNAME: "unbox_admin"
   SPRING_DATASOURCE_PASSWORD:
     valueFrom:
