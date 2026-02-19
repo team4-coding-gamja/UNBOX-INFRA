@@ -95,11 +95,11 @@ rollout:
     # Tier 1 - 안정적 확장: 5% → 25% → 50% → 100%
     steps:
       - setWeight: 5
-      - pause: {duration: 2m}  # 시스템 부하 및 에러율 관찰
+      - pause: {duration: 30s}  # 테스트용 단축
       - setWeight: 25
-      - pause: {duration: 2m}
+      - pause: {duration: 30s}
       - setWeight: 50
-      - pause: {duration: 2m}
+      - pause: {duration: 30s}
       - setWeight: 100
     maxSurge: "25%"
     maxUnavailable: 0
