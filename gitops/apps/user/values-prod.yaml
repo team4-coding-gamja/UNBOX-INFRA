@@ -36,6 +36,10 @@ env:
   DB_DRIVER_CLASS_NAME: "org.postgresql.Driver"
   SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
   SPRING_JPA_SHOW_SQL: "false"
+
+  # Base values.yaml의 빈 값 제거 (DB_URL 사용 위함)
+  SPRING_DATASOURCE_URL: null
+  SPRING_DATASOURCE_USERNAME: null
   
   DB_URL:
     valueFrom:
