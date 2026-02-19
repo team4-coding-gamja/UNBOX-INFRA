@@ -30,7 +30,19 @@ spec:
           externalCA: true
           issuer:
             scheme: kubernetes.io/tls
-          remoteTrustAnchorName: linkerd-trust-anchor
+          
+        identityTrustAnchorsPEM: |
+            -----BEGIN CERTIFICATE-----
+            MIIBijCCATGgAwIBAgIRAMdZ6K6/68tP9X4C9Z9/5/gwCgYIKoZIzj0EAwIwJTEj
+            MCEGA1UEAxMacm9vdC5saW5rZXJkLmNsdXN0ZXIubG9jYWwwHhcNMjYwMjE5MDQz
+            NTIyWhcNMzYwMjE3MDQzNTIyWjAlMSMwIQYDVQQDExpyb290LmxpbmtlcmQuY2x1
+            c3Rlci5sb2NhbDBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABLRPQBMu5R/BGVyT
+            djZmMn74YQf4ERA0O8jUUrfRaIydSVswhSmP4Ta2bLxRTTOLTee+xyUbOZ+6cor1
+            cW6RJlljU0cwDgYDVR0PAQH/BAQDAgKkMA8GA1UdEwEB/wQFMAMBAf8wHQYDVR0O
+            BBYEFIK+X6qXmS6IqM15N7lXJHSX8W2WMAoGCCqGSM49BAMCA0gAMEUCIQCnO9/B
+            lXIoJ/Zvn+0g1F1/C6qN35tCN/Uwb6SXYlAq+AIgP4k7d5dYFk2XoM5i+F+3tPz6
+            X2/3f0uX5k5u5/5v5/k=
+            -----END CERTIFICATE-----
           
   destination:
     server: https://kubernetes.default.svc
