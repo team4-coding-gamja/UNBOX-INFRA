@@ -21,21 +21,6 @@ spec:
         enableHA: true  # Prod HA Enabled
         controllerReplicas: 3
         
-        # Root CA (Assuming same CA as Dev provided in ca.crt or needing update)
-        # Using placeholder or content from ca.crt if valid
-        identityTrustAnchorsPEM: |
-            -----BEGIN CERTIFICATE-----
-            MIIBijCCATGgAwIBAgIRAODnQ4z4oOgjv3eWED6/XHMwCgYIKoZIzj0EAwIwJTEj
-            MCEGA1UEAxMacm9vdC5saW5rZXJkLmNsdXN0ZXIubG9jYWwwHhcNMjYwMjE2MDgy
-            NTM1WhcNMzYwMjE0MDgyNTM1WjAlMSMwIQYDVQQDExpyb290LmxpbmtlcmQuY2x1
-            c3Rlci5sb2NhbDBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABAXJYz3M+Rlgflnv
-            Qotgt9VXMrx9dudJm3oVlisglRjkMpZrYcIeACEkAQUugW/ji7ZvXqISnBGaonm4
-            E1biUaNCMEAwDgYDVR0PAQH/BAQDAgKkMA8GA1UdEwEB/wQFMAMBAf8wHQYDVR0O
-            BBYEFDxZO2Ceoe9UmTZKg5YwJIP2MntRMAoGCCqGSM49BAMCA0gAMEUCIQCJ3snu
-            0F+Z49eOhpwCDEj6gz658t9mIkmJGpl83bKY0AIgIDc4BbTYvHzXlR1A0D5QIdF4
-            2qB8APjOCcXjd8hQmdk=
-            -----END CERTIFICATE-----
-        
         identity:
           issuer:
             scheme: kubernetes.io/tls
