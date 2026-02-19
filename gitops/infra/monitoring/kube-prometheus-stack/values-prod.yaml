@@ -1,0 +1,4 @@
+grafana:
+  ingress:
+    enabled: false
+  adminPassword: "prom-operator" # TODO: Change this to a secure secret
