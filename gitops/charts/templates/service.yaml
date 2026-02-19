@@ -29,3 +29,37 @@ spec:
       targetPort: {{ .Values.containerPort | default 8080 }}   # 스프링부트는 8080
   selector:
     app: {{ .Values.appName }}
+---
+{{- if and .Values.rollout.enabled (eq .Values.rollout.strategy "canary") }}
+# Canary Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.rollout.canary.canaryService }}
+  labels:
+    app: {{ .Values.appName }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 80
+      targetPort: {{ .Values.containerPort | default 8080 }}
+  selector:
+    app: {{ .Values.appName }}
+---
+# Stable Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.rollout.canary.stableService }}
+  labels:
+    app: {{ .Values.appName }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 80
+      targetPort: {{ .Values.containerPort | default 8080 }}
+  selector:
+    app: {{ .Values.appName }}
+{{- end }}
