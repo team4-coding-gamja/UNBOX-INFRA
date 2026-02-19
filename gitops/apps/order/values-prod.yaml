@@ -33,9 +33,13 @@ env:
   SPRING_JPA_HIBERNATE_DDL_AUTO: "update"  # 초기 배포용 update
   SPRING_JPA_SHOW_SQL: "false"
 
-  # Base values.yaml의 빈 값 제거 (DB_URL 사용 위함)
-  SPRING_DATASOURCE_URL: null
-  SPRING_DATASOURCE_USERNAME: null
+  # Base values.yaml의 빈 값 오버라이드 (올바른 값으로 설정)
+  SPRING_DATASOURCE_URL:
+    valueFrom:
+      secretKeyRef:
+        name: db-secret
+        key: ORDER_RDS_ENDPOINT
+  SPRING_DATASOURCE_USERNAME: "unbox_admin"
   
   DB_URL:
     valueFrom:
