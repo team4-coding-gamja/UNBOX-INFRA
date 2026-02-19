@@ -50,14 +50,14 @@ env:
   SPRING_JPA_HIBERNATE_DDL_AUTO: "validate"  # 프로덕션에서는 validate만
   
   # Prod RDS
-  SPRING_DATASOURCE_URL:
+  DB_URL:
     valueFrom:
       secretKeyRef:
         name: db-secret
         key: TRADE_RDS_ENDPOINT
-  SPRING_JPA_DATABASE_PLATFORM: "org.hibernate.dialect.PostgreSQLDialect"        
-  SPRING_DATASOURCE_USERNAME: "unbox_admin"
-  SPRING_DATASOURCE_PASSWORD:
+  DB_DRIVER_CLASS_NAME: "org.postgresql.Driver"        
+  DB_USERNAME: "unbox_admin"
+  DB_PASSWORD:
     valueFrom:
       secretKeyRef:
         name: db-secret
