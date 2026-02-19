@@ -50,13 +50,13 @@ env:
   SPRING_JPA_HIBERNATE_DDL_AUTO: "validate"  # 프로덕션에서는 validate만
   
   # Prod RDS
-  SPRING_DATASOURCE_URL: "jdbc:postgresql://unbox-prod-common-db.endpoint.ap-northeast-2.rds.amazonaws.com:5432/prod_db"
+  SPRING_DATASOURCE_URL: "jdbc:postgresql://unbox-prod-product-db.crmw2cqokxc4.ap-northeast-2.rds.amazonaws.com:5432/product_db"
   SPRING_DATASOURCE_USERNAME: "unbox_admin"
   SPRING_DATASOURCE_PASSWORD:
     valueFrom:
       secretKeyRef:
         name: db-secret
-        key: DB_PASSWORD
+        key: PRODUCT_DB_PASSWORD
   
   # Prod Kafka
   SPRING_KAFKA_BOOTSTRAP_SERVERS: "prod-kafka.unbox-infra.svc.cluster.local:9092"
