@@ -72,3 +72,7 @@ monitoring:
       installOperator: false
  
 
+
+promtail:
+  enabled: false
+FLUENT_BIT_ENABLED: true
