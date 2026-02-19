@@ -12,6 +12,9 @@ spec:
     repoURL: https://github.com/team4-coding-gamja/UNBOX-INFRA.git
     targetRevision: HEAD
     path: gitops/infra/external-secrets
+    helm:
+      valueFiles:
+        - values-prod.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: unbox-prod
