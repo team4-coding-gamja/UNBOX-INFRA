@@ -10,7 +10,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/team4-coding-gamja/UNBOX-INFRA.git
-    targetRevision: HEAD
+    targetRevision: feat/ArgoCD-dev
     path: gitops/charts
     helm:
       valueFiles:
