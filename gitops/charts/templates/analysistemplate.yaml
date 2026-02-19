@@ -42,20 +42,22 @@ spec:
       prometheus:
         address: {{ .Values.rollout.analysis.prometheusAddress }}
         query: |
-          sum(rate(
-            http_server_requests_seconds_count{
-              job="unbox-{{ .Values.appName }}",
-              rollouts_pod_template_hash="{{`{{args.canary-hash}}`}}",
-              status=~"5.."
-            }[{{ .Values.rollout.analysis.queryRange }}]
-          )) 
-          / 
-          sum(rate(
-            http_server_requests_seconds_count{
-              job="unbox-{{ .Values.appName }}",
-              rollouts_pod_template_hash="{{`{{args.canary-hash}}`}}"
-            }[{{ .Values.rollout.analysis.queryRange }}]
-          )) * 100
+          (
+            sum(rate(
+              http_server_requests_seconds_count{
+                job="unbox-{{ .Values.appName }}",
+                rollouts_pod_template_hash="{{`{{args.canary-hash}}`}}",
+                status=~"5.."
+              }[{{ .Values.rollout.analysis.queryRange }}]
+            )) 
+            / 
+            sum(rate(
+              http_server_requests_seconds_count{
+                job="unbox-{{ .Values.appName }}",
+                rollouts_pod_template_hash="{{`{{args.canary-hash}}`}}"
+              }[{{ .Values.rollout.analysis.queryRange }}]
+            )) * 100
+          ) or vector(0)
   
   # 평균 응답 시간 체크 (Canary만)
   - name: avg-response-time
