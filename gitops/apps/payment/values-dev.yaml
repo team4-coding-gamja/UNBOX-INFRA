@@ -27,7 +27,7 @@ env:
   DB_DRIVER_CLASS_NAME: "org.postgresql.Driver"
   SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
   SPRING_JPA_SHOW_SQL: "false"
-  TEST_CANARY_DEPLOYMENT: "v1"  # Canary 배포 테스트용
+  TEST_CANARY_DEPLOYMENT: "v2"  # Canary 배포 테스트용 - 2차 테스트
   SPRING_DATASOURCE_URL:
     valueFrom:
       secretKeyRef:
