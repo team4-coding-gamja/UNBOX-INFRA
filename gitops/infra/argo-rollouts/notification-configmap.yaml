@@ -4,21 +4,18 @@ metadata:
   name: argo-rollouts-notification-configmap
   namespace: argo-rollouts
 data:
-  # Discord 서비스 설정
-  service.discord: |
-    token: $discord-token
-  
-  # Discord Webhook URL (Secret에서 참조)
-  # kubectl create secret generic argo-rollouts-notification-secret \
-  #   --from-literal=discord-token=<YOUR_DISCORD_WEBHOOK_URL> \
-  #   -n argo-rollouts
+  # Webhook 서비스 설정 (Discord)
+  service.webhook.discord: |
+    url: https://discord.com/api/webhooks/$discord-token
+    headers:
+    - name: Content-Type
+      value: application/json
   
   # Rollout Paused 알림 템플릿
   template.rollout-paused: |
     webhook:
       discord:
         method: POST
-        path: /api/webhooks/{{.secret.discord-token}}
         body: |
           {
             "embeds": [{
@@ -38,12 +35,7 @@ data:
                 },
                 {
                   "name": "현재 단계",
-                  "value": "{{.rollout.status.currentStepIndex}}/{{.rollout.spec.strategy.canary.steps | len}}",
-                  "inline": true
-                },
-                {
-                  "name": "Canary 트래픽",
-                  "value": "{{.rollout.status.canary.weights.canary}}%",
+                  "value": "Step {{.rollout.status.currentStepIndex}}",
                   "inline": true
                 },
                 {
@@ -66,8 +58,7 @@ data:
                   "value": "`kubectl argo rollouts abort {{.rollout.metadata.name}} -n {{.rollout.metadata.namespace}}`",
                   "inline": false
                 }
-              ],
-              "timestamp": "{{.rollout.status.conditions[0].lastUpdateTime}}"
+              ]
             }]
           }
   
@@ -76,7 +67,6 @@ data:
     webhook:
       discord:
         method: POST
-        path: /api/webhooks/{{.secret.discord-token}}
         body: |
           {
             "embeds": [{
@@ -99,8 +89,7 @@ data:
                   "value": "✅ Healthy - 100% 트래픽 전환 완료",
                   "inline": false
                 }
-              ],
-              "timestamp": "{{.rollout.status.conditions[0].lastUpdateTime}}"
+              ]
             }]
           }
   
@@ -109,7 +98,6 @@ data:
     webhook:
       discord:
         method: POST
-        path: /api/webhooks/{{.secret.discord-token}}
         body: |
           {
             "embeds": [{
@@ -128,23 +116,17 @@ data:
                   "inline": true
                 },
                 {
-                  "name": "중단 단계",
-                  "value": "{{.rollout.status.currentStepIndex}}/{{.rollout.spec.strategy.canary.steps | len}}",
-                  "inline": true
-                },
-                {
                   "name": "상태",
                   "value": "🔄 Rollback 완료 - 이전 버전으로 복구됨",
                   "inline": false
                 }
-              ],
-              "timestamp": "{{.rollout.status.conditions[0].lastUpdateTime}}"
+              ]
             }]
           }
   
   # 트리거 설정
   trigger.on-rollout-paused: |
-    - when: rollout.spec.paused == true
+    - when: rollout.status.phase == 'Paused'
       send: [rollout-paused]
   
   trigger.on-rollout-completed: |
@@ -152,5 +134,5 @@ data:
       send: [rollout-completed]
   
   trigger.on-rollout-aborted: |
-    - when: rollout.status.phase == 'Degraded' || rollout.status.abort == true
+    - when: rollout.status.phase == 'Degraded'
       send: [rollout-aborted]

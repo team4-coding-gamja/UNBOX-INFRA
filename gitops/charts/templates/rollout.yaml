@@ -5,6 +5,12 @@ metadata:
   name: {{ .Values.appName }}
   labels:
     app: {{ .Values.appName }}
+  {{- if .Values.rollout.notifications }}
+  annotations:
+    notifications.argoproj.io/subscribe.on-rollout-paused.discord: ""
+    notifications.argoproj.io/subscribe.on-rollout-completed.discord: ""
+    notifications.argoproj.io/subscribe.on-rollout-aborted.discord: ""
+  {{- end }}
 spec:
   replicas: {{ .Values.replicaCount }}
   revisionHistoryLimit: 3
