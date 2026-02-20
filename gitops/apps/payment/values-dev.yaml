@@ -3,7 +3,7 @@ appName: payment-service
 replicaCount: 1
 image:
   repository: 632941626317.dkr.ecr.ap-northeast-2.amazonaws.com/unbox-dev-payment-repo
-  tag: dev-dd01d387219bd830edf5278dd197b21102cf05a5
+  tag: dev-1f6447a0796b0ad8ee0276e2c9a33a14577739c8
   pullPolicy: Always
 # Ingress 활성화
 ingress:
@@ -27,7 +27,7 @@ env:
   DB_DRIVER_CLASS_NAME: "org.postgresql.Driver"
   SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
   SPRING_JPA_SHOW_SQL: "false"
-  TEST_CANARY_DEPLOYMENT: "v2"  # Canary 배포 테스트 완료
+  TEST_CANARY_DEPLOYMENT: "v2" # Canary 배포 테스트 완료
   SPRING_DATASOURCE_URL:
     valueFrom:
       secretKeyRef:
@@ -79,7 +79,6 @@ resources:
 rollout:
   enabled: true
   strategy: "canary"
-  
   # Notification 설정 (Discord 알림)
   notifications:
     - trigger: rollout-paused
@@ -91,7 +90,6 @@ rollout:
     - trigger: rollout-aborted
       send:
         - discord
-  
   healthCheck:
     enabled: true
     path: "/payment/actuator/health"
@@ -99,7 +97,6 @@ rollout:
     startupProbe:
       failureThreshold: 60
       periodSeconds: 10
-  
   canary:
     canaryService: payment-service-canary
     stableService: payment-service-stable
@@ -107,29 +104,23 @@ rollout:
       # Step 1: 1% 트래픽으로 초기 배포
       - setWeight: 1
       - pause:
-          duration: 30s  # 30초간 자동 모니터링
-      
+          duration: 30s # 30초간 자동 모니터링
       # Step 2: Manual Approval 대기 (Discord 알림)
-      - pause: {}  # 무한 대기 - 수동 승인 필요
-      
+      - pause: {} # 무한 대기 - 수동 승인 필요
       # Step 3: 10% 트래픽
       - setWeight: 10
       - pause:
           duration: 30s
-      
       # Step 4: 30% 트래픽
       - setWeight: 30
       - pause:
           duration: 30s
-      
       # Step 5: 50% 트래픽
       - setWeight: 50
       - pause:
           duration: 30s
-      
       # Step 6: 100% 트래픽 (완전 전환)
       - setWeight: 100
-  
   # 분석 설정
   analysis:
-    enabled: false  # Dev 환경에서는 비활성화
+    enabled: false # Dev 환경에서는 비활성화
