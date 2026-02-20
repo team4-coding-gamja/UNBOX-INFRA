@@ -6,4 +6,4 @@ trust-manager:
   # Additional configuration for the upstream chart if needed
   app:
     trust:
-      namespace: cert-manager
+      namespace: linkerd
