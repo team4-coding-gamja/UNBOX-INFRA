@@ -1,0 +1,9 @@
+# Default values for trust-manager-wrapper.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+trust-manager:
+  # Additional configuration for the upstream chart if needed
+  app:
+    trust:
+      namespace: cert-manager
