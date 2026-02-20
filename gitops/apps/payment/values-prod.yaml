@@ -99,10 +99,22 @@ resources:
     memory: "1Gi"
     cpu: "500m"
 
-# Rollout 설정 (Prod: BlueGreen)
+# Rollout 설정 (Prod: Canary + Manual Approval)
 rollout:
   enabled: true
-  strategy: "blueGreen"
+  strategy: "canary"
+  
+  # Notification 설정 (Discord 알림)
+  notifications:
+    - trigger: rollout-paused
+      send:
+        - discord
+    - trigger: rollout-completed
+      send:
+        - discord
+    - trigger: rollout-aborted
+      send:
+        - discord
   
   healthCheck:
     enabled: true
@@ -111,11 +123,20 @@ rollout:
     startupProbe:
       failureThreshold: 60
       periodSeconds: 10
-      
-  # Prod는 Auto Promotion 비활성화 (수동 승인)
-  blueGreen:
-    autoPromotionEnabled: false
-    autoPromotionSeconds: 600
-    scaleDownDelaySeconds: 300
-    activeService: payment-service
-    previewService: payment-service-preview
+  
+  canary:
+    steps:
+      - setWeight: 1
+      - pause:
+          duration: 30s
+      - pause: {}  # Manual Approval
+      - setWeight: 10
+      - pause:
+          duration: 30s
+      - setWeight: 30
+      - pause:
+          duration: 30s
+      - setWeight: 50
+      - pause:
+          duration: 30s
+      - setWeight: 100

@@ -2,25 +2,29 @@
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
-  name: {{ .Values.appName }}-success-rate
+  name: {{ .Values.appName }}-analysis
+  labels:
+    app: {{ .Values.appName }}
 spec:
   args:
   - name: canary-hash
-    # Argo Rollouts가 자동으로 Canary Pod의 hash를 전달
   
   metrics:
-  # HTTP 성공률 체크 (Canary만)
+  # 1. 성공률 체크
   - name: success-rate
+    initialDelay: 30s # 30초 대기 후 시작
     interval: {{ .Values.rollout.analysis.interval }}
+    count: 5 # 5번 측정
     successCondition: result[0] >= {{ .Values.rollout.analysis.successRate }}
     failureLimit: {{ .Values.rollout.analysis.failureLimit }}
+    inconclusiveLimit: 2 # 메트릭 없을 때 2번까지 허용
     provider:
       prometheus:
         address: {{ .Values.rollout.analysis.prometheusAddress }}
         query: |
           sum(rate(
             http_server_requests_seconds_count{
-              job="unbox-{{ .Values.appName }}",
+              service="{{ .Values.appName }}",
               rollouts_pod_template_hash="{{`{{args.canary-hash}}`}}",
               status=~"2.."
             }[{{ .Values.rollout.analysis.queryRange }}]
@@ -28,16 +32,19 @@ spec:
           / 
           sum(rate(
             http_server_requests_seconds_count{
-              job="unbox-{{ .Values.appName }}",
+              service="{{ .Values.appName }}",
               rollouts_pod_template_hash="{{`{{args.canary-hash}}`}}"
             }[{{ .Values.rollout.analysis.queryRange }}]
           )) * 100
   
-  # 에러율 체크 (Canary만)
+  # 2. 에러율 체크
   - name: error-rate
+    initialDelay: 30s
     interval: {{ .Values.rollout.analysis.interval }}
+    count: 5
     successCondition: result[0] <= {{ .Values.rollout.analysis.errorRate }}
     failureLimit: {{ .Values.rollout.analysis.failureLimit }}
+    inconclusiveLimit: 2
     provider:
       prometheus:
         address: {{ .Values.rollout.analysis.prometheusAddress }}
@@ -45,7 +52,7 @@ spec:
           (
             sum(rate(
               http_server_requests_seconds_count{
-                job="unbox-{{ .Values.appName }}",
+                service="{{ .Values.appName }}",
                 rollouts_pod_template_hash="{{`{{args.canary-hash}}`}}",
                 status=~"5.."
               }[{{ .Values.rollout.analysis.queryRange }}]
@@ -53,31 +60,34 @@ spec:
             / 
             sum(rate(
               http_server_requests_seconds_count{
-                job="unbox-{{ .Values.appName }}",
+                service="{{ .Values.appName }}",
                 rollouts_pod_template_hash="{{`{{args.canary-hash}}`}}"
               }[{{ .Values.rollout.analysis.queryRange }}]
             )) * 100
           ) or vector(0)
   
-  # 평균 응답 시간 체크 (Canary만)
+  # 3. 평균 응답시간 체크
   - name: avg-response-time
+    initialDelay: 30s
     interval: {{ .Values.rollout.analysis.interval }}
+    count: 5
     successCondition: result[0] <= {{ .Values.rollout.analysis.avgResponseTime }}
     failureLimit: {{ .Values.rollout.analysis.failureLimit }}
+    inconclusiveLimit: 2
     provider:
       prometheus:
         address: {{ .Values.rollout.analysis.prometheusAddress }}
         query: |
           sum(rate(
             http_server_requests_seconds_sum{
-              job="unbox-{{ .Values.appName }}",
+              service="{{ .Values.appName }}",
               rollouts_pod_template_hash="{{`{{args.canary-hash}}`}}"
             }[{{ .Values.rollout.analysis.queryRange }}]
           )) 
           / 
           sum(rate(
             http_server_requests_seconds_count{
-              job="unbox-{{ .Values.appName }}",
+              service="{{ .Values.appName }}",
               rollouts_pod_template_hash="{{`{{args.canary-hash}}`}}"
             }[{{ .Values.rollout.analysis.queryRange }}]
           )) * 1000

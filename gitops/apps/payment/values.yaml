@@ -74,7 +74,7 @@ resources:
 # Argo Rollouts 설정
 rollout:
   enabled: false  # 기본적으로 비활성화 (환경별로 활성화)
-  strategy: "blueGreen"  # Payment는 Blue/Green 전략 (Tier 1 - 데이터 정합성)
+  strategy: "canary"  # Payment는 Canary + Manual Approval (Tier 0 - 무결성 최우선)
   
   # Health Check 설정
   healthCheck:
@@ -83,11 +83,66 @@ rollout:
     initialDelaySeconds: 30
     periodSeconds: 10
   
-  # Blue/Green 전략 설정
-  blueGreen:
-    autoPromotionEnabled: false  # 수동 승인 필요
-    autoPromotionSeconds: 600    # 10분 후 자동 전환
-    scaleDownDelaySeconds: 300   # 5분 후 이전 버전 삭제
+  # Canary 전략 설정 (Manual Approval)
+  canary:
+    canaryService: payment-service-canary
+    stableService: payment-service-stable
+    steps:
+      # Step 1: 1% 트래픽으로 초기 배포
+      - setWeight: 1
+      - pause:
+          duration: 30s  # 30초간 자동 모니터링
+      
+      # Step 2: Manual Approval 대기 (Discord 알림)
+      - pause: {}  # 무한 대기 - 수동 승인 필요
+      
+      # Step 3: 10% 트래픽
+      - setWeight: 10
+      - pause:
+          duration: 30s
+      
+      # Step 4: 30% 트래픽
+      - setWeight: 30
+      - pause:
+          duration: 30s
+      
+      # Step 5: 50% 트래픽
+      - setWeight: 50
+      - pause:
+          duration: 30s
+      
+      # Step 6: 100% 트래픽 (완전 전환)
+      - setWeight: 100
+    
+    # 분석 설정 (각 단계마다 실행)
+    analysis:
+      enabled: false  # 현재는 비활성화
+      templates:
+        - templateName: payment-success-rate
+      startingStep: 1  # 1% 단계부터 분석 시작
+      args:
+        - name: service-name
+          value: payment-service
+    
+    # 트래픽 라우팅
+    trafficRouting:
+      managedRoutes:
+        - name: primary
+      smi:
+        trafficSplitName: payment-service-trafficsplit
+        rootService: payment-service
+  
+  # Notification 설정 (Discord 알림)
+  notifications:
+    - trigger: rollout-paused
+      send:
+        - discord
+    - trigger: rollout-completed
+      send:
+        - discord
+    - trigger: rollout-aborted
+      send:
+        - discord
 
   # Feature Flag 설정
   featureFlag:
