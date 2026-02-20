@@ -85,6 +85,8 @@ rollout:
   
   # Canary 전략 설정 (Manual Approval)
   canary:
+    canaryService: payment-service-canary
+    stableService: payment-service-stable
     steps:
       # Step 1: 1% 트래픽으로 초기 배포
       - setWeight: 1
