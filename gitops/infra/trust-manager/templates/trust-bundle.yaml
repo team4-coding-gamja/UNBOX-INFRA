@@ -1,25 +1,15 @@
 apiVersion: trust.cert-manager.io/v1alpha1
 kind: Bundle
 metadata:
-  name: linkerd-trust-anchor
+  name: linkerd-identity-trust-roots
 spec:
   sources:
   - secret:
       name: linkerd-trust-anchor
       key: tls.crt
-      # trust-manager defaults to looking in the trust-manager namespace (cert-manager)
-      # if not specified? No, `trust-manager` only supports sources in the same namespace as the Bundle?
-      # Wait, Bundle is cluster-scoped.
-      # `trust-manager` usually reads from a configurable "trust namespace" (default: cert-manager).
-      # If our secret is in `linkerd` namespace, `trust-manager` might not be able to read it 
-      # depending on how it's configured.
-      # BUT, let's try to verify if we can specify namespace.
-      # The CRD spec says: `sources[].secret.name`, `sources[].secret.key`.
-      # It does NOT have a namespace field. It assumes the secret is in the "trust namespace".
-      # WE MUST COPY `linkerd-trust-anchor` to `cert-manager` namespace for trust-manager to see it.
   target:
     configMap:
-      key: trust-anchor.crt
+      key: ca-bundle.crt
     namespaceSelector:
       matchLabels:
         linkerd.io/control-plane-ns: linkerd
