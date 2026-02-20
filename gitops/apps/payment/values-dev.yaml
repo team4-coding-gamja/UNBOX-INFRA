@@ -126,3 +126,7 @@ rollout:
       
       # Step 6: 100% 트래픽 (완전 전환)
       - setWeight: 100
+  
+  # 분석 설정
+  analysis:
+    enabled: false  # Dev 환경에서는 비활성화

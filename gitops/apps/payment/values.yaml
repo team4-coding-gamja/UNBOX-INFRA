@@ -114,6 +114,7 @@ rollout:
     
     # 분석 설정 (각 단계마다 실행)
     analysis:
+      enabled: false  # 현재는 비활성화
       templates:
         - templateName: payment-success-rate
       startingStep: 1  # 1% 단계부터 분석 시작
