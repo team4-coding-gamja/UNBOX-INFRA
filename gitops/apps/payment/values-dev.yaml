@@ -77,7 +77,20 @@ resources:
     memory: "1Gi"
 rollout:
   enabled: true
-  strategy: "blueGreen"
+  strategy: "canary"
+  
+  # Notification 설정 (Discord 알림)
+  notifications:
+    - trigger: rollout-paused
+      send:
+        - discord
+    - trigger: rollout-completed
+      send:
+        - discord
+    - trigger: rollout-aborted
+      send:
+        - discord
+  
   healthCheck:
     enabled: true
     path: "/payment/actuator/health"
@@ -85,7 +98,31 @@ rollout:
     startupProbe:
       failureThreshold: 60
       periodSeconds: 10
-  blueGreen:
-    autoPromotionEnabled: true
-    autoPromotionSeconds: 30
-    scaleDownDelaySeconds: 30
+  
+  canary:
+    steps:
+      # Step 1: 1% 트래픽으로 초기 배포
+      - setWeight: 1
+      - pause:
+          duration: 30s  # 30초간 자동 모니터링
+      
+      # Step 2: Manual Approval 대기 (Discord 알림)
+      - pause: {}  # 무한 대기 - 수동 승인 필요
+      
+      # Step 3: 10% 트래픽
+      - setWeight: 10
+      - pause:
+          duration: 30s
+      
+      # Step 4: 30% 트래픽
+      - setWeight: 30
+      - pause:
+          duration: 30s
+      
+      # Step 5: 50% 트래픽
+      - setWeight: 50
+      - pause:
+          duration: 30s
+      
+      # Step 6: 100% 트래픽 (완전 전환)
+      - setWeight: 100
