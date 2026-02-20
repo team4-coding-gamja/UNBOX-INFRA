@@ -12,9 +12,12 @@ spec:
   metrics:
   # 1. 성공률 체크
   - name: success-rate
+    initialDelay: 30s # 30초 대기 후 시작
     interval: {{ .Values.rollout.analysis.interval }}
+    count: 5 # 5번 측정
     successCondition: result[0] >= {{ .Values.rollout.analysis.successRate }}
     failureLimit: {{ .Values.rollout.analysis.failureLimit }}
+    inconclusiveLimit: 2 # 메트릭 없을 때 2번까지 허용
     provider:
       prometheus:
         address: {{ .Values.rollout.analysis.prometheusAddress }}
@@ -36,9 +39,12 @@ spec:
   
   # 2. 에러율 체크
   - name: error-rate
+    initialDelay: 30s
     interval: {{ .Values.rollout.analysis.interval }}
+    count: 5
     successCondition: result[0] <= {{ .Values.rollout.analysis.errorRate }}
     failureLimit: {{ .Values.rollout.analysis.failureLimit }}
+    inconclusiveLimit: 2
     provider:
       prometheus:
         address: {{ .Values.rollout.analysis.prometheusAddress }}
@@ -62,9 +68,12 @@ spec:
   
   # 3. 평균 응답시간 체크
   - name: avg-response-time
+    initialDelay: 30s
     interval: {{ .Values.rollout.analysis.interval }}
+    count: 5
     successCondition: result[0] <= {{ .Values.rollout.analysis.avgResponseTime }}
     failureLimit: {{ .Values.rollout.analysis.failureLimit }}
+    inconclusiveLimit: 2
     provider:
       prometheus:
         address: {{ .Values.rollout.analysis.prometheusAddress }}
