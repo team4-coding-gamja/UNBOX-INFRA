@@ -3,7 +3,7 @@ appName: trade-service
 replicaCount: 1
 image:
   repository: 632941626317.dkr.ecr.ap-northeast-2.amazonaws.com/unbox-dev-trade-repo
-  tag: dev-cfb5665252f948221c81a668f2c6467fd8d78cc8-test2
+  tag: dev-cfb5665252f948221c81a668f2c6467fd8d78cc8
   pullPolicy: Always
 # Ingress 활성화
 ingress:
@@ -27,7 +27,7 @@ env:
   DB_DRIVER_CLASS_NAME: "org.postgresql.Driver"
   SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
   SPRING_JPA_SHOW_SQL: "false"
-  TEST_CANARY_DEPLOYMENT: "v2" # Canary 배포 테스트 - 시나리오 1 (정상 배포)
+  TEST_CANARY_DEPLOYMENT: "v2.0" # Canary 배포 테스트 - 시나리오 1 (정상 배포 재테스트)
   SPRING_DATASOURCE_URL:
     valueFrom:
       secretKeyRef:
