@@ -3,7 +3,7 @@ appName: payment-service
 replicaCount: 1
 image:
   repository: 632941626317.dkr.ecr.ap-northeast-2.amazonaws.com/unbox-dev-payment-repo
-  tag: dev-31d5a6403a49f901bcc10727b987ae0a5cbe1f9c
+  tag: dev-dd01d387219bd830edf5278dd197b21102cf05a5
   pullPolicy: Always
 # Ingress 활성화
 ingress:
@@ -27,6 +27,7 @@ env:
   DB_DRIVER_CLASS_NAME: "org.postgresql.Driver"
   SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
   SPRING_JPA_SHOW_SQL: "false"
+  TEST_CANARY_DEPLOYMENT: "v1"  # Canary 배포 테스트용
   SPRING_DATASOURCE_URL:
     valueFrom:
       secretKeyRef:
