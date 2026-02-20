@@ -4,13 +4,16 @@ metadata:
   name: unbox-prod-services
   namespace: argocd
   labels:
+    type: application
+    bundle: apps
     env: prod
-    bundle: services
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"  # 인프라(Wave -1~9) 이후 배포
 spec:
   project: default
   source:
     repoURL: https://github.com/team4-coding-gamja/UNBOX-INFRA.git
-    targetRevision: HEAD
+    targetRevision: feat/ArgoCD-dev
     path: gitops/apps
     directory:
       recurse: true
@@ -24,3 +27,10 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+  info:
+    - name: 'Description'
+      value: 'Prod Application services (User, Product, Order, Trade, Payment)'
+    - name: 'Deployment Order'
+      value: 'Wave 10: User → Wave 11: Product/Order/Payment → Wave 12: Trade'
+    - name: 'Features'
+      value: 'All Services: Canary/BlueGreen Deployment Strategy'
