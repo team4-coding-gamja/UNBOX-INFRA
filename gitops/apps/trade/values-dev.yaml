@@ -27,6 +27,7 @@ env:
   DB_DRIVER_CLASS_NAME: "org.postgresql.Driver"
   SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
   SPRING_JPA_SHOW_SQL: "false"
+  TEST_CANARY_DEPLOYMENT: "v1" # Canary 배포 테스트용
   SPRING_DATASOURCE_URL:
     valueFrom:
       secretKeyRef:
@@ -78,23 +79,30 @@ rollout:
     canaryService: trade-service-canary
     stableService: trade-service-stable
     steps:
+      # Step 0: 10% 트래픽 (초기 배포)
       - setWeight: 10
-      - pause: {duration: 30s} # Analysis 체크 시간
+      - pause: {duration: 30s}
+      # Step 1: 25% 트래픽 (Analysis 시작)
       - setWeight: 25
       - pause: {duration: 30s}
+      # Step 2: 50% 트래픽
       - setWeight: 50
       - pause: {duration: 30s}
+      # Step 3: 75% 트래픽
       - setWeight: 75
       - pause: {duration: 30s}
+      # Step 4: 100% 트래픽 (완전 전환)
+      - setWeight: 100
     maxSurge: "25%"
     maxUnavailable: 0
+  # Analysis 설정 (자동 롤백)
   analysis:
-    enabled: true # Analysis 활성화
-    interval: "30s"
-    successRate: 95
-    errorRate: 5
-    avgResponseTime: 1000
-    failureLimit: 3
-    startingStep: 1
-    queryRange: "5m"
+    enabled: true
+    interval: "30s" # 30초마다 메트릭 체크
+    successRate: 95 # 95% 이상 성공률 요구
+    errorRate: 5 # 5% 이하 에러율 요구
+    avgResponseTime: 1000 # 1초 이하 평균 응답시간
+    failureLimit: 3 # 3번 실패 시 롤백
+    startingStep: 1 # 두 번째 단계(25% 트래픽)부터 분석 시작
+    queryRange: "5m" # 5분 범위 메트릭
     prometheusAddress: "http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090"

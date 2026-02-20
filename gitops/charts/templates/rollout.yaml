@@ -150,7 +150,7 @@ spec:
       {{- if .Values.rollout.analysis.enabled }}
       analysis:
         templates:
-        - templateName: {{ .Values.appName }}-success-rate
+        - templateName: {{ .Values.appName }}-analysis
         startingStep: {{ .Values.rollout.analysis.startingStep }}
         args:
         - name: canary-hash
