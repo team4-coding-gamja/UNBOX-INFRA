@@ -113,17 +113,6 @@ rollout:
       
       # Step 6: 100% 트래픽 (완전 전환)
       - setWeight: 100
-    
-    # 분석 설정 (각 단계마다 실행)
-    analysis:
-      enabled: false  # 현재는 비활성화
-      templates:
-        - templateName: payment-success-rate
-      startingStep: 1  # 1% 단계부터 분석 시작
-      args:
-        - name: service-name
-          value: payment-service
-    
     # 트래픽 라우팅
     trafficRouting:
       managedRoutes:
@@ -131,7 +120,16 @@ rollout:
       smi:
         trafficSplitName: payment-service-trafficsplit
         rootService: payment-service
-  
+          
+  # 분석 설정
+  analysis:
+    enabled: false
+    templates:
+      - templateName: payment-success-rate
+    startingStep: 1
+    args:
+      - name: service-name
+        value: payment-service
   # Notification 설정 (Discord 알림)
   notifications:
     - trigger: rollout-paused
