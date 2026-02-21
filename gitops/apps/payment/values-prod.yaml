@@ -140,3 +140,6 @@ rollout:
       - pause:
           duration: 30s
       - setWeight: 100
+    
+    analysis:
+      enabled: false

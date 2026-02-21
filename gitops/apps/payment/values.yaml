@@ -83,16 +83,7 @@ rollout:
     initialDelaySeconds: 30
     periodSeconds: 10
   
-    # 분석 설정 (각 단계마다 실행)
-  analysis:
-    enabled: false  # 현재는 비활성화
-    templates:
-      - templateName: payment-success-rate
-    startingStep: 1  # 1% 단계부터 분석 시작
-    args:
-      - name: service-name
-        value: payment-service
-  
+  # Canary 전략 설정 (Manual Approval)
   canary:
     canaryService: payment-service-canary
     stableService: payment-service-stable
@@ -122,6 +113,16 @@ rollout:
       
       # Step 6: 100% 트래픽 (완전 전환)
       - setWeight: 100
+    
+    # 분석 설정 (각 단계마다 실행)
+    analysis:
+      enabled: false  # 현재는 비활성화
+      templates:
+        - templateName: payment-success-rate
+      startingStep: 1  # 1% 단계부터 분석 시작
+      args:
+        - name: service-name
+          value: payment-service
     
     # 트래픽 라우팅
     trafficRouting:
