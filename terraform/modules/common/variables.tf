@@ -47,11 +47,6 @@ variable "domain_name" {
 }
 
 ####################### WAF #######################
-variable "alb_arn" {
-  description = "ALB ARN for WAF association (prod only)"
-  type        = string
-  default     = ""
-}
 
 variable "aws_region" {
   type    = string

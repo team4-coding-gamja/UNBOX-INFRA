@@ -14,14 +14,11 @@ metadata:
     # 2. [병합] 보안 그룹 자동화: Terraform에서 고정한 이름을 사용 (ID 몰라도 됨)
     alb.ingress.kubernetes.io/security-groups: {{ .Values.ingress.securityGroup | default "unbox-dev-alb-sg" | quote }}
     
-    # 3. [병합] HTTPS/SSL 설정: 인증서 연결 및 포트 활성화
-    {{- if .Values.ingress.certificateArn }}
-    alb.ingress.kubernetes.io/certificate-arn: {{ .Values.ingress.certificateArn | quote }}
+    # 3. HTTPS/SSL 설정
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
     
-    # 4. [병합] 보안 강화: HTTP로 오면 443(HTTPS)으로 자동 리다이렉트
+    # 4. 보안 강화: HTTP로 오면 443(HTTPS)으로 자동 리다이렉트
     alb.ingress.kubernetes.io/ssl-redirect: '443'
-    {{- end }}
     
     # 5. 기존 설정: 상태 검사 및 그룹화
     alb.ingress.kubernetes.io/healthcheck-path: {{ .Values.rollout.healthCheck.path | default "/actuator/health" }}

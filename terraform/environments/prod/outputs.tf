@@ -1,6 +1,6 @@
-output "alb_address" {
-  value = module.alb.alb_dns_name
-}
+# output "alb_address" {
+#   value = module.alb.alb_dns_name
+# }
 
 # VPC 정보
 output "vpc_id" {

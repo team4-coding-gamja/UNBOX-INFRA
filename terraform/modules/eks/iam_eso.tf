@@ -1,5 +1,7 @@
 # modules/eks/iam_eso.tf
 
+data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
 # 1. Assume Role Policy (Trust Relationship)
 # Allows the 'external-secrets' Service Account in K8s to assume this IAM Role
 data "aws_iam_policy_document" "eso_assume_role" {
@@ -61,6 +63,15 @@ resource "aws_iam_policy" "eso_access" {
         Effect   = "Allow"
         Action   = ["kms:DescribeKey"]
         Resource = [var.kms_key_arn]
+      },
+      {
+        Sid    = "AllowSecretsManagerRead"
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:GetSecretValue",
+          "secretsmanager:DescribeSecret"
+        ]
+        Resource = ["arn:aws:secretsmanager:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:secret:${var.project_name}/${var.env}/*"]
       }
     ]
   })

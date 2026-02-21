@@ -20,7 +20,7 @@ module "vpc" {
   project_name       = var.project_name
   nat_sg_id          = module.security_group.nat_sg_id
   availability_zones = var.availability_zones
-  cluster_name       = "unbox-cluster"
+  cluster_name       = "unbox-cluster-prod"
 }
 
 module "security_group" {
@@ -40,7 +40,6 @@ module "common" {
   cloudtrail_bucket_id   = module.s3.cloudtrail_bucket_id
   users                  = var.users
   kms_key_arn            = data.aws_kms_alias.infra_key.target_key_arn
-  alb_arn                = module.alb.alb_arn
   private_app_subnet_ids = module.vpc.private_app_subnet_ids
   app_sg_ids             = module.security_group.app_sg_ids
   aws_region             = var.aws_region
@@ -53,18 +52,6 @@ module "s3" {
   kms_key_arn  = module.common.kms_key_arn
 }
 
-module "alb" {
-  source            = "../../modules/alb"
-  env               = var.env
-  project_name      = var.project_name
-  vpc_id            = module.vpc.vpc_id
-  public_subnet_ids = module.vpc.public_subnet_ids
-  alb_sg_id         = module.security_group.alb_sg_id # 아까 만든 보안 그룹 ID
-  service_config    = local.service_config
-  certificate_arn   = module.route53.certificate_arn
-  enable_https      = true
-  logs_bucket_id    = module.s3.logs_bucket_id
-}
 
 data "aws_ssm_parameter" "db_password" {
   # common 모듈 배포 후에 값이 수동으로 채워져 있어야 합니다.
@@ -108,12 +95,19 @@ module "redis" {
 
 
 
+# Ingress Controller가 생성한 ALB 찾기
+data "aws_lb" "ingress" {
+  tags = {
+    "ingress.k8s.aws/stack" = "unbox-prod" # Ingress groupName에 할당된 태그
+  }
+}
+
 module "route53" {
   source       = "../../modules/route53"
   domain_name  = "un-box.click"
   project_name = var.project_name
-  alb_dns_name = module.alb.alb_dns_name
-  alb_zone_id  = module.alb.alb_zone_id
+  alb_dns_name = data.aws_lb.ingress.dns_name
+  alb_zone_id  = data.aws_lb.ingress.zone_id
 }
 
 module "eks" {
@@ -121,7 +115,7 @@ module "eks" {
 
   project_name = var.project_name
   env          = var.env
-  cluster_name = "unbox-cluster"
+  cluster_name = "unbox-cluster-prod"
 
   vpc_id     = module.vpc.vpc_id
   subnet_ids = module.vpc.private_app_subnet_ids
@@ -140,7 +134,8 @@ module "eks" {
   fargate_profile_role_arn = module.common.eks_fargate_role_arn
   kms_key_arn              = module.common.kms_key_arn
 
-  enable_karpenter = var.enable_karpenter
+  enable_karpenter       = var.enable_karpenter
+  node_security_group_id = module.security_group.eks_node_sg_id
 }
 
 # [Fix] EKS Cluster -> RDS Security Group Rule (Avoid Cyclic Dependency)
@@ -152,7 +147,19 @@ resource "aws_security_group_rule" "rds_ingress_from_eks_cluster" {
   protocol                 = "tcp"
   security_group_id        = module.security_group.rds_sg_ids[each.key]
   source_security_group_id = module.eks.cluster_security_group_id
-  description              = "Allow EKS Cluster Nodes to access RDS"
+  description              = "Allow EKS Cluster Control Plane to access RDS"
+}
+
+# [Fix] EKS Worker Nodes -> RDS Security Group Rule
+resource "aws_security_group_rule" "rds_ingress_from_eks_nodes" {
+  for_each                 = local.service_config
+  type                     = "ingress"
+  from_port                = 5432
+  to_port                  = 5432
+  protocol                 = "tcp"
+  security_group_id        = module.security_group.rds_sg_ids[each.key]
+  source_security_group_id = module.security_group.eks_node_sg_id
+  description              = "Allow EKS Worker Nodes to access RDS"
 }
 
 # ========================================

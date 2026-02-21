@@ -39,11 +39,12 @@ resource "aws_wafv2_web_acl" "main" {
 }
 
 # [필수] ALB와 WAF를 연결해주는 코드
-resource "aws_wafv2_web_acl_association" "main" {
-  count        = var.env == "prod" ? 1 : 0
-  resource_arn = var.alb_arn # ALB의 ARN을 넣어줘야 합니다.
-  web_acl_arn  = aws_wafv2_web_acl.main[0].arn
-}
+# [필수] ALB와 WAF를 연결해주는 코드 - Ingress Annotation으로 대체 (Terraform에서는 ARN 모름)
+# resource "aws_wafv2_web_acl_association" "main" {
+#   count        = var.env == "prod" ? 1 : 0
+#   resource_arn = var.alb_arn # ALB의 ARN을 넣어줘야 합니다.
+#   web_acl_arn  = aws_wafv2_web_acl.main[0].arn
+# }
 
 # WAF 로깅은 추후 Kinesis Firehose 설정 후 활성화
 # resource "aws_wafv2_web_acl_logging_configuration" "main" {

@@ -268,3 +268,14 @@ resource "aws_security_group_rule" "eks_node_ingress_self" {
   source_security_group_id = aws_security_group.eks_node.id
   description              = "Allow Node-to-Node communication (DNS, Pod-to-Pod)"
 }
+
+# [Fix] EKS Worker Nodes -> Redis Security Group Rule
+resource "aws_security_group_rule" "redis_ingress_from_eks_nodes" {
+  type                     = "ingress"
+  from_port                = 6379
+  to_port                  = 6379
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.redis.id
+  source_security_group_id = aws_security_group.eks_node.id
+  description              = "Allow EKS Worker Nodes to access Redis"
+}

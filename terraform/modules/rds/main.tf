@@ -33,7 +33,7 @@ resource "aws_db_instance" "postgresql" {
 
   multi_az                = var.env == "prod" ? true : false
   backup_retention_period = var.env == "prod" ? 7 : 0
-  skip_final_snapshot     = var.env == "prod" ? false : true
+  skip_final_snapshot     = true # Refactor/Destroy 시 스냅샷 생략
 
   storage_encrypted = true
   kms_key_id        = var.kms_key_arn
