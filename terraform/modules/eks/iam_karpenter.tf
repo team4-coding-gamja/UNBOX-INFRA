@@ -69,9 +69,19 @@ resource "aws_iam_role_policy" "karpenter_controller" {
         Resource = "*"
       },
       {
-        Action   = "iam:PassRole"
+        Action = [
+          "iam:PassRole",
+          "iam:GetInstanceProfile",
+          "iam:CreateInstanceProfile",
+          "iam:TagInstanceProfile",
+          "iam:AddRoleToInstanceProfile",
+          "iam:RemoveRoleFromInstanceProfile"
+        ]
         Effect   = "Allow"
-        Resource = aws_iam_role.karpenter_node[0].arn
+        Resource = [
+          aws_iam_role.karpenter_node[0].arn,
+          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:instance-profile/*"
+        ]
       },
       {
         Action   = "eks:DescribeCluster"
