@@ -16,13 +16,15 @@ grafana:
       - grafana.un-box.click
     path: /
   additionalDataSources:
-#    - name: Loki-Infra
-#      type: loki
-#      uid: loki
-#      access: proxy
-#      url: http://loki.monitoring:3100
-#      version: 1
-#      isDefault: false
+    - name: Loki-Final
+      type: loki
+      uid: "loki-prod-unique-final"
+      access: proxy
+      url: http://loki.monitoring:3100
+      version: 13
+      isDefault: false
+      jsonData:
+        maxLines: 1500
     - name: Tempo
       type: tempo
       access: proxy
