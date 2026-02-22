@@ -32,16 +32,10 @@ singleBinary:
 # Prod: 캐시 활성화 (메모리 줄임)
 chunksCache:
   enabled: true
-  memcached:
-    batch_size: 1024
-    parallelism: 100
-    allocatedMemory: 1024  # 1GB로 제한
-    maxItemMemory: 5       # 5MB 객체 크기 제한
+  allocatedMemory: 1024   # 1GB (단위: MB)
+  maxItemMemory: 5        # 5MB 객체 크기 제한
 
 resultsCache:
   enabled: true
-  memcached:
-    batch_size: 1024
-    parallelism: 100
-    allocatedMemory: 512   # 512MB로 제한
-    maxItemMemory: 5
+  allocatedMemory: 512    # 512MB (단위: MB)
+  maxItemMemory: 5
