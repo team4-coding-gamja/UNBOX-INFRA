@@ -97,17 +97,19 @@ module "redis" {
 
 # Ingress Controller가 생성한 ALB 찾기
 data "aws_lb" "ingress" {
+  count = var.enable_alb ? 1 : 0
   tags = {
     "ingress.k8s.aws/stack" = "unbox-prod" # Ingress groupName에 할당된 태그
   }
 }
 
 module "route53" {
+  count        = var.enable_alb ? 1 : 0
   source       = "../../modules/route53"
   domain_name  = "un-box.click"
   project_name = var.project_name
-  alb_dns_name = data.aws_lb.ingress.dns_name
-  alb_zone_id  = data.aws_lb.ingress.zone_id
+  alb_dns_name = data.aws_lb.ingress[0].dns_name
+  alb_zone_id  = data.aws_lb.ingress[0].zone_id
 }
 
 module "eks" {
@@ -167,13 +169,11 @@ resource "aws_security_group_rule" "rds_ingress_from_eks_nodes" {
 # ========================================
 
 data "aws_route53_zone" "main" {
-  count        = var.enable_alb ? 1 : 0
   name         = "un-box.click"
   private_zone = false
 }
 
 resource "aws_acm_certificate" "prod" {
-  count             = var.enable_alb ? 1 : 0
   domain_name       = "un-box.click"
   validation_method = "DNS"
 
@@ -189,34 +189,32 @@ resource "aws_acm_certificate" "prod" {
 }
 
 resource "aws_route53_record" "cert_validation" {
-  for_each = var.enable_alb ? {
-    for dvo in aws_acm_certificate.prod[0].domain_validation_options : dvo.domain_name => {
+  for_each = {
+    for dvo in aws_acm_certificate.prod.domain_validation_options : dvo.domain_name => {
       name   = dvo.resource_record_name
       record = dvo.resource_record_value
       type   = dvo.resource_record_type
     }
-  } : {}
+  }
 
   allow_overwrite = true
   name            = each.value.name
   records         = [each.value.record]
   ttl             = 60
   type            = each.value.type
-  zone_id         = data.aws_route53_zone.main[0].zone_id
+  zone_id         = data.aws_route53_zone.main.zone_id
 }
 
 resource "aws_acm_certificate_validation" "prod" {
-  count                   = var.enable_alb ? 1 : 0
-  certificate_arn         = aws_acm_certificate.prod[0].arn
+  certificate_arn         = aws_acm_certificate.prod.arn
   validation_record_fqdns = [for record in aws_route53_record.cert_validation : record.fqdn]
 }
 
 # ACM ARN을 SSM Parameter Store에 저장
 resource "aws_ssm_parameter" "acm_certificate_arn" {
-  count     = var.enable_alb ? 1 : 0
   name      = "/${var.project_name}/${var.env}/acm/certificate_arn"
   type      = "String"
-  value     = aws_acm_certificate.prod[0].arn
+  value     = aws_acm_certificate.prod.arn
   overwrite = true
 
   tags = {

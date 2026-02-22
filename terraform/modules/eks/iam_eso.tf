@@ -47,7 +47,9 @@ resource "aws_iam_policy" "eso_access" {
           "ssm:GetParameterHistory"
         ]
         Resource = [
-          "arn:aws:ssm:*:*:parameter/${var.project_name}/${var.env}/*"
+          "arn:aws:ssm:*:*:parameter/${var.project_name}/${var.env}/*",
+          "arn:aws:ssm:*:*:parameter/${var.project_name}/dev/common/*",
+          "arn:aws:ssm:*:*:parameter/${var.project_name}/dev/acm/*"
         ]
       },
       {
@@ -56,13 +58,13 @@ resource "aws_iam_policy" "eso_access" {
         Action = [
           "kms:Decrypt"
         ]
-        Resource = [var.kms_key_arn]
+        Resource = ["*"] # Allow all KMS keys for decryption to support shared secrets across environments
       },
       {
         Sid      = "AllowDescribeKey"
         Effect   = "Allow"
         Action   = ["kms:DescribeKey"]
-        Resource = [var.kms_key_arn]
+        Resource = ["*"]
       },
       {
         Sid    = "AllowSecretsManagerRead"
@@ -71,7 +73,10 @@ resource "aws_iam_policy" "eso_access" {
           "secretsmanager:GetSecretValue",
           "secretsmanager:DescribeSecret"
         ]
-        Resource = ["arn:aws:secretsmanager:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:secret:${var.project_name}/${var.env}/*"]
+        Resource = [
+          "arn:aws:secretsmanager:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:secret:${var.project_name}/${var.env}/*",
+          "arn:aws:secretsmanager:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:secret:${var.project_name}/dev/common/*"
+        ]
       }
     ]
   })

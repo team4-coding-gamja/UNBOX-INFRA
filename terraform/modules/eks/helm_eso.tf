@@ -19,5 +19,18 @@ resource "helm_release" "external_secrets" {
     value = "external-secrets"
   }
 
-  # Fargate 사용 시 호환성을 위해 추가 설정 가능 (현재는 Node Group 사용 중이라 기본값 무관)
+  set {
+    name  = "installCRDs"
+    value = "true"
+  }
+
+  set {
+    name  = "webhook.enabled"
+    value = "true"
+  }
+
+  set {
+    name  = "certController.enabled"
+    value = "true"
+  }
 }

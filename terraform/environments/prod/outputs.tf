@@ -24,5 +24,5 @@ output "kms_key_arn" {
 
 output "acm_certificate_arn" {
   description = "ACM Certificate ARN for un-box.click"
-  value       = var.enable_alb ? aws_acm_certificate.prod[0].arn : "ACM not created"
+  value       = aws_acm_certificate.prod.arn
 }
