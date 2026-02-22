@@ -1,6 +1,10 @@
 # gitops/infra/monitoring/loki/values-prod.yaml
 # Loki - Production Environment Override
 
+loki:
+  storage:
+    type: 'filesystem'
+
 singleBinary:
   replicas: 2
   persistence:
