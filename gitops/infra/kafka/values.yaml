@@ -1,7 +1,5 @@
 replicaCount: 1
 
-replicaCount: 1
-
 # 이미지 설정
 image:
   repository: apache/kafka

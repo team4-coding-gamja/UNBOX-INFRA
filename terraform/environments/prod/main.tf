@@ -143,6 +143,7 @@ module "eks" {
 
   enable_karpenter       = var.enable_karpenter
   node_security_group_id = module.security_group.eks_node_sg_id
+  acm_certificate_arn    = aws_acm_certificate.prod.arn
 }
 
 # [Fix] EKS Cluster -> RDS Security Group Rule (Avoid Cyclic Dependency)

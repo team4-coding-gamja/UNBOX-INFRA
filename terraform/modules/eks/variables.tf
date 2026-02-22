@@ -127,3 +127,9 @@ variable "enable_karpenter" {
   type        = bool
   default     = false
 }
+
+variable "acm_certificate_arn" {
+  description = "ACM Certificate ARN for Ingresses"
+  type        = string
+  default     = ""
+}

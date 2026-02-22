@@ -46,13 +46,28 @@ resource "helm_release" "argocd" {
 
   set {
     name  = "server.ingress.annotations.alb\\.ingress\\.kubernetes\\.io/listen-ports"
-    value = "[{\\\"HTTP\\\": 80}]"
+    value = var.env == "prod" ? "[{\\\"HTTP\\\": 80}, {\\\"HTTPS\\\": 443}]" : "[{\\\"HTTP\\\": 80}]"
   }
 
-  # Ingress Host (선택사항)
+  set {
+    name  = "server.ingress.annotations.alb\\.ingress\\.kubernetes\\.io/ssl-redirect"
+    value = var.env == "prod" ? "443" : ""
+  }
+
+  set {
+    name  = "server.ingress.annotations.alb\\.ingress\\.kubernetes\\.io/group.name"
+    value = "${var.project_name}-${var.env}"
+  }
+
+  set {
+    name  = "server.ingress.annotations.alb\\.ingress\\.kubernetes\\.io/certificate-arn"
+    value = var.acm_certificate_arn
+  }
+
+  # Ingress Host
   set {
     name  = "server.ingress.hosts[0]"
-    value = "argocd.${var.env}.unbox.com"
+    value = var.env == "prod" ? "argocd.un-box.click" : "argocd.${var.env}.un-box.click"
   }
 
   depends_on = [
