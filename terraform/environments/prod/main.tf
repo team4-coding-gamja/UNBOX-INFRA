@@ -48,7 +48,7 @@ module "common" {
   private_app_subnet_ids  = module.vpc.private_app_subnet_ids
   app_sg_ids              = module.security_group.app_sg_ids
   aws_region              = var.aws_region
-  eks_oidc_provider_arn   = try(aws_iam_openid_connect_provider.eks.arn, "")
+  eks_oidc_provider_arn   = local.eks_oidc_provider_arn
   eks_cluster_name        = "unbox-cluster-prod"
 }
 
@@ -238,21 +238,19 @@ resource "aws_ssm_parameter" "acm_certificate_arn" {
 }
 
 # EKS OIDC Provider (IRSA용)
-data "tls_certificate" "eks" {
-  url = module.eks.cluster_endpoint
-}
-
 resource "aws_iam_openid_connect_provider" "eks" {
-  client_id_list  = ["sts.amazonaws.com"]
-  thumbprint_list = [data.tls_certificate.eks.certificates[0].sha1_fingerprint]
-  url             = module.eks.cluster_endpoint
+  client_id_list = ["sts.amazonaws.com"]
+  url            = module.eks.cluster_endpoint
+  
+  # EKS OIDC Provider의 기본 thumbprint (AWS 공식)
+  thumbprint_list = ["9e99a48a9960b14926bb7f3b02e22da2b0ab7280"]
 
   tags = {
     Name = "${var.project_name}-${var.env}-eks-irsa"
   }
 }
 
-# common 모듈에 OIDC Provider ARN 전달하기 위한 로컬 변수
+# common 모듈에 OIDC Provider ARN 전달
 locals {
   eks_oidc_provider_arn = aws_iam_openid_connect_provider.eks.arn
 }
