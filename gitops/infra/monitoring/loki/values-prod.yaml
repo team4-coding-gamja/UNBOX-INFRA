@@ -28,23 +28,6 @@ loki:
 
 singleBinary:
   replicas: 2  # S3 사용 가능하므로 2개 이상 띄울 수 있음
-  persistence:
-    enabled: true
-    size: 20Gi
-    storageClassName: gp2
-  
-  resources:
-    requests:
-      cpu: 500m
-      memory: 1Gi
-    limits:
-      cpu: 1000m
-      memory: 2Gi
-  
-  # AWS IAM Role 마운트 (EKS IRSA 사용)
-  env:
-    - name: AWS_REGION
-      value: ap-northeast-2
 
 # Prod: 캐시 활성화
 chunksCache:
