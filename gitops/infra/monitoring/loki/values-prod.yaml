@@ -1,12 +1,30 @@
 # gitops/infra/monitoring/loki/values-prod.yaml
-# Loki - Production Environment Override
+# Loki - Production Environment Override with S3
 
 loki:
+  auth_enabled: false
   storage:
-    type: 'filesystem'
+    type: 's3'
+    s3:
+      endpoint: s3.ap-northeast-2.amazonaws.com
+      bucket: unbox-prod-data-apne2  # S3 data 버킷 (terraform에서 생성됨)
+      region: ap-northeast-2
+      insecure: false
+      s3ForcePathStyle: false
+  commonConfig:
+    replication_factor: 1
+  schemaConfig:
+    configs:
+      - from: 2024-04-01
+        store: tsdb
+        object_store: s3
+        schema: v13
+        index:
+          prefix: index_
+          period: 24h
 
 singleBinary:
-  replicas: 2
+  replicas: 2  # S3 사용 가능하므로 2개 이상 띄울 수 있음
   persistence:
     enabled: true
     size: 20Gi
@@ -19,3 +37,20 @@ singleBinary:
     limits:
       cpu: 1000m
       memory: 2Gi
+  
+  # AWS IAM Role 마운트 (EKS IRSA 사용)
+  env:
+    - name: AWS_REGION
+      value: ap-northeast-2
+
+# Prod: 캐시 활성화
+chunksCache:
+  enabled: true
+  memcached:
+    batch_size: 1024
+    parallelism: 100
+resultsCache:
+  enabled: true
+  memcached:
+    batch_size: 1024
+    parallelism: 100

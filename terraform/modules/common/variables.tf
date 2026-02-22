@@ -71,3 +71,15 @@ variable "app_sg_ids" {
   type        = map(string)
   default     = {}
 }
+
+variable "eks_oidc_provider_arn" {
+  description = "EKS OIDC Provider ARN for IRSA (Prod only)"
+  type        = string
+  default     = ""
+}
+
+variable "eks_cluster_name" {
+  description = "EKS Cluster Name for IRSA"
+  type        = string
+  default     = ""
+}

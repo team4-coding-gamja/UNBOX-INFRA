@@ -37,17 +37,19 @@ module "security_group" {
 }
 
 module "common" {
-  source                 = "../../modules/common"
-  env                    = var.env
-  project_name           = var.project_name
-  service_config         = local.service_config
-  vpc_id                 = module.vpc.vpc_id
-  cloudtrail_bucket_id   = module.s3.cloudtrail_bucket_id
-  users                  = var.users
-  kms_key_arn            = data.aws_kms_alias.infra_key.target_key_arn
-  private_app_subnet_ids = module.vpc.private_app_subnet_ids
-  app_sg_ids             = module.security_group.app_sg_ids
-  aws_region             = var.aws_region
+  source                  = "../../modules/common"
+  env                     = var.env
+  project_name            = var.project_name
+  service_config          = local.service_config
+  vpc_id                  = module.vpc.vpc_id
+  cloudtrail_bucket_id    = module.s3.cloudtrail_bucket_id
+  users                   = var.users
+  kms_key_arn             = data.aws_kms_alias.infra_key.target_key_arn
+  private_app_subnet_ids  = module.vpc.private_app_subnet_ids
+  app_sg_ids              = module.security_group.app_sg_ids
+  aws_region              = var.aws_region
+  eks_oidc_provider_arn   = try(aws_iam_openid_connect_provider.eks.arn, "")
+  eks_cluster_name        = "unbox-cluster-prod"
 }
 
 module "s3" {
@@ -233,4 +235,24 @@ resource "aws_ssm_parameter" "acm_certificate_arn" {
   }
 
   depends_on = [aws_acm_certificate_validation.prod]
+}
+
+# EKS OIDC Provider (IRSA용)
+data "tls_certificate" "eks" {
+  url = module.eks.cluster_endpoint
+}
+
+resource "aws_iam_openid_connect_provider" "eks" {
+  client_id_list  = ["sts.amazonaws.com"]
+  thumbprint_list = [data.tls_certificate.eks.certificates[0].sha1_fingerprint]
+  url             = module.eks.cluster_endpoint
+
+  tags = {
+    Name = "${var.project_name}-${var.env}-eks-irsa"
+  }
+}
+
+# common 모듈에 OIDC Provider ARN 전달하기 위한 로컬 변수
+locals {
+  eks_oidc_provider_arn = aws_iam_openid_connect_provider.eks.arn
 }
