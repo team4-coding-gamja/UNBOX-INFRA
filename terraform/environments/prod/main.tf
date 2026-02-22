@@ -103,13 +103,18 @@ data "aws_lb" "ingress" {
   }
 }
 
-module "route53" {
-  count        = var.enable_alb ? 1 : 0
-  source       = "../../modules/route53"
-  domain_name  = "un-box.click"
-  project_name = var.project_name
-  alb_dns_name = data.aws_lb.ingress[0].dns_name
-  alb_zone_id  = data.aws_lb.ingress[0].zone_id
+# Route53 Alias Record (ALB 연결)
+resource "aws_route53_record" "www" {
+  count   = var.enable_alb ? 1 : 0
+  zone_id = data.aws_route53_zone.main.zone_id
+  name    = "un-box.click"
+  type    = "A"
+
+  alias {
+    name                   = data.aws_lb.ingress[0].dns_name
+    zone_id                = data.aws_lb.ingress[0].zone_id
+    evaluate_target_health = true
+  }
 }
 
 module "eks" {
