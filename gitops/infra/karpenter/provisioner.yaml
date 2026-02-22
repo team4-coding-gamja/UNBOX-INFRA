@@ -2,6 +2,7 @@ apiVersion: karpenter.k8s.aws/v1beta1
 kind: EC2NodeClass
 metadata:
   name: default
+  namespace: karpenter
 spec:
   amiFamily: AL2
   role: "unbox-prod-karpenter-node"
@@ -12,18 +13,34 @@ spec:
   securityGroupSelectorTerms:
     - tags:
         Name: "unbox-prod-eks-node-sg"
-    - tags:
-        "kubernetes.io/cluster/unbox-cluster": "shared" # Include shared cluster SG if tagged (VPC module tags subnets, checking if SG has it too?)
-        # Verified SG module doesn't tag SG with cluster tag. So relying on Name.
-    # Also added discovery tag to SG would be better, but Name is deterministic.
+  userData: |
+    #!/bin/bash
+    # Enable IMDSv2 by default
+    echo "Instance metadata options are set by Karpenter"
+  metadataOptions:
+    httpEndpoint: enabled
+    httpProtocolIPv6: disabled
+    httpPutResponseHopLimit: 2
+    httpTokens: required
+  blockDeviceMappings:
+    - deviceName: /dev/xvda
+      ebs:
+        volumeSize: 100Gi
+        volumeType: gp3
+        encrypted: true
+        deleteOnTermination: true
 
 ---
 apiVersion: karpenter.sh/v1beta1
 kind: NodePool
 metadata:
   name: default
+  namespace: karpenter
 spec:
   template:
+    metadata:
+      labels:
+        karpenter.sh/capacity-type: on-demand
     spec:
       nodeClassRef:
         name: default
@@ -34,16 +51,22 @@ spec:
         - key: kubernetes.io/arch
           operator: In
           values: ["amd64"]
-        - key: karpenter.k8s.aws/instance-category
+        - key: node.kubernetes.io/instance-type
           operator: In
-          values: ["c", "m", "r", "t"]
-        - key: karpenter.k8s.aws/instance-generation
-          operator: Gt
-          values: ["2"]
-      taints: []
+          values: ["c5.large", "c5.xlarge", "c6i.large", "c6i.xlarge", "m5.large", "m5.xlarge", "m6i.large", "m6i.xlarge"]
+        - key: karpenter.sh/do-not-consolidate
+          operator: DoesNotExist
+      expireAfter: 2592h # 30일
+      ttlSecondsUntilExpired: 2592000
   limits:
     cpu: 1000
     memory: 1000Gi
   disruption:
-    consolidationPolicy: WhenUnderutilized
+    consolidateAfter: 30s
+    consolidateOnTTL: true
     expireAfter: 720h
+    budgets:
+      - nodes: "10%"
+  providerRef:
+    name: default
+  weight: 100

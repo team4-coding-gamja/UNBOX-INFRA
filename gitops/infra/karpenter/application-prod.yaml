@@ -1,18 +1,38 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: karpenter-provisioner-prod
+  name: karpenter-prod
   namespace: argocd
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
+  labels:
+    component: cluster-autoscaling
+    env: prod
+  annotations:
+    argocd.argoproj.io/sync-wave: "-5"
 spec:
   project: default
-  source:
-    repoURL: https://github.com/team4-coding-gamja/UNBOX-INFRA.git
-    targetRevision: HEAD
-    path: gitops/infra/karpenter
-    directory:
-      recurse: true
+  sources:
+    # Karpenter Helm Chart (latest version with K8s 1.35 support)
+    - repoURL: https://charts.karpenter.sh
+      chart: karpenter
+      targetRevision: v0.16.3
+      helm:
+        releaseName: karpenter
+        values: |
+          serviceAccount:
+            name: karpenter
+          settings:
+            clusterName: unbox-cluster-prod
+          replicas: 2
+          logLevel: info
+          webhook:
+            enabled: true
+        valueFiles:
+          - $values/gitops/infra/karpenter/values.yaml
+    # NodePool + EC2NodeClass from Git
+    - repoURL: https://github.com/team4-coding-gamja/UNBOX-INFRA.git
+      targetRevision: feat/ArgoCD-dev
+      ref: values
+      path: gitops/infra/karpenter
   destination:
     server: https://kubernetes.default.svc
     namespace: karpenter
@@ -20,3 +40,6 @@ spec:
     automated:
       prune: true
       selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+  revisionHistoryLimit: 3
