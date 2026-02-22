@@ -73,9 +73,15 @@ monitoring:
  
 
 
+loki:
+  isDefault: false
+
 # Disable automated datasource creation (will manage in prometheus-stack)
 grafana:
   enabled: false
+  sidecar:
+    datasources:
+      enabled: false
 
 promtail:
   enabled: false
