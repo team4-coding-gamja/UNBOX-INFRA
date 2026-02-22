@@ -18,6 +18,7 @@ spec:
         releaseName: loki
         valueFiles:
           - $values/gitops/infra/monitoring/loki/values.yaml
+          - $values/gitops/infra/monitoring/loki/values-prod.yaml
     - repoURL: https://github.com/team4-coding-gamja/UNBOX-INFRA.git
       targetRevision: feat/ArgoCD-dev
       ref: values

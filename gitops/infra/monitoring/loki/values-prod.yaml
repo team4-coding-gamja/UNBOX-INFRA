@@ -1,0 +1,17 @@
+# gitops/infra/monitoring/loki/values-prod.yaml
+# Loki - Production Environment Override
+
+singleBinary:
+  replicas: 2
+  persistence:
+    enabled: true
+    size: 20Gi
+    storageClassName: gp2
+  
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 1000m
+      memory: 2Gi

@@ -110,9 +110,9 @@ data "aws_lb" "ingress" {
 
 # Route53 Alias Records for Subdomains
 resource "aws_route53_record" "subdomains" {
-  for_each = var.enable_alb ? toset(["argocd", "grafana", "rollouts"]) : []
+  for_each = var.enable_alb ? toset(["argocd", "grafana", "rollouts", "www", ""]) : []
   zone_id  = data.aws_route53_zone.main.zone_id
-  name     = "${each.key}.un-box.click"
+  name     = each.key == "" ? "un-box.click" : "${each.key}.un-box.click"
   type     = "A"
 
   alias {
