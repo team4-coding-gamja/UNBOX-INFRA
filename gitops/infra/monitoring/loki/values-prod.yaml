@@ -3,16 +3,19 @@
 
 loki:
   auth_enabled: false
-  storage:
-    type: 's3'
-    s3:
-      endpoint: s3.ap-northeast-2.amazonaws.com
-      bucket: unbox-prod-data-apne2  # S3 data 버킷 (terraform에서 생성됨)
-      region: ap-northeast-2
-      insecure: false
-      s3ForcePathStyle: false
   commonConfig:
     replication_factor: 1
+    storage:
+      type: 's3'
+      bucketNames:
+        chunks: unbox-prod-data-apne2
+        admin: unbox-prod-data-apne2
+        ruler: unbox-prod-data-apne2
+      s3:
+        endpoint: s3.ap-northeast-2.amazonaws.com
+        region: ap-northeast-2
+        insecure: false
+        s3ForcePathStyle: false
   schemaConfig:
     configs:
       - from: 2024-04-01

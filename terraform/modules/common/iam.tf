@@ -326,7 +326,6 @@ resource "aws_iam_role_policy_attachment" "eks_node_ssm" {
 
 # Loki S3 IRSA Role (Prod Environment)
 resource "aws_iam_role" "loki_s3" {
-  count = var.eks_oidc_provider_arn != "" ? 1 : 0
   name  = "${var.project_name}-${var.env}-loki-s3-role"
 
   assume_role_policy = jsonencode({
@@ -351,9 +350,8 @@ resource "aws_iam_role" "loki_s3" {
 }
 
 resource "aws_iam_role_policy" "loki_s3" {
-  count  = var.eks_oidc_provider_arn != "" ? 1 : 0
   name   = "${var.project_name}-${var.env}-loki-s3-policy"
-  role   = aws_iam_role.loki_s3[0].id
+  role   = aws_iam_role.loki_s3.id
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
@@ -373,9 +371,5 @@ resource "aws_iam_role_policy" "loki_s3" {
 }
 
 output "loki_role_arn" {
-  value = try(aws_iam_role.loki_s3[0].arn, "")
-}
-
-output "loki_role_arn" {
-  value = try(aws_iam_role.loki_s3[0].arn, "")
+  value = aws_iam_role.loki_s3.arn
 }
