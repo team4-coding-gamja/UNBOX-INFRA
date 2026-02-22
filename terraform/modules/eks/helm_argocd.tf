@@ -46,7 +46,7 @@ resource "helm_release" "argocd" {
 
   set {
     name  = "server.ingress.annotations.alb\\.ingress\\.kubernetes\\.io/listen-ports"
-    value = var.env == "prod" ? "[{\\\"HTTP\\\": 80}, {\\\"HTTPS\\\": 443}]" : "[{\\\"HTTP\\\": 80}]"
+    value = var.env == "prod" ? "[{\\\"HTTP\\\": 80}\\, {\\\"HTTPS\\\": 443}]" : "[{\\\"HTTP\\\": 80}]"
   }
 
   set {
@@ -55,7 +55,7 @@ resource "helm_release" "argocd" {
   }
 
   set {
-    name  = "server.ingress.annotations.alb\\.ingress\\.kubernetes\\.io/group.name"
+    name  = "server.ingress.annotations.alb\\.ingress\\.kubernetes\\.io/group\\.name"
     value = "${var.project_name}-${var.env}"
   }
 
