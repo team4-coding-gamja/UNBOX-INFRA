@@ -73,6 +73,10 @@ monitoring:
  
 
 
+# Disable automated datasource creation (will manage in prometheus-stack)
+grafana:
+  enabled: false
+
 promtail:
   enabled: false
 FLUENT_BIT_ENABLED: true

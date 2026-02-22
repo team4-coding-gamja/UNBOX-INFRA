@@ -21,54 +21,28 @@ resource "helm_release" "argocd" {
     value = "--insecure"
   }
 
-  # Ingress 활성화
-  set {
-    name  = "server.ingress.enabled"
-    value = "true"
-  }
-
-  # Ingress Class - AWS Load Balancer Controller
-  set {
-    name  = "server.ingress.ingressClassName"
-    value = "alb"
-  }
-
-  # Ingress Annotations - ALB 설정
-  set {
-    name  = "server.ingress.annotations.alb\\.ingress\\.kubernetes\\.io/scheme"
-    value = "internet-facing"
-  }
-
-  set {
-    name  = "server.ingress.annotations.alb\\.ingress\\.kubernetes\\.io/target-type"
-    value = "ip"
-  }
-
-  set {
-    name  = "server.ingress.annotations.alb\\.ingress\\.kubernetes\\.io/listen-ports"
-    value = var.env == "prod" ? "[{\\\"HTTP\\\": 80}\\, {\\\"HTTPS\\\": 443}]" : "[{\\\"HTTP\\\": 80}]"
-  }
-
-  set {
-    name  = "server.ingress.annotations.alb\\.ingress\\.kubernetes\\.io/ssl-redirect"
-    value = var.env == "prod" ? "443" : ""
-  }
-
-  set {
-    name  = "server.ingress.annotations.alb\\.ingress\\.kubernetes\\.io/group\\.name"
-    value = "${var.project_name}-${var.env}"
-  }
-
-  set {
-    name  = "server.ingress.annotations.alb\\.ingress\\.kubernetes\\.io/certificate-arn"
-    value = var.acm_certificate_arn
-  }
-
-  # Ingress Host
-  set {
-    name  = "server.ingress.hosts[0]"
-    value = var.env == "prod" ? "argocd.un-box.click" : "argocd.${var.env}.un-box.click"
-  }
+  # Ingress 설정 (values 블록 사용으로 특수문자 파싱 문제 해결)
+  values = [
+    yamlencode({
+      server = {
+        ingress = {
+          enabled          = true
+          ingressClassName = "alb"
+          annotations = {
+            "alb.ingress.kubernetes.io/scheme"          = "internet-facing"
+            "alb.ingress.kubernetes.io/target-type"     = "ip"
+            "alb.ingress.kubernetes.io/listen-ports"    = var.env == "prod" ? "[{\"HTTP\": 80}, {\"HTTPS\": 443}]" : "[{\"HTTP\": 80}]"
+            "alb.ingress.kubernetes.io/ssl-redirect"    = var.env == "prod" ? "443" : ""
+            "alb.ingress.kubernetes.io/group.name"      = "${var.project_name}-${var.env}"
+            "alb.ingress.kubernetes.io/certificate-arn" = var.acm_certificate_arn
+          }
+          hosts = [
+            var.env == "prod" ? "argocd.un-box.click" : "argocd.${var.env}.un-box.click"
+          ]
+        }
+      }
+    })
+  ]
 
   depends_on = [
     aws_eks_node_group.main

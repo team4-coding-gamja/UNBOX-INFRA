@@ -34,6 +34,11 @@ module "security_group" {
   project_name   = var.project_name
   vpc_id         = module.vpc.vpc_id
   service_config = local.service_config
+  extra_service_config = {
+    "argocd"   = 8080
+    "grafana"  = 3000
+    "rollouts" = 3100
+  }
 }
 
 module "common" {
@@ -179,30 +184,32 @@ resource "aws_ssm_parameter" "acm_certificate_arn" {
   depends_on = [aws_acm_certificate_validation.dev]
 }
 
-# Route53 DNS 레코드는 ALB 생성 후 수동으로 추가
-# module "route53" {
-#   count            = var.enable_alb ? 1 : 0
-#   source           = "../../modules/route53"
-#   domain_name      = "dev.un-box.click"
-#   hosted_zone_name = "un-box.click"
-#   project_name     = var.project_name
-#   alb_dns_name     = data.aws_lb.ingress[0].dns_name
-#   alb_zone_id      = data.aws_lb.ingress[0].zone_id
-# }
+# Ingress가 생성한 ALB 찾기 (ALB 생성 후에만 사용 가능)
+data "aws_lb" "ingress" {
+  count = var.enable_alb ? 1 : 0
+  tags = {
+    "ingress.k8s.aws/stack" = "unbox-dev"
+  }
+}
 
-# # Grafana DNS 레코드 추가 (Ingress 연결)
-# resource "aws_route53_record" "grafana" {
-#   count   = var.enable_alb ? 1 : 0
-#   zone_id = module.route53[0].zone_id
-#   name    = "grafana.dev.un-box.click"
-#   type    = "A"
-#
-#   alias {
-#     name                   = data.aws_lb.ingress[0].dns_name
-#     zone_id                = data.aws_lb.ingress[0].zone_id
-#     evaluate_target_health = true
-#   }
-# }
+data "aws_route53_zone" "main" {
+  count = var.enable_alb ? 1 : 0
+  name  = "un-box.click"
+}
+
+# Route53 Alias Records for Subdomains (Dev)
+resource "aws_route53_record" "subdomains" {
+  for_each = var.enable_alb ? toset(["argocd", "grafana", "rollouts", "dev"]) : []
+  zone_id  = data.aws_route53_zone.main[0].zone_id
+  name     = each.key == "dev" ? "dev.un-box.click" : "${each.key}.dev.un-box.click"
+  type     = "A"
+
+  alias {
+    name                   = data.aws_lb.ingress[0].dns_name
+    zone_id                = data.aws_lb.ingress[0].zone_id
+    evaluate_target_health = true
+  }
+}
 
 module "eks" {
   source = "../../modules/eks"

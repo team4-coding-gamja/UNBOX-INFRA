@@ -29,6 +29,11 @@ module "security_group" {
   project_name   = var.project_name
   vpc_id         = module.vpc.vpc_id
   service_config = local.service_config
+  extra_service_config = {
+    "argocd"   = 8080
+    "grafana"  = 3000
+    "rollouts" = 3100 # Added for consistency if needed
+  }
 }
 
 module "common" {
@@ -103,12 +108,12 @@ data "aws_lb" "ingress" {
   }
 }
 
-# Route53 Alias Record (ALB 연결)
-resource "aws_route53_record" "www" {
-  count   = var.enable_alb ? 1 : 0
-  zone_id = data.aws_route53_zone.main.zone_id
-  name    = "un-box.click"
-  type    = "A"
+# Route53 Alias Records for Subdomains
+resource "aws_route53_record" "subdomains" {
+  for_each = var.enable_alb ? toset(["argocd", "grafana", "rollouts"]) : []
+  zone_id  = data.aws_route53_zone.main.zone_id
+  name     = "${each.key}.un-box.click"
+  type     = "A"
 
   alias {
     name                   = data.aws_lb.ingress[0].dns_name

@@ -196,6 +196,18 @@ resource "aws_security_group_rule" "alb_egress_to_node" {
   source_security_group_id = aws_security_group.eks_node.id
 }
 
+# ALB -> Extra Services (ArgoCD, Grafana, etc.)
+resource "aws_security_group_rule" "alb_egress_to_extra_services" {
+  for_each                 = var.extra_service_config
+  type                     = "egress"
+  from_port                = each.value
+  to_port                  = each.value
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.alb.id
+  source_security_group_id = aws_security_group.eks_node.id
+  description              = "Allow ALB to access ${each.key} (Port ${each.value})"
+}
+
 resource "aws_security_group_rule" "app_egress_all" {
   for_each          = var.service_config
   type              = "egress"
@@ -226,6 +238,18 @@ resource "aws_security_group_rule" "eks_node_ingress_from_alb_pods" {
   protocol                 = "tcp"
   security_group_id        = aws_security_group.eks_node.id
   source_security_group_id = aws_security_group.alb.id
+}
+
+# EKS Node Inbound (From ALB - Extra Services)
+resource "aws_security_group_rule" "eks_node_ingress_from_alb_extra" {
+  for_each                 = var.extra_service_config
+  type                     = "ingress"
+  from_port                = each.value
+  to_port                  = each.value
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.eks_node.id
+  source_security_group_id = aws_security_group.alb.id
+  description              = "Allow ALB to access ${each.key} pods (Port ${each.value})"
 }
 
 # EKS Node Inbound (Self - for pod-to-pod communication)
