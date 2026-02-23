@@ -1,6 +1,9 @@
 # 기본적으로 Linkerd는 끔 (필요하면 켬)
 linkerd:
   enabled: false
+  proxy:
+    cpuRequest: "50m"
+    memoryRequest: "64Mi"
 
 # 기본 이미지 설정 (각 서비스별로 오버라이드)
 image:
