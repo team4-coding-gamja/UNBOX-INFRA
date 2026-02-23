@@ -37,7 +37,7 @@ spec:
   role: unbox-prod-karpenter-node
   subnetSelectorTerms:
     - tags:
-        kubernetes.io/cluster/unbox-cluster: shared
+        kubernetes.io/cluster/unbox-cluster-prod: shared
         kubernetes.io/role/internal-elb: "1"
   securityGroupSelectorTerms:
     - tags:
