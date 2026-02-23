@@ -12,10 +12,22 @@ spec:
   project: default
   sources:
     - repoURL: public.ecr.aws/karpenter
+      chart: karpenter-crd
+      targetRevision: 1.0.8
+      helm:
+        releaseName: karpenter-crd
+        values: |
+          webhook:
+            enabled: true
+            serviceName: karpenter
+            serviceNamespace: karpenter
+            port: 8443
+    - repoURL: public.ecr.aws/karpenter
       chart: karpenter
       targetRevision: 1.0.8
       helm:
         releaseName: karpenter
+        skipCrds: true
         values: |
           serviceAccount:
             name: karpenter
