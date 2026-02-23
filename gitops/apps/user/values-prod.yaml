@@ -1,6 +1,11 @@
 # User Service - Prod Environment
 appName: user-service
 replicaCount: 2
+hpa:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
 image:
   repository: 632941626317.dkr.ecr.ap-northeast-2.amazonaws.com/unbox-dev-user-repo
   tag: dev-1d06338785a21ff9f2e541a478df647a5f119fb6
