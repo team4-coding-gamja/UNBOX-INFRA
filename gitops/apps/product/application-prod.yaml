@@ -20,6 +20,12 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: unbox-prod
+  ignoreDifferences:
+    - group: argoproj.io
+      kind: Rollout
+      name: product-service
+      jsonPointers:
+        - /spec/replicas
   syncPolicy:
     automated:
       prune: true

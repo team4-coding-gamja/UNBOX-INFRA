@@ -26,6 +26,7 @@ hpa:
   maxReplicas: 10
   targetCPUUtilizationPercentage: 70
   targetMemoryUtilizationPercentage: null
+  behavior: {}
 
 # 기본 리소스 (작게)
 resources:
