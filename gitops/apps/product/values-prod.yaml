@@ -111,15 +111,15 @@ rollout:
     enabled: true
     path: "/product/actuator/health"
     periodSeconds: 10
-    timeoutSeconds: 5
+    timeoutSeconds: 10
     startupProbe:
-      failureThreshold: 60
+      failureThreshold: 90
       periodSeconds: 10
-      timeoutSeconds: 5
+      timeoutSeconds: 10
     livenessProbe:
-      failureThreshold: 6
+      failureThreshold: 10
     readinessProbe:
-      failureThreshold: 6
+      failureThreshold: 10
       
   # Dev와 동일: 자동 승인
   blueGreen:
