@@ -106,10 +106,10 @@ rollout:
       failureThreshold: 60
       periodSeconds: 10
       
-  # Prod는 Auto Promotion 비활성화 (수동 승인)
+  # Dev와 동일: 자동 승인
   blueGreen:
-    autoPromotionEnabled: false
-    autoPromotionSeconds: 600
-    scaleDownDelaySeconds: 300
+    autoPromotionEnabled: true
+    autoPromotionSeconds: 30
+    scaleDownDelaySeconds: 30
     activeService: order-service
     previewService: order-service-preview
