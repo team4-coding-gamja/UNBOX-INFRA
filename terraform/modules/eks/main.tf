@@ -172,6 +172,13 @@ locals {
     username = "system:node:{{EC2PrivateDNSName}}"
     groups   = ["system:bootstrappers", "system:nodes"]
   }
+
+  # Karpenter-provisioned nodes must also be mapped in aws-auth to register.
+  karpenter_node_role_map = var.enable_karpenter ? [{
+    rolearn  = aws_iam_role.karpenter_node[0].arn
+    username = "system:node:{{EC2PrivateDNSName}}"
+    groups   = ["system:bootstrappers", "system:nodes"]
+  }] : []
 }
 
 resource "kubernetes_config_map" "aws_auth" {
@@ -181,7 +188,7 @@ resource "kubernetes_config_map" "aws_auth" {
   }
 
   data = {
-    mapRoles = yamlencode(concat([local.node_role_map], var.aws_auth_roles))
+    mapRoles = yamlencode(concat([local.node_role_map], local.karpenter_node_role_map, var.aws_auth_roles))
     mapUsers = yamlencode(var.aws_auth_users)
   }
 
