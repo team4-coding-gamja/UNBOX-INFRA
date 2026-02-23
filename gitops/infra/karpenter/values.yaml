@@ -1,40 +1,26 @@
-# gitops/infra/karpenter/values.yaml
-# Karpenter Helm Chart Configuration
-
 serviceAccount:
   name: karpenter
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::632941626317:role/unbox-prod-karpenter-controller
 
 settings:
   clusterName: unbox-cluster-prod
-  
-serviceMonitor:
-  enabled: false  # Prometheus ServiceMonitor (optional)
 
-# Pod disruption budget
 podDisruptionBudget:
   maxUnavailable: 1
 
-# Resource requests/limits
+replicas: 2
+
 resources:
   requests:
     cpu: 100m
     memory: 128Mi
   limits:
-    cpu: 200m
-    memory: 256Mi
+    cpu: 500m
+    memory: 512Mi
 
-# Replicas for HA
-replicas: 2
-
-# Enable webhook
 webhook:
   enabled: true
   port: 8443
 
-# Log level
-logLevel: debug
-
-# Feature gates for K8s 1.35 compatibility
-featureGates:
-  driftEnabled: true
-  spotToSpotConsolidation: true
+logLevel: info
