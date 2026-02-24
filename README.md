@@ -2,6 +2,7 @@
 
 UNBOX 인프라(IaC) 관리 저장소입니다.  
 AWS 인프라는 Terraform으로 관리하고, Kubernetes 리소스는 GitOps 매니페스트로 관리합니다.
+<img width="2523" height="1843" alt="찐찐막prod drawio" src="https://github.com/user-attachments/assets/e165a0ec-45df-4127-bebf-208cd9fa59a2" />
 
 ## Repository Structure
 
