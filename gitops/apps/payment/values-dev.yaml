@@ -2,7 +2,7 @@
 appName: payment-service
 replicaCount: 1
 annotations:
-  reloadTimestamp: "2026-02-25-02-37" # 시나리오2: 50% 에러율 롤백 테스트 시작
+  reloadTimestamp: "2026-02-25-02-47" # 시나리오2: 50% 에러율 롤백 테스트 - 최종
 image:
   repository: 632941626317.dkr.ecr.ap-northeast-2.amazonaws.com/unbox-dev-payment-repo
   tag: dev-4426714b8be1132f1c0f2b3b28edd392d1a6ccb9
