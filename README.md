@@ -34,19 +34,16 @@ unbox-infra/
 ## Infra Overview
 
 - Network: VPC + Public/Private/Data 서브넷
-- Compute: EKS (dev/prod), 일부 워크로드 Fargate 사용 가능
-- Data: RDS, Redis, MSK
+- Compute: EKS (dev/prod)
+- Data: RDS, Redis
 - Edge/DNS: ALB, Route53, ACM
-- Security/Common: IAM, KMS, S3, SSM, Secrets Manager, CloudWatch, CloudTrail
+- Security/Common: IAM, KMS, S3, SSM, Secrets Manager, CloudTrail
 
 ## Prerequisites
 
 - Terraform `v1.5+`
 - AWS CLI 인증 완료
 - 환경별 변수 파일 준비 (`terraform/environments/{env}/terraform.tfvars`)
-
-주의:
-- `terraform.tfvars` 는 Git에 커밋하지 않습니다.
 
 ## Terraform Workflow
 
