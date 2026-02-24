@@ -177,9 +177,7 @@ unbox-infra/
 3. Kubernetes Secret(`db-secret` 등) 생성/갱신
 4. 앱 Deployment/Rollout이 SecretKeyRef로 주입
 
-주의:
 - 환경별 경로(`/unbox/dev/...`, `/unbox/prod/...`)를 혼용하면 주입 실패 원인
-- secret path 하드코딩은 최대한 제거하고 values 기반 템플릿 사용 권장
 
 ## 7. 트래픽/네트워킹 경로
 
@@ -189,11 +187,6 @@ unbox-infra/
 서비스 메시 흐름(Linkerd 사용 시):
 - Pod <-> Pod 트래픽에 sidecar proxy 개입
 - mTLS/메트릭/트래픽 제어(특히 Rollout canary traffic split) 지원
-
-현재 구조에서 고려할 점:
-- prod는 서비스별 ingress가 이미 활성화된 앱이 많음
-- 별도 ingress-gateway와 중복 시 라우팅/운영 복잡도 증가 가능
-- 환경별로 단일 ingress 전략(centralized vs service-owned) 통일 권장
 
 ## 8. 관측(Observability) 구조
 
@@ -209,7 +202,7 @@ unbox-infra/
 서비스 메시 레벨:
 - Linkerd 메트릭을 Prometheus로 수집하면 Grafana에서 통신 지표 시각화 가능
 
-## 9. 배포 절차(실무 권장 순서)
+## 9. 배포 절차(권장 순서)
 
 ### Step 0. Bootstrap (최초 1회/변경 시)
 
@@ -267,6 +260,3 @@ kubectl apply -f argocd/prod-bundle.yaml          # prod
 - README와 실제 배포 분기/브랜치 정책(`targetRevision`) 정합성 유지
 
 ---
-
-필요하면 이 README를 기준으로,
-"신규 멤버 온보딩용 문서(첫 배포/장애대응/롤백 절차)" 버전으로 더 세분화해서 분리할 수 있습니다.
