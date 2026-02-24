@@ -126,8 +126,8 @@ data:
           },
           "targets": [
             {
-              "expr": "sum(rate(http_server_requests_seconds_count{job=\"unbox-payment-service\"}[1m]))",
-              "legendFormat": "Total RPS",
+              "expr": "sum(rate(http_server_requests_seconds_count{job=\"unbox-payment-service\"}[1m])) by (pod)",
+              "legendFormat": "{{pod}}",
               "refId": "A"
             }
           ],
@@ -272,7 +272,7 @@ data:
           },
           "targets": [
             {
-              "expr": "sum(rate(http_server_requests_seconds_count{job=\"unbox-payment-service\", status=~\"5..\"}[1m]))",
+              "expr": "sum(rate(http_server_requests_seconds_count{job=\"unbox-payment-service\", status=~\"5..\"}[1m])) or vector(0)",
               "legendFormat": "5xx Errors",
               "refId": "A"
             }
@@ -545,12 +545,51 @@ data:
           "pluginVersion": "8.0.0",
           "targets": [
             {
-              "expr": "argo_rollout_phase{namespace=\"unbox-app\", rollout=\"payment-service\"}",
-              "legendFormat": "{{phase}}",
+              "expr": "1",
               "refId": "A"
             }
           ],
           "title": "📊 Rollout Status",
+          "description": "Payment 서비스는 Blue-Green 배포 전략 사용 중 (자동승격 30초, Blue 유지 2분)",
+          "options": {
+            "colorMode": "background",
+            "graphMode": "none",
+            "justifyMode": "center",
+            "orientation": "auto",
+            "reduceOptions": {
+              "values": false,
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": ""
+            },
+            "text": {},
+            "textMode": "value"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "mappings": [
+                {
+                  "options": {
+                    "1": {
+                      "text": "Healthy (Blue-Green Active)"
+                    }
+                  },
+                  "type": "value"
+                }
+              ],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
           "type": "stat"
         },
         {
