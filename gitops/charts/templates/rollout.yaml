@@ -126,6 +126,24 @@ spec:
       autoPromotionSeconds: {{ .Values.rollout.blueGreen.autoPromotionSeconds }}
       {{- end }}
       scaleDownDelaySeconds: {{ .Values.rollout.blueGreen.scaleDownDelaySeconds }}
+      {{- if .Values.rollout.blueGreen.prePromotionAnalysis }}
+      {{- if .Values.rollout.blueGreen.prePromotionAnalysis.enabled }}
+      prePromotionAnalysis:
+        templates:
+        {{- range .Values.rollout.blueGreen.prePromotionAnalysis.templates }}
+        - templateName: {{ .templateName }}
+        {{- end }}
+      {{- end }}
+      {{- end }}
+      {{- if .Values.rollout.blueGreen.postPromotionAnalysis }}
+      {{- if .Values.rollout.blueGreen.postPromotionAnalysis.enabled }}
+      postPromotionAnalysis:
+        templates:
+        {{- range .Values.rollout.blueGreen.postPromotionAnalysis.templates }}
+        - templateName: {{ .templateName }}
+        {{- end }}
+      {{- end }}
+      {{- end }}
   {{- else if eq .Values.rollout.strategy "canary" }}
   strategy:
     canary:
