@@ -4,7 +4,7 @@ resource "aws_ssm_parameter" "rds_endpoints" {
   name        = "/${var.project_name}/${var.env}/rds/${each.key}/endpoint"
   description = "Endpoint for RDS instance ${each.key}"
   type        = "String"
-  value       = "jdbc:postgresql://${module.rds.db_endpoints["common"]}/unbox_db"
+  value       = module.rds.db_endpoints["common"]
 
   tags = {
     Environment = var.env
@@ -52,20 +52,6 @@ resource "aws_ssm_parameter" "kafka_endpoint" {
   }
 }
 
-resource "aws_ssm_parameter" "target_group_arns" {
-  for_each = local.service_config
-
-  name        = "/${var.project_name}/${var.env}/tg/${each.key}/arn"
-  description = "Target Group ARN for ${each.key} service"
-  type        = "String"
-  value       = module.alb.target_group_arns[each.key]
-
-  tags = {
-    Environment = var.env
-    Project     = var.project_name
-    Service     = each.key
-  }
-}
 
 resource "aws_ssm_parameter" "toss_secret_key" {
   name        = "/${var.project_name}/${var.env}/common/TOSS_SECRET_KEY"

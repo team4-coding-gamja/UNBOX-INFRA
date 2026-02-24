@@ -1,0 +1,58 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: karpenter-prod
+  namespace: argocd
+  labels:
+    component: cluster-autoscaling
+    env: prod
+  annotations:
+    argocd.argoproj.io/sync-wave: "-5"
+spec:
+  project: default
+  sources:
+    - repoURL: public.ecr.aws/karpenter
+      chart: karpenter-crd
+      targetRevision: 1.0.8
+      helm:
+        releaseName: karpenter-crd
+        values: |
+          webhook:
+            enabled: true
+            serviceName: karpenter
+            serviceNamespace: karpenter
+            port: 8443
+    - repoURL: public.ecr.aws/karpenter
+      chart: karpenter
+      targetRevision: 1.0.8
+      helm:
+        releaseName: karpenter
+        skipCrds: true
+        values: |
+          serviceAccount:
+            name: karpenter
+          settings:
+            clusterName: unbox-cluster-prod
+          replicas: 2
+          logLevel: info
+          webhook:
+            enabled: true
+        valueFiles:
+          - $values/gitops/infra/karpenter/values.yaml
+    - repoURL: https://github.com/team4-coding-gamja/UNBOX-INFRA.git
+      targetRevision: feat/ArgoCD-dev
+      ref: values
+      path: gitops/infra/karpenter
+      directory:
+        recurse: true
+        include: "provisioner.yaml"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: karpenter
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+  revisionHistoryLimit: 3

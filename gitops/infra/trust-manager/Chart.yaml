@@ -1,0 +1,10 @@
+apiVersion: v2
+name: trust-manager-wrapper
+description: A wrapper chart for trust-manager to include custom Bundles
+type: application
+version: 0.1.0
+appVersion: "0.7.0"
+dependencies:
+  - name: trust-manager
+    version: "0.7.0"
+    repository: "https://charts.jetstack.io"

@@ -1,6 +1,32 @@
 # 기본적으로 Linkerd는 끔 (필요하면 켬)
 linkerd:
   enabled: false
+  proxy:
+    cpuRequest: "50m"
+    memoryRequest: "64Mi"
+
+# 기본 이미지 설정 (각 서비스별로 오버라이드)
+image:
+  repository: ""
+  tag: "latest"
+  pullPolicy: "Always"
+
+# 기본 서비스 설정
+service:
+  port: 80
+  targetPort: 8080
+
+containerPort: 8080
+replicaCount: 1
+
+# HPA 설정 (기본 비활성화)
+hpa:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: null
+  behavior: {}
 
 # 기본 리소스 (작게)
 resources:
@@ -11,13 +37,14 @@ resources:
     memory: "1024Mi"
     cpu: "1000m"
 
-# 환경변수 리스트 (비워둠)
-env: 
-  USER_SERVICE_URL: "http://user-service.unbox-app"
-  PRODUCT_SERVICE_URL: "http://product-service.unbox-app"
-  ORDER_SERVICE_URL: "http://order-service.unbox-app"
-  PAYMENT_SERVICE_URL: "http://payment-service.unbox-app"
-  TRADE_SERVICE_URL: "http://trade-service.unbox-app"
+# Ingress 설정
+ingress:
+  enabled: false
+  path: "/"
+  groupName: "unbox-dev"
+  securityGroup: "unbox-dev-alb-sg"
+
+# 환경변수 리스트 (각 서비스별 values 파일에서 오버라이드)
+env: {}
   
-  # 공통 모니터링 환경변수 (모든 앱에 적용)
-  OTEL_EXPORTER_OTLP_ENDPOINT: "http://tempo.monitoring.svc.cluster.local:4318"
+  

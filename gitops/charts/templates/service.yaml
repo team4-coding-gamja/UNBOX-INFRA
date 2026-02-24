@@ -5,6 +5,9 @@ metadata:
   labels:
     app: {{ .Values.appName }}
   annotations:
+    {{- with .Values.service.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
     # [핵심] Linkerd 서킷 브레이커 (Failure Accrual) 설정
     
     # 모드: "consecutive" (연속 실패 시 발동)
@@ -14,15 +17,49 @@ metadata:
     config.linkerd.io/failure-accrual-max-failures: "5"
     
     # 처벌: 고장 판정나면 최소 30초 동안 이 파드에는 요청을 안 보냄 (제외시킴)
-    config.linkerd.io/failure-accrual-min-backoff: "30s"
+    config.linkerd.io/failure-accrual-min-backoff: "40s"
     
     # 처벌 최대: 계속 고장나면 최대 60초까지 제외 시간 늘림
     config.linkerd.io/failure-accrual-max-backoff: "60s"
 spec:
   type: ClusterIP
   ports:
-    - name: http
+    - name: http         # ServiceMonitor가 이 이름으로 포트를 찾음
       port: 80           # 내부 통신은 무조건 80번 포트
       targetPort: {{ .Values.containerPort | default 8080 }}   # 스프링부트는 8080
   selector:
     app: {{ .Values.appName }}
+---
+{{- if and .Values.rollout.enabled (eq .Values.rollout.strategy "canary") }}
+# Canary Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.rollout.canary.canaryService }}
+  labels:
+    app: {{ .Values.appName }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 80
+      targetPort: {{ .Values.containerPort | default 8080 }}
+  selector:
+    app: {{ .Values.appName }}
+---
+# Stable Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.rollout.canary.stableService }}
+  labels:
+    app: {{ .Values.appName }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 80
+      targetPort: {{ .Values.containerPort | default 8080 }}
+  selector:
+    app: {{ .Values.appName }}
+{{- end }}

@@ -1,0 +1,108 @@
+# Trade Service - Dev Environment
+appName: trade-service
+replicaCount: 1
+image:
+  repository: 632941626317.dkr.ecr.ap-northeast-2.amazonaws.com/unbox-dev-trade-repo
+  tag: dev-de21326268a59e8e28fbc48984ef8c11285135f1
+  pullPolicy: Always
+# Ingress 활성화
+ingress:
+  enabled: false
+linkerd:
+  enabled: true # Linkerd Service Mesh 활성화
+service:
+  port: 80
+  targetPort: 8083
+  annotations:
+    alb.ingress.kubernetes.io/healthcheck-path: "/trade/actuator/health"
+containerPort: 8083
+env:
+  SERVER_PORT: "8083"
+  SERVER_SERVLET_CONTEXT_PATH: "/trade"
+  SPRING_JWT_SECRET:
+    valueFrom:
+      secretKeyRef:
+        name: db-secret
+        key: JWT_SECRET
+  DB_DRIVER_CLASS_NAME: "org.postgresql.Driver"
+  SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
+  SPRING_JPA_SHOW_SQL: "false"
+  TEST_CANARY_DEPLOYMENT: "v1" # 정상 배포
+  SPRING_DATASOURCE_URL:
+    valueFrom:
+      secretKeyRef:
+        name: db-secret
+        key: RDS_ENDPOINT
+  SPRING_DATASOURCE_USERNAME: "unbox_admin"
+  SPRING_DATASOURCE_PASSWORD:
+    valueFrom:
+      secretKeyRef:
+        name: db-secret
+        key: DB_PASSWORD
+  SPRING_DATA_REDIS_HOST:
+    valueFrom:
+      secretKeyRef:
+        name: db-secret
+        key: REDIS_ENDPOINT
+  SPRING_DATA_REDIS_PORT: "6379"
+  SPRING_DATA_REDIS_SSL: "true"
+  SPRING_DATA_REDIS_PASSWORD:
+    valueFrom:
+      secretKeyRef:
+        name: db-secret
+        key: REDIS_PASSWORD
+  SPRING_KAFKA_BOOTSTRAP_SERVERS:
+    valueFrom:
+      secretKeyRef:
+        name: db-secret
+        key: KAFKA_ENDPOINT
+  # Tracing 활성화 (Tempo)
+  MANAGEMENT_TRACING_ENABLED: "true"
+  TEMPO_OTLP_ENDPOINT: "http://tempo.monitoring.svc.cluster.local:4318/v1/traces"
+resources:
+  requests:
+    memory: "512Mi"
+    cpu: "100m"
+  limits:
+    memory: "1Gi"
+rollout:
+  enabled: true
+  strategy: "canary"
+  healthCheck:
+    enabled: true
+    path: "/trade/actuator/health"
+    periodSeconds: 10
+    startupProbe:
+      failureThreshold: 60
+      periodSeconds: 10
+  canary:
+    canaryService: trade-service-canary
+    stableService: trade-service-stable
+    steps:
+      # Step 0: 10% 트래픽 (초기 배포)
+      - setWeight: 10
+      - pause: {duration: 30s}
+      # Step 1: 25% 트래픽 (Analysis 시작)
+      - setWeight: 25
+      - pause: {duration: 30s}
+      # Step 2: 50% 트래픽
+      - setWeight: 50
+      - pause: {duration: 30s}
+      # Step 3: 75% 트래픽
+      - setWeight: 75
+      - pause: {duration: 30s}
+      # Step 4: 100% 트래픽 (완전 전환)
+      - setWeight: 100
+    maxSurge: "25%"
+    maxUnavailable: 0
+  # Analysis 설정 (자동 롤백)
+  analysis:
+    enabled: true
+    interval: "30s" # 30초마다 메트릭 체크
+    successRate: 95 # 95% 이상 성공률 요구
+    errorRate: 5 # 5% 이하 에러율 요구
+    avgResponseTime: 1000 # 1초 이하 평균 응답시간
+    failureLimit: 3 # 3번 실패 시 롤백
+    startingStep: 1 # 두 번째 단계(25% 트래픽)부터 분석 시작
+    queryRange: "5m" # 5분 범위 메트릭
+    prometheusAddress: "http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090"

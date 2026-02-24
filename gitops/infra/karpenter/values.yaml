@@ -1,0 +1,26 @@
+serviceAccount:
+  name: karpenter
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::632941626317:role/unbox-prod-karpenter-controller
+
+settings:
+  clusterName: unbox-cluster-prod
+
+podDisruptionBudget:
+  maxUnavailable: 1
+
+replicas: 2
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+webhook:
+  enabled: true
+  port: 8443
+
+logLevel: info

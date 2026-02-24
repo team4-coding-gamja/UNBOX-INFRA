@@ -14,11 +14,12 @@ output "kms_key_arn" {
 
 
 # Prod용 JWT Secret ARN (ECS 모듈에서 사용)
-output "jwt_secret_arn" {
-  description = "JWT Secret Secrets Manager ARN (Prod 환경)"
-  value       = var.env == "prod" ? aws_secretsmanager_secret.jwt_secret[0].arn : ""
-  sensitive   = false
-}
+# NOTE: Using SSM Parameter Store instead
+# output "jwt_secret_arn" {
+#   description = "JWT Secret Secrets Manager ARN (Prod 환경)"
+#   value       = var.env == "prod" ? aws_secretsmanager_secret.jwt_secret[0].arn : ""
+#   sensitive   = false
+# }
 
 output "db_password_arns" {
   value = { for k, v in data.aws_secretsmanager_secret.db_password : k => v.arn }

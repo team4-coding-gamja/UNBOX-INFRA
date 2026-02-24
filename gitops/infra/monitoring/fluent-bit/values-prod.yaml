@@ -1,0 +1,16 @@
+# gitops/infra/monitoring/fluent-bit/values-prod.yaml
+# Fluent Bit - Production Environment Override
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+tolerations:
+  - key: "dedicated"
+    operator: "Equal"
+    value: "monitoring"
+    effect: "NoSchedule"

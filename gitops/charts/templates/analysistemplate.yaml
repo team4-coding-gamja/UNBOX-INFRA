@@ -1,0 +1,94 @@
+{{- if and .Values.rollout.enabled (eq .Values.rollout.strategy "canary") .Values.rollout.analysis.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: {{ .Values.appName }}-analysis
+  labels:
+    app: {{ .Values.appName }}
+spec:
+  args:
+  - name: canary-hash
+  
+  metrics:
+  # 1. 성공률 체크
+  - name: success-rate
+    initialDelay: 30s # 30초 대기 후 시작
+    interval: {{ .Values.rollout.analysis.interval }}
+    count: 5 # 5번 측정
+    successCondition: result[0] >= {{ .Values.rollout.analysis.successRate }}
+    failureLimit: {{ .Values.rollout.analysis.failureLimit }}
+    inconclusiveLimit: 2 # 메트릭 없을 때 2번까지 허용
+    provider:
+      prometheus:
+        address: {{ .Values.rollout.analysis.prometheusAddress }}
+        query: |
+          sum(rate(
+            http_server_requests_seconds_count{
+              service="{{ .Values.appName }}",
+              rollouts_pod_template_hash="{{`{{args.canary-hash}}`}}",
+              status=~"2.."
+            }[{{ .Values.rollout.analysis.queryRange }}]
+          )) 
+          / 
+          sum(rate(
+            http_server_requests_seconds_count{
+              service="{{ .Values.appName }}",
+              rollouts_pod_template_hash="{{`{{args.canary-hash}}`}}"
+            }[{{ .Values.rollout.analysis.queryRange }}]
+          )) * 100
+  
+  # 2. 에러율 체크
+  - name: error-rate
+    initialDelay: 30s
+    interval: {{ .Values.rollout.analysis.interval }}
+    count: 5
+    successCondition: result[0] <= {{ .Values.rollout.analysis.errorRate }}
+    failureLimit: {{ .Values.rollout.analysis.failureLimit }}
+    inconclusiveLimit: 2
+    provider:
+      prometheus:
+        address: {{ .Values.rollout.analysis.prometheusAddress }}
+        query: |
+          (
+            sum(rate(
+              http_server_requests_seconds_count{
+                service="{{ .Values.appName }}",
+                rollouts_pod_template_hash="{{`{{args.canary-hash}}`}}",
+                status=~"5.."
+              }[{{ .Values.rollout.analysis.queryRange }}]
+            )) 
+            / 
+            sum(rate(
+              http_server_requests_seconds_count{
+                service="{{ .Values.appName }}",
+                rollouts_pod_template_hash="{{`{{args.canary-hash}}`}}"
+              }[{{ .Values.rollout.analysis.queryRange }}]
+            )) * 100
+          ) or vector(0)
+  
+  # 3. 평균 응답시간 체크
+  - name: avg-response-time
+    initialDelay: 30s
+    interval: {{ .Values.rollout.analysis.interval }}
+    count: 5
+    successCondition: result[0] <= {{ .Values.rollout.analysis.avgResponseTime }}
+    failureLimit: {{ .Values.rollout.analysis.failureLimit }}
+    inconclusiveLimit: 2
+    provider:
+      prometheus:
+        address: {{ .Values.rollout.analysis.prometheusAddress }}
+        query: |
+          sum(rate(
+            http_server_requests_seconds_sum{
+              service="{{ .Values.appName }}",
+              rollouts_pod_template_hash="{{`{{args.canary-hash}}`}}"
+            }[{{ .Values.rollout.analysis.queryRange }}]
+          )) 
+          / 
+          sum(rate(
+            http_server_requests_seconds_count{
+              service="{{ .Values.appName }}",
+              rollouts_pod_template_hash="{{`{{args.canary-hash}}`}}"
+            }[{{ .Values.rollout.analysis.queryRange }}]
+          )) * 1000
+{{- end }}

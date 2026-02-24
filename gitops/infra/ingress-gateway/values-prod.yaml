@@ -1,0 +1,30 @@
+# gitops/infra/ingress-gateway/values-prod.yaml
+ingress:
+  annotations:
+    alb.ingress.kubernetes.io/group.name: unbox-prod
+    # Update this ARN after Terraform apply
+    alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:ap-northeast-2:632941626317:certificate/9401b873-c5c8-4275-9b76-cb45d8f71e7e"
+
+  hosts:
+    - host: un-box.click
+      paths:
+        - path: /user
+          pathType: Prefix
+          service: user-service
+          port: 80
+        - path: /product
+          pathType: Prefix
+          service: product-service
+          port: 80
+        - path: /order
+          pathType: Prefix
+          service: order-service
+          port: 80
+        - path: /payment
+          pathType: Prefix
+          service: payment-service
+          port: 80
+        - path: /trade
+          pathType: Prefix
+          service: trade-service
+          port: 80

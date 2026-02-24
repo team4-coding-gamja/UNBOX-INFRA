@@ -2,6 +2,12 @@ data "tls_certificate" "github" {
   url = "https://token.actions.githubusercontent.com"
 }
 
+# 현재 AWS 계정 ID 조회
+data "aws_caller_identity" "current" {}
+
+# 현재 AWS Region 조회
+data "aws_region" "current" {}
+
 # ---------------------------------------------------------
 
 
@@ -316,4 +322,54 @@ resource "aws_iam_role_policy_attachment" "eks_fargate_app_policy" {
 resource "aws_iam_role_policy_attachment" "eks_node_ssm" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
   role       = aws_iam_role.eks_node.name
+}
+
+# Loki S3 IRSA Role (Prod Environment)
+resource "aws_iam_role" "loki_s3" {
+  name  = "${var.project_name}-${var.env}-loki-s3-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action = "sts:AssumeRoleWithWebIdentity"
+      Effect = "Allow"
+      Principal = {
+        Federated = var.eks_oidc_provider_arn
+      }
+      Condition = {
+        StringEquals = {
+          "${replace(var.eks_oidc_provider_arn, "/^(.*)/oidc-provider\\//", "")}:sub" = "system:serviceaccount:monitoring:loki"
+        }
+      }
+    }]
+  })
+
+  tags = {
+    Name = "${var.project_name}-${var.env}-loki-s3-role"
+  }
+}
+
+resource "aws_iam_role_policy" "loki_s3" {
+  name   = "${var.project_name}-${var.env}-loki-s3-policy"
+  role   = aws_iam_role.loki_s3.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:DeleteObject",
+        "s3:ListBucket"
+      ]
+      Resource = [
+        "arn:aws:s3:::${var.project_name}-${var.env}-data-apne2",
+        "arn:aws:s3:::${var.project_name}-${var.env}-data-apne2/*"
+      ]
+    }]
+  })
+}
+
+output "loki_role_arn" {
+  value = aws_iam_role.loki_s3.arn
 }

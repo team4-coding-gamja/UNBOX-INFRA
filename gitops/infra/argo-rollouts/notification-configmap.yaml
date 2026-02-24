@@ -1,0 +1,138 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argo-rollouts-notification-configmap
+  namespace: argo-rollouts
+data:
+  # Webhook 서비스 설정 (Discord)
+  service.webhook.discord: |
+    url: https://discord.com/api/webhooks/$discord-token
+    headers:
+    - name: Content-Type
+      value: application/json
+  
+  # Rollout Paused 알림 템플릿
+  template.rollout-paused: |
+    webhook:
+      discord:
+        method: POST
+        body: |
+          {
+            "embeds": [{
+              "title": "🚨 Payment Service 배포 승인 대기",
+              "description": "Manual Approval이 필요합니다",
+              "color": 16776960,
+              "fields": [
+                {
+                  "name": "서비스",
+                  "value": "{{.rollout.metadata.name}}",
+                  "inline": true
+                },
+                {
+                  "name": "네임스페이스",
+                  "value": "{{.rollout.metadata.namespace}}",
+                  "inline": true
+                },
+                {
+                  "name": "현재 단계",
+                  "value": "Step {{.rollout.status.currentStepIndex}}",
+                  "inline": true
+                },
+                {
+                  "name": "상태",
+                  "value": "⏸️ Paused - Manual Approval 필요",
+                  "inline": false
+                },
+                {
+                  "name": "📊 확인 사항",
+                  "value": "• Grafana 대시보드에서 메트릭 확인\n• 결제 성공/실패 건수\n• PG사별 응답 시간\n• 환불 처리 정상 여부",
+                  "inline": false
+                },
+                {
+                  "name": "✅ 승인",
+                  "value": "`kubectl argo rollouts promote {{.rollout.metadata.name}} -n {{.rollout.metadata.namespace}}`",
+                  "inline": false
+                },
+                {
+                  "name": "❌ 거부 (롤백)",
+                  "value": "`kubectl argo rollouts abort {{.rollout.metadata.name}} -n {{.rollout.metadata.namespace}}`",
+                  "inline": false
+                }
+              ]
+            }]
+          }
+  
+  # Rollout Completed 알림 템플릿
+  template.rollout-completed: |
+    webhook:
+      discord:
+        method: POST
+        body: |
+          {
+            "embeds": [{
+              "title": "✅ Payment Service 배포 완료",
+              "description": "배포가 성공적으로 완료되었습니다",
+              "color": 65280,
+              "fields": [
+                {
+                  "name": "서비스",
+                  "value": "{{.rollout.metadata.name}}",
+                  "inline": true
+                },
+                {
+                  "name": "네임스페이스",
+                  "value": "{{.rollout.metadata.namespace}}",
+                  "inline": true
+                },
+                {
+                  "name": "상태",
+                  "value": "✅ Healthy - 100% 트래픽 전환 완료",
+                  "inline": false
+                }
+              ]
+            }]
+          }
+  
+  # Rollout Aborted 알림 템플릿
+  template.rollout-aborted: |
+    webhook:
+      discord:
+        method: POST
+        body: |
+          {
+            "embeds": [{
+              "title": "❌ Payment Service 배포 중단",
+              "description": "배포가 중단되고 롤백되었습니다",
+              "color": 16711680,
+              "fields": [
+                {
+                  "name": "서비스",
+                  "value": "{{.rollout.metadata.name}}",
+                  "inline": true
+                },
+                {
+                  "name": "네임스페이스",
+                  "value": "{{.rollout.metadata.namespace}}",
+                  "inline": true
+                },
+                {
+                  "name": "상태",
+                  "value": "🔄 Rollback 완료 - 이전 버전으로 복구됨",
+                  "inline": false
+                }
+              ]
+            }]
+          }
+  
+  # 트리거 설정
+  trigger.on-rollout-paused: |
+    - when: rollout.status.phase == 'Paused'
+      send: [rollout-paused]
+  
+  trigger.on-rollout-completed: |
+    - when: rollout.status.phase == 'Healthy'
+      send: [rollout-completed]
+  
+  trigger.on-rollout-aborted: |
+    - when: rollout.status.phase == 'Degraded'
+      send: [rollout-aborted]

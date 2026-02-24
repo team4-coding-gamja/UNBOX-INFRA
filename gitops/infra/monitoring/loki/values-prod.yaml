@@ -1,0 +1,52 @@
+# gitops/infra/monitoring/loki/values-prod.yaml
+# Loki - Production Environment Override with S3
+
+loki:
+  auth_enabled: false
+  storage:
+    type: 's3'
+    bucketNames:
+      chunks: unbox-prod-data-apne2
+      admin: unbox-prod-data-apne2
+      ruler: unbox-prod-data-apne2
+    s3:
+      endpoint: s3.ap-northeast-2.amazonaws.com
+      region: ap-northeast-2
+      insecure: false
+      s3ForcePathStyle: false
+  commonConfig:
+    replication_factor: 1
+  schemaConfig:
+    configs:
+      - from: 2024-04-01
+        store: tsdb
+        object_store: s3
+        schema: v13
+        index:
+          prefix: index_
+          period: 24h
+  limits_config:
+    retention_period: 720h
+  compactor:
+    retention_enabled: true
+    delete_request_store: s3
+
+serviceAccount:
+  create: true
+  name: loki
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::632941626317:role/unbox-prod-loki-s3-role
+
+singleBinary:
+  replicas: 2  # S3 사용 가능하므로 2개 이상 띄울 수 있음
+
+# Prod: 캐시 활성화 (메모리 줄임)
+chunksCache:
+  enabled: true
+  allocatedMemory: 1024   # 1GB (단위: MB)
+  maxItemMemory: 5        # 5MB 객체 크기 제한
+
+resultsCache:
+  enabled: true
+  allocatedMemory: 512    # 512MB (단위: MB)
+  maxItemMemory: 5

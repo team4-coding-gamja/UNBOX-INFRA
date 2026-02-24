@@ -1,6 +1,6 @@
-output "alb_address" {
-  value = module.alb.alb_dns_name
-}
+# output "alb_address" {
+#   value = module.alb.alb_dns_name
+# }
 
 # VPC 정보
 output "vpc_id" {
@@ -20,4 +20,9 @@ output "redis_primary_endpoint" {
 
 output "kms_key_arn" {
   value = module.common.kms_key_arn
+}
+
+output "acm_certificate_arn" {
+  description = "ACM Certificate ARN for un-box.click"
+  value       = aws_acm_certificate.prod.arn
 }

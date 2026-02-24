@@ -72,3 +72,19 @@ monitoring:
       installOperator: false
  
 
+
+loki:
+  isDefault: false
+
+# Enable automated datasource creation
+grafana:
+  enabled: false
+  sidecar:
+    datasources:
+      enabled: true
+      label: grafana_datasource
+      labelValue: "1"
+
+promtail:
+  enabled: false
+FLUENT_BIT_ENABLED: true

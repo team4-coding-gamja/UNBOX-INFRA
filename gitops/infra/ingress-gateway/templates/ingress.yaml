@@ -1,0 +1,48 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    # Healthcheck settings per service require distinct TargetGroups. 
+    # ALB Controller merges these if they share the same backend service.
+    # Since we have multiple paths, we rely on the default or service-specific annotations
+    # BUT service-specific annotations on the Ingress resource might be ambiguous if multiple services are used.
+    # However, ALB controller supports `alb.ingress.kubernetes.io/healthcheck-path` annotation 
+    # but it applies to ALL target groups created by this Ingress unless overridden.
+    # Problem: user-service check path is /user/actuator/health, product is /product/actuator/health
+    # We cannot set a single healthcheck-path for all.
+    # Solution: We need to use `alb.ingress.kubernetes.io/healthcheck-path` on the SERVICE resource? 
+    # No, ALB controller reads annotations from Ingress and Service.
+    # We should move service-specific annotations (like healthcheck) to the SERVICE definition in the individual apps?
+    # NO, we can't easily modify the Service if it's managed by another chart unless we use `kubectl annotate`.
+    # Better approach: The Ingress resource can have multiple rules.
+    # Actually, recent ALB controller versions allow defining conditions on Ingress rules.
+    # But for health checks, it's a property of the Target Group.
+    # The Controller looks for annotations on the Service object if not found on Ingress.
+    # So, we should add `alb.ingress.kubernetes.io/healthcheck-path` to the values-dev.yaml of each APP's Service.
+    # Wait, the previous config had these annotations on the INGRESS.
+    # If we consolidate to one Ingress, we can't have conflicting annotations on the one Ingress resource.
+    # This is a key constraint.
+    # We must ensure each Service has the annotation on the Service object itself.
+    # I will document this requirement.
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  rules:
+    {{- range .Values.ingress.hosts }}
+    - host: {{ .host }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path }}
+            pathType: {{ .pathType }}
+            backend:
+              service:
+                name: {{ .service }}
+                port:
+                  number: {{ .port }}
+          {{- end }}
+    {{- end }}

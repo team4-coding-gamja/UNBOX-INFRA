@@ -1,23 +1,32 @@
-# 1. 앱 기본 정보
+# Order Service - 공통 기본값
 appName: order-service
 contextPath: /order
 replicaCount: 1
+contextPath: /order
+
 image:
-  repository: 632941626317.dkr.ecr.ap-northeast-2.amazonaws.com/unbox-dev-order-repo
+  repository: ""  # 환경별로 오버라이드
   tag: latest
   pullPolicy: Always
 
-targetGroupArn: "arn:aws:elasticloadbalancing:ap-northeast-2:632941626317:targetgroup/order-20260209233604218100000004/17004f0ae1eb94c1"
+# Ingress 설정
+ingress:
+  enabled: false
+  path: /order
+  groupName: unbox-dev
 
-# 2. 로컬이니까 Linkerd 끄기 (테스트할 때만 true)
+
+# 서비스 메시 설정
 linkerd:
-  enabled: true
+  enabled: false  # 기본값은 비활성화
+
 service:
   port: 80
   targetPort: 8084
 
 containerPort: 8084
 
+# 공통 환경변수
 env:
   SERVER_PORT: "8084"
   SERVER_SERVLET_CONTEXT_PATH: "/order"
@@ -27,31 +36,51 @@ env:
         name: db-secret
         key: JWT_SECRET
   DB_DRIVER_CLASS_NAME: "org.postgresql.Driver"
-  # DB 연결 (아까 설치한 postgres 서비스명 사용)
-  SPRING_DATASOURCE_URL: "jdbc:postgresql://unbox-dev-common-db.crmw2cqokxc4.ap-northeast-2.rds.amazonaws.com:5432/dev_db"
-  SPRING_DATASOURCE_USERNAME: "unbox_admin"
-  SPRING_DATASOURCE_PASSWORD:
-    valueFrom:
-      secretKeyRef:
-        name: db-secret
-        key: DB_PASSWORD
   SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
+  SPRING_JPA_SHOW_SQL: "false"
   
-  # (참고) SQL 쿼리 나가는 거 보고 싶으면 이것도 추가
-  SPRING_JPA_SHOW_SQL: "true"
-  # Kafka 연결 (아까 설치한 kafka 서비스명 사용)
-  SPRING_KAFKA_BOOTSTRAP_SERVERS: "kafka.unbox-infra.svc.cluster.local:9092"
-  
-  # Redis 연결 (아까 설치한 redis 서비스명 사용)
-  SPRING_DATA_REDIS_HOST: "master.unbox-dev-redis.r0vran.apn2.cache.amazonaws.com"
+  # 기본 연결 설정 (환경별로 오버라이드)
+  SPRING_DATASOURCE_URL: ""
+  SPRING_DATASOURCE_USERNAME: ""
+  SPRING_KAFKA_BOOTSTRAP_SERVERS: ""
+  SPRING_DATA_REDIS_HOST: ""
   SPRING_DATA_REDIS_PORT: "6379"
   SPRING_DATA_REDIS_SSL: "true"
-  SPRING_DATA_REDIS_PASSWORD:
-    valueFrom:
-      secretKeyRef:
-        name: db-secret
-        key: REDIS_PASSWORD
-  
-  # Zipkin 연결
-  MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: "http://zipkin.unbox-infra.svc.cluster.local:9411/api/v2/spans"
+  # SPRING_DATA_REDIS_PASSWORD: "1234"
+  MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: ""
   TEMPO_OTLP_ENDPOINT: "http://tempo.monitoring.svc.cluster.local:4318/v1/traces"
+  USER_SERVICE_URL: "http://user-service.unbox-app"
+  PRODUCT_SERVICE_URL: "http://product-service.unbox-app"
+  ORDER_SERVICE_URL: "http://order-service.unbox-app"
+  PAYMENT_SERVICE_URL: "http://payment-service.unbox-app"
+  TRADE_SERVICE_URL: "http://trade-service.unbox-app"
+
+# 리소스 제한 (기본값)
+resources:
+  requests:
+    memory: "512Mi"
+    cpu: "500m"
+  limits:
+    memory: "1024Mi"
+    cpu: "1000m"
+
+# Argo Rollouts 설정
+rollout:
+  enabled: false  # 기본적으로 비활성화 (환경별로 활성화)
+  strategy: "blueGreen"  # Order는 Blue/Green 전략
+  
+  # Health Check 설정
+  healthCheck:
+    enabled: true
+    path: "/actuator/health"
+    initialDelaySeconds: 30
+    periodSeconds: 10
+  
+  # Blue/Green 전략 설정
+  blueGreen:
+    autoPromotionEnabled: false  # 수동 승인 필요
+    autoPromotionSeconds: 600    # 10분 후 자동 전환
+    scaleDownDelaySeconds: 300   # 5분 후 이전 버전 삭제
+  # Feature Flag 설정
+  featureFlag:
+    enabled: false

@@ -1,0 +1,3 @@
+env: dev
+namespace: unbox-app
+dbName: dev_db

@@ -1,0 +1,7 @@
+# gitops/infra/kafka/values-prod.yaml
+replicaCount: 3
+
+server:
+  properties:
+    # Prod tuning if needed
+    log.retention.hours: 72

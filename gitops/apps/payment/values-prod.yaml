@@ -1,0 +1,151 @@
+# Payment Service - Prod Environment
+appName: payment-service
+replicaCount: 2
+hpa:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+image:
+  repository: 632941626317.dkr.ecr.ap-northeast-2.amazonaws.com/unbox-dev-payment-repo
+  tag: dev-5793a655772035339182e1010e369ec3b920bfe8
+  pullPolicy: Always
+
+# Ingress 활성화 (Dev와 동일하게 설정하되 enabled는 false)
+ingress:
+  enabled: true
+  host: "un-box.click"
+  groupName: "unbox-prod"
+  securityGroup: "unbox-prod-alb-sg"
+
+# Linkerd Service Mesh (Prod는 현재 이슈로 인해 비활성화)
+linkerd:
+  enabled: true
+
+service:
+  port: 80
+  targetPort: 8085
+  annotations:
+    alb.ingress.kubernetes.io/healthcheck-path: "/payment/actuator/health"
+
+containerPort: 8085
+
+env:
+  SERVER_PORT: "8085"
+  SERVER_SERVLET_CONTEXT_PATH: "/payment"
+  
+  SPRING_JWT_SECRET:
+    valueFrom:
+      secretKeyRef:
+        name: db-secret
+        key: JWT_SECRET
+  
+  # Prod Application이 요구하는 환경변수명 (DB_URL, DB_USERNAME, DB_PASSWORD)
+  DB_DRIVER_CLASS_NAME: "org.postgresql.Driver"
+  SPRING_JPA_HIBERNATE_DDL_AUTO: "update"  # 초기 배포용 update
+  SPRING_JPA_SHOW_SQL: "false"
+
+  # Base values.yaml의 빈 값 오버라이드 (올바른 값으로 설정)
+  SPRING_DATASOURCE_URL:
+    valueFrom:
+      secretKeyRef:
+        name: db-secret
+        key: PAYMENT_RDS_ENDPOINT
+  SPRING_DATASOURCE_USERNAME: "unbox_admin"
+  
+  DB_URL:
+    valueFrom:
+      secretKeyRef:
+        name: db-secret
+        key: PAYMENT_RDS_ENDPOINT
+        
+  DB_USERNAME: "unbox_admin"
+  
+  DB_PASSWORD:
+    valueFrom:
+      secretKeyRef:
+        name: db-secret
+        key: PAYMENT_DB_PASSWORD
+
+  # Redis (Prod Endpoint)
+  SPRING_DATA_REDIS_HOST: "master.unbox-prod-redis.r0vran.apn2.cache.amazonaws.com"
+  SPRING_DATA_REDIS_PORT: "6379"
+  SPRING_DATA_REDIS_SSL: "true"
+  SPRING_DATA_REDIS_PASSWORD:
+    valueFrom:
+      secretKeyRef:
+        name: db-secret
+        key: REDIS_PASSWORD
+
+  # Kafka (Prod Endpoint)
+  SPRING_KAFKA_BOOTSTRAP_SERVERS: "kafka.unbox-infra.svc.cluster.local:9092"
+  
+  # Tracing (Tempo/Zipkin)
+  MANAGEMENT_TRACING_ENABLED: "true"
+  TEMPO_OTLP_ENDPOINT: "http://tempo.monitoring.svc.cluster.local:4318/v1/traces"
+  MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: "http://zipkin.unbox-infra.svc.cluster.local:9411/api/v2/spans"
+
+  # Toss Payments
+  TOSS_SECRET_KEY:
+    valueFrom:
+      secretKeyRef:
+        name: db-secret
+        key: TOSS_SECRET_KEY
+  TOSS_SECURITY_KEY:
+    valueFrom:
+      secretKeyRef:
+        name: db-secret
+        key: TOSS_SECURITY_KEY
+
+resources:
+  requests:
+    memory: "512Mi"
+    cpu: "250m"
+  limits:
+    memory: "1Gi"
+    cpu: "500m"
+
+# Rollout 설정 (Prod: Canary + Manual Approval)
+rollout:
+  enabled: true
+  strategy: "canary"
+  
+  # Notification 설정 (Discord 알림)
+  notifications:
+    - trigger: rollout-paused
+      send:
+        - discord
+    - trigger: rollout-completed
+      send:
+        - discord
+    - trigger: rollout-aborted
+      send:
+        - discord
+  
+  healthCheck:
+    enabled: true
+    path: "/payment/actuator/health"
+    periodSeconds: 10
+    startupProbe:
+      failureThreshold: 60
+      periodSeconds: 10
+  
+  canary:
+    steps:
+      - setWeight: 1
+      - pause:
+          duration: 30s
+      - pause: {}  # Manual Approval
+      - setWeight: 10
+      - pause:
+          duration: 30s
+      - setWeight: 30
+      - pause:
+          duration: 30s
+      - setWeight: 50
+      - pause:
+          duration: 30s
+      - setWeight: 100
+  
+  analysis:
+    enabled: false

@@ -23,3 +23,4 @@ variable "alb_zone_id" {
   description = "ALB의 Hosted Zone ID"
   type        = string
 }
+

@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: linkerd-smi-prod
+  namespace: argocd
+  labels:
+    type: infrastructure
+    component: service-mesh-smi
+    env: prod
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: default
+  source:
+    repoURL: https://linkerd.github.io/linkerd-smi
+    chart: linkerd-smi
+    targetRevision: 1.0.4
+    helm:
+      releaseName: linkerd-smi
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: linkerd-smi
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - Replace=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

@@ -10,7 +10,7 @@ locals {
 data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 data "aws_kms_alias" "infra_key" {
-  name = "alias/${var.project_name}/${var.env}/main-key"
+  name = "alias/${var.project_name}/dev/main-key" # Using shared dev KMS key
 }
 
 module "vpc" {
@@ -20,29 +20,36 @@ module "vpc" {
   project_name       = var.project_name
   nat_sg_id          = module.security_group.nat_sg_id
   availability_zones = var.availability_zones
-  cluster_name       = "unbox-cluster"
+  cluster_name       = "unbox-cluster-prod"
 }
 
 module "security_group" {
-  source       = "../../modules/security_group"
-  env          = var.env
-  project_name = var.project_name
-  vpc_id       = module.vpc.vpc_id
+  source         = "../../modules/security_group"
+  env            = var.env
+  project_name   = var.project_name
+  vpc_id         = module.vpc.vpc_id
+  service_config = local.service_config
+  extra_service_config = {
+    "argocd"   = 8080
+    "grafana"  = 3000
+    "rollouts" = 3100 # Added for consistency if needed
+  }
 }
 
 module "common" {
-  source                 = "../../modules/common"
-  env                    = var.env
-  project_name           = var.project_name
-  service_config         = local.service_config
-  vpc_id                 = module.vpc.vpc_id
-  cloudtrail_bucket_id   = module.s3.cloudtrail_bucket_id
-  users                  = var.users
-  kms_key_arn            = data.aws_kms_alias.infra_key.target_key_arn
-  alb_arn                = module.alb.alb_arn
-  private_app_subnet_ids = module.vpc.private_app_subnet_ids
-  app_sg_ids             = module.security_group.app_sg_ids
-  aws_region             = var.aws_region
+  source                  = "../../modules/common"
+  env                     = var.env
+  project_name            = var.project_name
+  service_config          = local.service_config
+  vpc_id                  = module.vpc.vpc_id
+  cloudtrail_bucket_id    = module.s3.cloudtrail_bucket_id
+  users                   = var.users
+  kms_key_arn             = data.aws_kms_alias.infra_key.target_key_arn
+  private_app_subnet_ids  = module.vpc.private_app_subnet_ids
+  app_sg_ids              = module.security_group.app_sg_ids
+  aws_region              = var.aws_region
+  eks_oidc_provider_arn   = local.eks_oidc_provider_arn
+  eks_cluster_name        = "unbox-cluster-prod"
 }
 
 module "s3" {
@@ -52,18 +59,6 @@ module "s3" {
   kms_key_arn  = module.common.kms_key_arn
 }
 
-module "alb" {
-  source            = "../../modules/alb"
-  env               = var.env
-  project_name      = var.project_name
-  vpc_id            = module.vpc.vpc_id
-  public_subnet_ids = module.vpc.public_subnet_ids
-  alb_sg_id         = module.security_group.alb_sg_id # 아까 만든 보안 그룹 ID
-  service_config    = local.service_config
-  certificate_arn   = module.route53.certificate_arn
-  enable_https      = true
-  logs_bucket_id    = module.s3.logs_bucket_id
-}
 
 data "aws_ssm_parameter" "db_password" {
   # common 모듈 배포 후에 값이 수동으로 채워져 있어야 합니다.
@@ -107,12 +102,26 @@ module "redis" {
 
 
 
-module "route53" {
-  source       = "../../modules/route53"
-  domain_name  = "un-box.click"
-  project_name = var.project_name
-  alb_dns_name = module.alb.alb_dns_name
-  alb_zone_id  = module.alb.alb_zone_id
+# Ingress Controller가 생성한 ALB 찾기
+data "aws_lb" "ingress" {
+  count = var.enable_alb ? 1 : 0
+  tags = {
+    "ingress.k8s.aws/stack" = "unbox-prod" # Ingress groupName에 할당된 태그
+  }
+}
+
+# Route53 Alias Records for Subdomains
+resource "aws_route53_record" "subdomains" {
+  for_each = var.enable_alb ? toset(["argocd", "grafana", "rollouts", "www", ""]) : []
+  zone_id  = data.aws_route53_zone.main.zone_id
+  name     = each.key == "" ? "un-box.click" : "${each.key}.un-box.click"
+  type     = "A"
+
+  alias {
+    name                   = data.aws_lb.ingress[0].dns_name
+    zone_id                = data.aws_lb.ingress[0].zone_id
+    evaluate_target_health = true
+  }
 }
 
 module "eks" {
@@ -120,7 +129,7 @@ module "eks" {
 
   project_name = var.project_name
   env          = var.env
-  cluster_name = "unbox-cluster"
+  cluster_name = "unbox-cluster-prod"
 
   vpc_id     = module.vpc.vpc_id
   subnet_ids = module.vpc.private_app_subnet_ids
@@ -138,6 +147,10 @@ module "eks" {
   node_role_arn            = module.common.eks_node_role_arn
   fargate_profile_role_arn = module.common.eks_fargate_role_arn
   kms_key_arn              = module.common.kms_key_arn
+
+  enable_karpenter       = var.enable_karpenter
+  node_security_group_id = module.security_group.eks_node_sg_id
+  acm_certificate_arn    = aws_acm_certificate.prod.arn
 }
 
 # [Fix] EKS Cluster -> RDS Security Group Rule (Avoid Cyclic Dependency)
@@ -149,5 +162,95 @@ resource "aws_security_group_rule" "rds_ingress_from_eks_cluster" {
   protocol                 = "tcp"
   security_group_id        = module.security_group.rds_sg_ids[each.key]
   source_security_group_id = module.eks.cluster_security_group_id
-  description              = "Allow EKS Cluster Nodes to access RDS"
+  description              = "Allow EKS Cluster Control Plane to access RDS"
+}
+
+# [Fix] EKS Worker Nodes -> RDS Security Group Rule
+resource "aws_security_group_rule" "rds_ingress_from_eks_nodes" {
+  for_each                 = local.service_config
+  type                     = "ingress"
+  from_port                = 5432
+  to_port                  = 5432
+  protocol                 = "tcp"
+  security_group_id        = module.security_group.rds_sg_ids[each.key]
+  source_security_group_id = module.security_group.eks_node_sg_id
+  description              = "Allow EKS Worker Nodes to access RDS"
+}
+
+# ========================================
+# ACM Certificate for Ingress Gateway
+# ========================================
+
+data "aws_route53_zone" "main" {
+  name         = "un-box.click"
+  private_zone = false
+}
+
+resource "aws_acm_certificate" "prod" {
+  domain_name       = "un-box.click"
+  validation_method = "DNS"
+
+  subject_alternative_names = ["*.un-box.click"]
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  tags = {
+    Name = "${var.project_name}-prod-acm-cert"
+  }
+}
+
+resource "aws_route53_record" "cert_validation" {
+  for_each = {
+    for dvo in aws_acm_certificate.prod.domain_validation_options : dvo.domain_name => {
+      name   = dvo.resource_record_name
+      record = dvo.resource_record_value
+      type   = dvo.resource_record_type
+    }
+  }
+
+  allow_overwrite = true
+  name            = each.value.name
+  records         = [each.value.record]
+  ttl             = 60
+  type            = each.value.type
+  zone_id         = data.aws_route53_zone.main.zone_id
+}
+
+resource "aws_acm_certificate_validation" "prod" {
+  certificate_arn         = aws_acm_certificate.prod.arn
+  validation_record_fqdns = [for record in aws_route53_record.cert_validation : record.fqdn]
+}
+
+# ACM ARN을 SSM Parameter Store에 저장
+resource "aws_ssm_parameter" "acm_certificate_arn" {
+  name      = "/${var.project_name}/${var.env}/acm/certificate_arn"
+  type      = "String"
+  value     = aws_acm_certificate.prod.arn
+  overwrite = true
+
+  tags = {
+    Name = "${var.project_name}-${var.env}-acm-arn"
+  }
+
+  depends_on = [aws_acm_certificate_validation.prod]
+}
+
+# EKS OIDC Provider (IRSA용)
+resource "aws_iam_openid_connect_provider" "eks" {
+  client_id_list = ["sts.amazonaws.com"]
+  url            = module.eks.cluster_endpoint
+  
+  # EKS OIDC Provider의 기본 thumbprint (AWS 공식)
+  thumbprint_list = ["9e99a48a9960b14926bb7f3b02e22da2b0ab7280"]
+
+  tags = {
+    Name = "${var.project_name}-${var.env}-eks-irsa"
+  }
+}
+
+# common 모듈에 OIDC Provider ARN 전달
+locals {
+  eks_oidc_provider_arn = aws_iam_openid_connect_provider.eks.arn
 }

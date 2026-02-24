@@ -34,18 +34,23 @@ module "security_group" {
   project_name   = var.project_name
   vpc_id         = module.vpc.vpc_id
   service_config = local.service_config
+  extra_service_config = {
+    "argocd"   = 8080
+    "grafana"  = 3000
+    "rollouts" = 3100
+  }
 }
 
 module "common" {
-  source                 = "../../modules/common"
-  env                    = var.env
-  project_name           = var.project_name
-  service_config         = local.service_config
-  vpc_id                 = module.vpc.vpc_id
-  cloudtrail_bucket_id   = module.s3.cloudtrail_bucket_id
-  users                  = var.users
-  kms_key_arn            = data.aws_kms_alias.infra_key.target_key_arn
-  alb_arn                = module.alb.alb_arn
+  source               = "../../modules/common"
+  env                  = var.env
+  project_name         = var.project_name
+  service_config       = local.service_config
+  vpc_id               = module.vpc.vpc_id
+  cloudtrail_bucket_id = module.s3.cloudtrail_bucket_id
+  users                = var.users
+  kms_key_arn          = data.aws_kms_alias.infra_key.target_key_arn
+  # alb_arn                = module.alb.alb_arn
   private_app_subnet_ids = module.vpc.private_app_subnet_ids # Lambda 배포용
   app_sg_ids             = module.security_group.app_sg_ids  # Lambda SG용
 }
@@ -57,18 +62,26 @@ module "s3" {
   kms_key_arn  = module.common.kms_key_arn
 }
 
-module "alb" {
-  source            = "../../modules/alb"
-  env               = var.env
-  project_name      = var.project_name
-  vpc_id            = module.vpc.vpc_id
-  public_subnet_ids = module.vpc.public_subnet_ids
-  alb_sg_id         = module.security_group.alb_sg_id # 아까 만든 보안 그룹 ID
-  service_config    = local.service_config
-  certificate_arn   = module.route53.certificate_arn
-  enable_https      = true
-  logs_bucket_id    = module.s3.logs_bucket_id
-}
+# module "alb" {
+#   source            = "../../modules/alb"
+#   env               = var.env
+#   project_name      = var.project_name
+#   vpc_id            = module.vpc.vpc_id
+#   public_subnet_ids = module.vpc.public_subnet_ids
+#   alb_sg_id         = module.security_group.alb_sg_id # 아까 만든 보안 그룹 ID
+#   service_config    = local.service_config
+#   certificate_arn   = module.route53.certificate_arn
+#   enable_https      = true
+#   logs_bucket_id    = module.s3.logs_bucket_id
+# }
+
+# Ingress가 생성한 ALB 찾기 (ALB 생성 후에만 사용 가능)
+# data "aws_lb" "ingress" {
+#   count = var.enable_alb ? 1 : 0
+#   tags = {
+#     "ingress.k8s.aws/stack" = "unbox-dev"
+#   }
+# }
 
 data "aws_ssm_parameter" "db_password" {
   # common 모듈 배포 후에 값이 수동으로 채워져 있어야 합니다.
@@ -110,13 +123,87 @@ module "redis" {
 
 
 
-module "route53" {
-  source           = "../../modules/route53"
-  domain_name      = "dev.un-box.click"
-  hosted_zone_name = "un-box.click"
-  project_name     = var.project_name
-  alb_dns_name     = module.alb.alb_dns_name
-  alb_zone_id      = module.alb.alb_zone_id
+# ACM 인증서 생성 (Ingress Controller가 사용)
+data "aws_route53_zone" "main" {
+  count        = var.enable_alb ? 1 : 0
+  name         = "un-box.click"
+  private_zone = false
+}
+
+resource "aws_acm_certificate" "dev" {
+  count             = var.enable_alb ? 1 : 0
+  domain_name       = "dev.un-box.click"
+  validation_method = "DNS"
+
+  subject_alternative_names = ["*.dev.un-box.click"]
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  tags = {
+    Name = "${var.project_name}-dev-acm-cert"
+  }
+}
+
+resource "aws_route53_record" "cert_validation" {
+  for_each = var.enable_alb ? {
+    for dvo in aws_acm_certificate.dev[0].domain_validation_options : dvo.domain_name => {
+      name   = dvo.resource_record_name
+      record = dvo.resource_record_value
+      type   = dvo.resource_record_type
+    }
+  } : {}
+
+  allow_overwrite = true
+  name            = each.value.name
+  records         = [each.value.record]
+  ttl             = 60
+  type            = each.value.type
+  zone_id         = data.aws_route53_zone.main[0].zone_id
+}
+
+resource "aws_acm_certificate_validation" "dev" {
+  count                   = var.enable_alb ? 1 : 0
+  certificate_arn         = aws_acm_certificate.dev[0].arn
+  validation_record_fqdns = [for record in aws_route53_record.cert_validation : record.fqdn]
+}
+
+# ACM 인증서 ARN을 SSM Parameter Store에 저장
+resource "aws_ssm_parameter" "acm_certificate_arn" {
+  count     = var.enable_alb ? 1 : 0
+  name      = "/${var.project_name}/${var.env}/acm/certificate_arn"
+  type      = "String"
+  value     = aws_acm_certificate.dev[0].arn
+  overwrite = true
+
+  tags = {
+    Name = "${var.project_name}-${var.env}-acm-arn"
+  }
+
+  depends_on = [aws_acm_certificate_validation.dev]
+}
+
+# Ingress가 생성한 ALB 찾기 (ALB 생성 후에만 사용 가능)
+data "aws_lb" "ingress" {
+  count = var.enable_alb ? 1 : 0
+  tags = {
+    "ingress.k8s.aws/stack" = "unbox-dev"
+  }
+}
+
+# Route53 Alias Records for Subdomains (Dev)
+resource "aws_route53_record" "subdomains" {
+  for_each = var.enable_alb ? toset(["argocd", "grafana", "rollouts", "dev"]) : []
+  zone_id  = data.aws_route53_zone.main[0].zone_id
+  name     = each.key == "dev" ? "dev.un-box.click" : "${each.key}.dev.un-box.click"
+  type     = "A"
+
+  alias {
+    name                   = data.aws_lb.ingress[0].dns_name
+    zone_id                = data.aws_lb.ingress[0].zone_id
+    evaluate_target_health = true
+  }
 }
 
 module "eks" {
@@ -141,6 +228,10 @@ module "eks" {
   fargate_profile_role_arn = module.common.eks_fargate_role_arn
   kms_key_arn              = module.common.kms_key_arn
   node_security_group_id   = module.security_group.eks_node_sg_id
+  acm_certificate_arn      = var.enable_alb ? aws_acm_certificate.dev[0].arn : ""
+
+  # ArgoCD 설정
+  argocd_admin_password = var.argocd_admin_password
 
   # AWS Auth (Manage Access)
   aws_auth_users = [

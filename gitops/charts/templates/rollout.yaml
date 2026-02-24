@@ -1,0 +1,163 @@
+{{- if .Values.rollout.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: {{ .Values.appName }}
+  labels:
+    app: {{ .Values.appName }}
+  {{- if .Values.rollout.notifications }}
+  annotations:
+    notifications.argoproj.io/subscribe.on-rollout-paused.discord: ""
+    notifications.argoproj.io/subscribe.on-rollout-completed.discord: ""
+    notifications.argoproj.io/subscribe.on-rollout-aborted.discord: ""
+  {{- end }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: {{ .Values.appName }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.appName }}
+      annotations:
+        {{- if .Values.linkerd.enabled }}
+        linkerd.io/inject: enabled
+        # SMTP 포트 587을 Linkerd 프록시에서 우회 (타임아웃 방지)
+        config.linkerd.io/skip-outbound-ports: "587"
+        config.linkerd.io/skip-inbound-ports: "{{ .Values.containerPort }}"
+        config.linkerd.io/proxy-cpu-request: "{{ .Values.linkerd.proxy.cpuRequest | default "50m" }}"
+        config.linkerd.io/proxy-memory-request: "{{ .Values.linkerd.proxy.memoryRequest | default "64Mi" }}"
+        {{- end }}
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "{{ .Values.containerPort | default 8080 }}"
+        prometheus.io/path: "{{ .Values.contextPath | default "" }}/actuator/prometheus"
+    spec:
+      containers:
+      - name: {{ .Values.appName }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.containerPort }}
+        env:
+        {{- range $key, $value := .Values.env }}
+        - name: {{ $key }}
+          {{- if kindIs "map" $value }}
+          {{- toYaml $value | nindent 10 }}
+          {{- else }}
+          value: {{ $value | quote }}
+          {{- end }}
+        {{- end }}
+        {{- if .Values.rollout.healthCheck.enabled }}
+        {{- if .Values.rollout.healthCheck.startupProbe }}
+        startupProbe:
+          httpGet:
+            path: {{ .Values.rollout.healthCheck.path }}
+            port: {{ .Values.containerPort }}
+            {{- if .Values.linkerd.enabled }}
+            httpHeaders:
+            - name: l5d-dst-override
+              value: {{ .Values.appName }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.containerPort }}
+            {{- end }}
+          failureThreshold: {{ .Values.rollout.healthCheck.startupProbe.failureThreshold | default 30 }}
+          periodSeconds: {{ .Values.rollout.healthCheck.startupProbe.periodSeconds | default 10 }}
+          {{- if .Values.rollout.healthCheck.startupProbe.timeoutSeconds }}
+          timeoutSeconds: {{ .Values.rollout.healthCheck.startupProbe.timeoutSeconds }}
+          {{- end }}
+        {{- end }}
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.rollout.healthCheck.path }}
+            port: {{ .Values.containerPort }}
+            {{- if .Values.linkerd.enabled }}
+            httpHeaders:
+            - name: l5d-dst-override
+              value: {{ .Values.appName }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.containerPort }}
+            {{- end }}
+          {{- if .Values.rollout.healthCheck.startupProbe }}
+          initialDelaySeconds: 0
+          {{- else }}
+          initialDelaySeconds: {{ .Values.rollout.healthCheck.initialDelaySeconds }}
+          {{- end }}
+          periodSeconds: {{ .Values.rollout.healthCheck.periodSeconds }}
+          {{- if .Values.rollout.healthCheck.timeoutSeconds }}
+          timeoutSeconds: {{ .Values.rollout.healthCheck.timeoutSeconds }}
+          {{- end }}
+          {{- if .Values.rollout.healthCheck.livenessProbe }}
+          failureThreshold: {{ .Values.rollout.healthCheck.livenessProbe.failureThreshold | default 3 }}
+          {{- else }}
+          failureThreshold: 3
+          {{- end }}
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.rollout.healthCheck.path }}
+            port: {{ .Values.containerPort }}
+            {{- if .Values.linkerd.enabled }}
+            httpHeaders:
+            - name: l5d-dst-override
+              value: {{ .Values.appName }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.containerPort }}
+            {{- end }}
+          {{- if .Values.rollout.healthCheck.startupProbe }}
+          initialDelaySeconds: 0
+          {{- else }}
+          initialDelaySeconds: {{ .Values.rollout.healthCheck.initialDelaySeconds }}
+          {{- end }}
+          periodSeconds: {{ .Values.rollout.healthCheck.periodSeconds }}
+          {{- if .Values.rollout.healthCheck.timeoutSeconds }}
+          timeoutSeconds: {{ .Values.rollout.healthCheck.timeoutSeconds }}
+          {{- end }}
+          {{- if .Values.rollout.healthCheck.readinessProbe }}
+          failureThreshold: {{ .Values.rollout.healthCheck.readinessProbe.failureThreshold | default 3 }}
+          {{- else }}
+          failureThreshold: 3
+          {{- end }}
+        {{- end }}
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+  
+  {{- if eq .Values.rollout.strategy "blueGreen" }}
+  strategy:
+    blueGreen:
+      activeService: {{ .Values.appName }}
+      previewService: {{ .Values.appName }}-preview
+      autoPromotionEnabled: {{ .Values.rollout.blueGreen.autoPromotionEnabled }}
+      {{- if .Values.rollout.blueGreen.autoPromotionEnabled }}
+      autoPromotionSeconds: {{ .Values.rollout.blueGreen.autoPromotionSeconds }}
+      {{- end }}
+      scaleDownDelaySeconds: {{ .Values.rollout.blueGreen.scaleDownDelaySeconds }}
+  {{- else if eq .Values.rollout.strategy "canary" }}
+  strategy:
+    canary:
+      {{- if .Values.rollout.canary.canaryService }}
+      canaryService: {{ .Values.rollout.canary.canaryService }}
+      {{- end }}
+      {{- if .Values.rollout.canary.stableService }}
+      stableService: {{ .Values.rollout.canary.stableService }}
+      {{- end }}
+      {{- if .Values.rollout.canary.steps }}
+      steps:
+      {{- toYaml .Values.rollout.canary.steps | nindent 6 }}
+      {{- end }}
+      {{- if .Values.rollout.canary.maxSurge }}
+      maxSurge: {{ .Values.rollout.canary.maxSurge }}
+      {{- end }}
+      {{- if .Values.rollout.canary.maxUnavailable }}
+      maxUnavailable: {{ .Values.rollout.canary.maxUnavailable }}
+      {{- end }}
+      {{- if .Values.rollout.canary.trafficRouting }}
+      trafficRouting:
+        {{- toYaml .Values.rollout.canary.trafficRouting | nindent 8 }}
+      {{- end }}
+      {{- if .Values.rollout.analysis.enabled }}
+      analysis:
+        templates:
+        - templateName: {{ .Values.appName }}-analysis
+        startingStep: {{ .Values.rollout.analysis.startingStep }}
+        args:
+        - name: canary-hash
+          valueFrom:
+            podTemplateHashValue: Latest
+      {{- end }}
+  {{- end }}
+{{- end }}
