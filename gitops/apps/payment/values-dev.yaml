@@ -2,7 +2,7 @@
 appName: payment-service
 replicaCount: 1
 annotations:
-  reloadTimestamp: "2026-02-24-22-57"  # 강제 재배포 트리거
+  reloadTimestamp: "2026-02-24-23-05"  # 강제 재배포 트리거
 image:
   repository: 632941626317.dkr.ecr.ap-northeast-2.amazonaws.com/unbox-dev-payment-repo
   tag: dev-bf57644c6779df254235bac2a0df02c8883187fd
