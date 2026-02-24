@@ -3,7 +3,7 @@ appName: trade-service
 replicaCount: 1
 image:
   repository: 632941626317.dkr.ecr.ap-northeast-2.amazonaws.com/unbox-dev-trade-repo
-  tag: dev-de21326268a59e8e28fbc48984ef8c11285135f1
+  tag: dev-55f99149a6a92b2097871629da72f4c446a25427
   pullPolicy: Always
 # Ingress 활성화
 ingress:
