@@ -27,8 +27,8 @@ env:
   DB_DRIVER_CLASS_NAME: "org.postgresql.Driver"
   SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
   SPRING_JPA_SHOW_SQL: "false"
-  TEST_CANARY_DEPLOYMENT: "v8-bluegreen-rollback-final" # Blue-Green 롤백 최종 테스트
-  TEST_ERROR_RATE: "60" # 60% 에러 발생 (확실한 롤백 테스트)
+  TEST_CANARY_DEPLOYMENT: "v9-bluegreen-rollback-with-analysis" # AnalysisTemplate 적용 롤백 테스트
+  TEST_ERROR_RATE: "70" # 70% 에러 발생 (확실한 실패)
   SPRING_DATASOURCE_URL:
     valueFrom:
       secretKeyRef:
