@@ -102,7 +102,7 @@ rollout:
     activeService: payment-service
     previewService: payment-service-preview
     autoPromotionEnabled: true # 테스트용 자동 승격
-    autoPromotionSeconds: 30 # 30초 후 자동 승격
+    autoPromotionSeconds: 180 # 3분 후 자동 승격 (분석 시간 확보)
     scaleDownDelaySeconds: 120 # 2분간 Blue 유지 (테스트용)
     prePromotionAnalysis:
       enabled: true # Green 환경에서 사전 검증
