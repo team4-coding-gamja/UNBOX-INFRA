@@ -4,3 +4,34 @@
 **/*.tfstate.*
 **/*.tfvars
 .DS_Store
+
+# Terraform runtime/plan artifacts
+**/tfplan
+**/tfplan.*
+**/plan_result.txt
+**/errored.tfstate
+**/crash.log
+**/crash.*.log
+
+# Terraform local override files
+**/override.tf
+**/override.tf.json
+**/*_override.tf
+**/*_override.tf.json
+
+# Local CLI/config artifacts
+**/kubeconfig*
+*.code-workspace
+
+# Root local cert/debug manifests
+/ca.crt
+/linkerd-ca.crt
+/manifest_ca.crt
+/debug-output.yaml
+/rendered-ingress.yaml
+/temp_tgb.yaml
+/fix-user.yaml
+/order-ingress.yaml
+/order-tgb-fix.yaml
+/trade-ingress.yaml
+/user-ingress.yaml

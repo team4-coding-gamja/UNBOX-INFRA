@@ -51,11 +51,11 @@ spec:
               
               /etc/kafka/docker/run
           env:
-            # 1. 기본 역할 설정
+            # 기본 역할 설정
             - name: KAFKA_PROCESS_ROLES
               value: "broker,controller"
             
-            # 2. 리스너 및 주소 설정
+            # 리스너 및 주소 설정
             - name: KAFKA_LISTENERS
               value: "PLAINTEXT://:9092,CONTROLLER://:9093"
             - name: KAFKA_CONTROLLER_LISTENER_NAMES
@@ -63,7 +63,7 @@ spec:
             - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
               value: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT"
             
-            # 3. [핵심 수정] 복제본 설정 (values-prod.yaml에 맞춰 조정 권장)
+            # 각 환경에 맞는 카프카 복제 수 설정
             - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
               value: "{{ .Values.replicaCount | default 1 }}"
             - name: KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR

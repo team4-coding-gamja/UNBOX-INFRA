@@ -192,11 +192,6 @@ data "aws_lb" "ingress" {
   }
 }
 
-data "aws_route53_zone" "main" {
-  count = var.enable_alb ? 1 : 0
-  name  = "un-box.click"
-}
-
 # Route53 Alias Records for Subdomains (Dev)
 resource "aws_route53_record" "subdomains" {
   for_each = var.enable_alb ? toset(["argocd", "grafana", "rollouts", "dev"]) : []

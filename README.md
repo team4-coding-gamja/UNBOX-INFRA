@@ -1,137 +1,76 @@
 # UNBOX-INFRA
 
-UNBOX 프로젝트의 안정적인 운영을 위한 인프라 관리 저장소 (IaC)  
-Terraform 기반 AWS 인프라 구성 레포지토리
-
----
+UNBOX 인프라(IaC) 관리 저장소입니다.  
+AWS 인프라는 Terraform으로 관리하고, Kubernetes 리소스는 GitOps 매니페스트로 관리합니다.
 
 ## Repository Structure
 
 ```txt
-unbox-infrastructure/
-├── environments/        # 환경별 실행 디렉토리 (Live 환경)
-│   ├── dev/             # 개발 환경
-│   └── prod/            # 운영 환경
-│
-├── modules/             # 공통 리소스 정의 모듈 (Reusable Components)
-│   ├── vpc/             # 네트워크 (VPC, Subnet, IGW, NAT)
-│   ├── ecs/             # ECS Cluster, Service, Task Definition
-│   ├── rds/             # RDS (Database)
-│   ├── msk/             # Kafka (MSK)
-│   ├── alb/             # Load Balancer
-│   └── common/          # 공통 리소스 (IAM, KMS, S3, CloudWatch, CloudMap 등)
-│
-├── bootstrap/           # 인프라 초기 세팅
-│   ├── s3-backend.tf    # Terraform State 저장용 S3
-│   └── dynamodb.tf      # Terraform Lock 관리용 DynamoDB
+unbox-infra/
+├── terraform/
+│   ├── environments/
+│   │   ├── bootstrap/     # state backend(S3, DynamoDB), ECR/Secrets 초기 리소스
+│   │   ├── dev/           # 개발 환경 실행 디렉토리
+│   │   └── prod/          # 운영 환경 실행 디렉토리
+│   └── modules/
+│       ├── alb/
+│       ├── common/
+│       ├── eks/
+│       ├── monitoring/
+│       ├── msk/
+│       ├── rds/
+│       ├── redis/
+│       ├── route53/
+│       ├── s3/
+│       ├── security_group/
+│       └── vpc/
+├── gitops/
+│   ├── apps/              # 서비스별 애플리케이션 매니페스트
+│   ├── charts/            # 공통 Helm chart 템플릿
+│   └── infra/             # 클러스터 인프라 컴포넌트(ArgoCD, Linkerd, Monitoring 등)
+└── argocd/                # ArgoCD 관련 설정
 ```
 
----
+## Infra Overview
 
-## Network Architecture (Production)
+- Network: VPC + Public/Private/Data 서브넷
+- Compute: EKS (dev/prod), 일부 워크로드 Fargate 사용 가능
+- Data: RDS, Redis, MSK
+- Edge/DNS: ALB, Route53, ACM
+- Security/Common: IAM, KMS, S3, SSM, Secrets Manager, CloudWatch, CloudTrail
 
-운영 환경은 고가용성(High Availability)을 고려한 3-Tier Architecture 구조로 설계되었습니다.
+## Prerequisites
 
-### VPC
-- CIDR: 10.0.0.0/16
+- Terraform `v1.5+`
+- AWS CLI 인증 완료
+- 환경별 변수 파일 준비 (`terraform/environments/{env}/terraform.tfvars`)
 
-### Subnet Tier Structure
-- Public Subnet: ALB, NAT Gateway  
-- Private Subnet: Application Servers (ECS)  
-- Data Subnet: Databases (RDS, MSK, Redis)
+주의:
+- `terraform.tfvars` 는 Git에 커밋하지 않습니다.
 
-### Availability Zones
-- ap-northeast-2a  
-- ap-northeast-2c  
+## Terraform Workflow
 
-Multi-AZ 기반 고가용성 구조
-
----
-
-## Quick Start
-
-### Prerequisites
-- Terraform v1.5+
-- AWS CLI 인증 설정
-- terraform.tfvars 파일 작성 (개인정보 및 시크릿 포함)
-
-> terraform.tfvars 파일은 Git에 절대 커밋되지 않으며 .gitignore 처리되어 있습니다.
-
----
-
-### Deployment
+### 1) Bootstrap (최초 1회 또는 변경 시)
 
 ```bash
-# 1. 원하는 환경으로 이동
-cd environments/prod
-
-# 2. 테라폼 초기화
+cd terraform/environments/bootstrap
 terraform init
-
-# 3. 변경 사항 검토 (필수)
 terraform plan
-
-# 4. 인프라 배포
 terraform apply
 ```
 
----
+### 2) Environment 배포 (dev/prod)
 
-## Security Policy
+```bash
+cd terraform/environments/dev   # 또는 prod
+terraform init
+terraform plan
+terraform apply
+```
 
-### Secret Management
+## 운영 원칙
 
-IMPORTANT:
-- terraform.tfvars 파일 Git 커밋 금지
-- 민감정보(이메일, 비밀번호, 토큰 등)는
-  terraform.tfvars.example 참고하여 로컬에서만 작성
-
----
-
-### State Lock
-
-WARNING:
-- Terraform State 관리:
-  - S3 Backend
-  - DynamoDB Lock
-- 동시 apply 방지 구조
-- terraform apply 도중 강제 종료 금지
-
----
-
-## Workflows
-
-### Branch Strategy
-- 모든 변경은 Feature Branch에서 시작
-
-### Review Process
-- PR 생성 시 terraform plan 결과 포함
-- 팀원 리뷰 필수
-- 승인 후 main 브랜치 merge
-
-### CI/CD
-- main 브랜치 merge 시 GitHub Actions 실행
-- Terraform 자동 배포
-- 실제 AWS 인프라 반영
-
----
-
-## Design Philosophy
-
-- Infrastructure as Code (IaC)
-- Immutable Infrastructure
-- Environment Isolation (dev/prod)
-- Least Privilege Security
-- High Availability
-- Modular Architecture
-- Production-Grade Terraform Structure
-
----
-
-## Operation Principles
-
-- 수동 콘솔 작업 금지
-- 모든 변경은 Terraform으로만 관리
-- 단일 책임 모듈 구조
-- 재현 가능한 인프라 구성
-- 자동화 기반 운영
+- 수동 콘솔 변경 대신 Terraform/GitOps 기준으로 변경 관리
+- `plan` 검토 후 `apply`
+- state backend(S3) + lock(DynamoDB) 사용
+- 모듈 재사용 중심으로 환경(dev/prod) 분리 운영

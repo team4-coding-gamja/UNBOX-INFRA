@@ -25,6 +25,17 @@ loki:
         index:
           prefix: index_
           period: 24h
+  limits_config:
+    retention_period: 720h
+  compactor:
+    retention_enabled: true
+    delete_request_store: s3
+
+serviceAccount:
+  create: true
+  name: loki
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::632941626317:role/unbox-prod-loki-s3-role
 
 singleBinary:
   replicas: 2  # S3 사용 가능하므로 2개 이상 띄울 수 있음

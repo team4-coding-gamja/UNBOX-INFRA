@@ -45,7 +45,8 @@ resource "helm_release" "argocd" {
   ]
 
   depends_on = [
-    aws_eks_node_group.main
+    aws_eks_node_group.main,
+    helm_release.aws_load_balancer_controller
   ]
 }
 

@@ -1,0 +1,15 @@
+apiVersion: trust.cert-manager.io/v1alpha1
+kind: Bundle
+metadata:
+  name: linkerd-trust-anchor
+spec:
+  sources:
+  - secret:
+      name: linkerd-trust-anchor
+      key: tls.crt
+  target:
+    configMap:
+      key: trust-anchor.crt
+    namespaceSelector:
+      matchLabels:
+        linkerd.io/control-plane-ns: linkerd
