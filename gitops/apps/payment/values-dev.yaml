@@ -29,7 +29,7 @@ env:
   DB_DRIVER_CLASS_NAME: "org.postgresql.Driver"
   SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
   SPRING_JPA_SHOW_SQL: "false"
-  TEST_CANARY_DEPLOYMENT: "v14-bluegreen-rollback-test" # 롤백 테스트
+  TEST_CANARY_DEPLOYMENT: "v2-bluegreen-error-rollback" # 에러율 감지 롤백 테스트
   TEST_ERROR_RATE: "50" # 50% 에러 발생 (롤백 유도)
   SPRING_DATASOURCE_URL:
     valueFrom:
