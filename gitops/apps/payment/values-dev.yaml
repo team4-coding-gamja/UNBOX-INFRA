@@ -3,7 +3,7 @@ appName: payment-service
 replicaCount: 1
 image:
   repository: 632941626317.dkr.ecr.ap-northeast-2.amazonaws.com/unbox-dev-payment-repo
-  tag: dev-55f99149a6a92b2097871629da72f4c446a25427
+  tag: dev-eda460b691d6a56b6c6bd17b613b493f9fcb2e6a
   pullPolicy: Always
 # Ingress 활성화
 ingress:
