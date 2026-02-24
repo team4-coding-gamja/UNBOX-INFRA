@@ -100,8 +100,9 @@ rollout:
   blueGreen:
     activeService: payment-service
     previewService: payment-service-preview
-    autoPromotionEnabled: false # 수동 승격 - 결제는 무결성 최우선
-    scaleDownDelaySeconds: 300 # 5분간 Blue 유지 (롤백 대비)
+    autoPromotionEnabled: true # 테스트용 자동 승격
+    autoPromotionSeconds: 30 # 30초 후 자동 승격
+    scaleDownDelaySeconds: 120 # 2분간 Blue 유지 (테스트용)
     prePromotionAnalysis:
       enabled: true # Green 환경에서 사전 검증
       templates:
