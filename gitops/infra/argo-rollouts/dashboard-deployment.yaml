@@ -34,6 +34,8 @@ spec:
         - dashboard
         - --port
         - "3100"
+        - --namespace
+        - unbox-app
         ports:
         - containerPort: 3100
           name: http
