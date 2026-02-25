@@ -1,0 +1,6 @@
+mesh,trial,startup_seconds,app_ns_cpu_m,app_ns_mem_mi,app_ns_pods,control_ns_cpu_m,control_ns_mem_mi,control_ns_pods,node_cpu_m,node_mem_mi
+linkerd,1,18,0,0,0,20,148,3,423,1471
+linkerd,2,19,0,0,0,20,148,3,423,1471
+linkerd,3,19,0,0,0,23,136,3,656,1542
+linkerd,4,18,0,0,0,23,136,3,656,1542
+linkerd,5,27,0,0,0,28,145,3,738,1784

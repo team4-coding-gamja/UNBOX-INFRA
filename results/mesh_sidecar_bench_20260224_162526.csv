@@ -1,0 +1,11 @@
+mesh,trial,startup_seconds,app_ns_cpu_m,app_ns_mem_mi,app_ns_pods,control_ns_cpu_m,control_ns_mem_mi,control_ns_pods,node_cpu_m,node_mem_mi
+linkerd,1,18,0,0,0,13,127,3,311,1790
+linkerd,2,18,0,0,0,13,127,3,311,1790
+linkerd,3,25,0,0,0,22,105,3,681,1578
+linkerd,4,27,0,0,0,30,129,3,687,1549
+linkerd,5,19,0,0,0,30,129,3,687,1549
+istio,1,35,216,344,10,16,162,2,650,2293
+istio,2,37,0,0,0,16,162,2,650,2293
+istio,3,33,0,0,0,31,145,2,762,2592
+istio,4,34,0,0,0,19,160,2,607,2385
+istio,5,34,0,0,0,14,151,2,508,1846
