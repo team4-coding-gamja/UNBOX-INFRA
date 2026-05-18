@@ -252,11 +252,4 @@ kubectl apply -f argocd/prod-bundle.yaml          # prod
   - 리소스 이름은 `project-env-role` 규칙 유지
   - dev/prod 값을 chart values에서 명확히 분리
 
-## 11. 향후 정리 권장 항목
-
-- ingress-gateway 전략 확정(유지 vs 제거) 후 단일화
-- generic bundle 사용 축소, env bundle 중심으로 통일
-- External Secrets 경로 하드코딩 제거
-- README와 실제 배포 분기/브랜치 정책(`targetRevision`) 정합성 유지
-
 ---
